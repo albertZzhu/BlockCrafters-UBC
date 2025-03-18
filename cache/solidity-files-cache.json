@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "/Users/joisey./Desktop/EECE571G/BlockCrafters-UBC/contracts/BackerRegister.sol": {
-      "lastModificationDate": 1742273939110,
-      "contentHash": "d41d8cd98f00b204e9800998ecf8427e",
+      "lastModificationDate": 1742275486321,
+      "contentHash": "bccb2855bad481a8d32fd689a446d2a2",
       "sourceName": "contracts/BackerRegister.sol",
       "solcConfig": {
         "version": "0.8.28",
@@ -29,13 +29,19 @@
           }
         }
       },
-      "imports": [],
-      "versionPragmas": [],
-      "artifacts": []
+      "imports": [
+        "@openzeppelin/contracts/access/Ownable.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "BackerRegister"
+      ]
     },
     "/Users/joisey./Desktop/EECE571G/BlockCrafters-UBC/contracts/CrowdFundingContract.sol": {
-      "lastModificationDate": 1742271237115,
-      "contentHash": "d41d8cd98f00b204e9800998ecf8427e",
+      "lastModificationDate": 1742275499408,
+      "contentHash": "b14e52864d9f311e0ff001699d46f042",
       "sourceName": "contracts/CrowdFundingContract.sol",
       "solcConfig": {
         "version": "0.8.28",
@@ -62,8 +68,86 @@
         }
       },
       "imports": [],
-      "versionPragmas": [],
-      "artifacts": []
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "CrowdFundingContract"
+      ]
+    },
+    "/Users/joisey./Desktop/EECE571G/BlockCrafters-UBC/node_modules/@openzeppelin/contracts/access/Ownable.sol": {
+      "lastModificationDate": 1742274058694,
+      "contentHash": "d3c790edc9ccf808a17c5a6cd13614fd",
+      "sourceName": "@openzeppelin/contracts/access/Ownable.sol",
+      "solcConfig": {
+        "version": "0.8.28",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../utils/Context.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "Ownable"
+      ]
+    },
+    "/Users/joisey./Desktop/EECE571G/BlockCrafters-UBC/node_modules/@openzeppelin/contracts/utils/Context.sol": {
+      "lastModificationDate": 1742274058588,
+      "contentHash": "67bfbc07588eb8683b3fd8f6f909563e",
+      "sourceName": "@openzeppelin/contracts/utils/Context.sol",
+      "solcConfig": {
+        "version": "0.8.28",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "Context"
+      ]
     }
   }
 }
