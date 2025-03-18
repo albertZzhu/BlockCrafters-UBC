@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "/Users/joisey./Desktop/EECE571G/BlockCrafters-UBC/contracts/BackerRegister.sol": {
-      "lastModificationDate": 1742275486321,
-      "contentHash": "bccb2855bad481a8d32fd689a446d2a2",
+      "lastModificationDate": 1742275837624,
+      "contentHash": "c4eef78c4d821efdd81bf760c1793fe8",
       "sourceName": "contracts/BackerRegister.sol",
       "solcConfig": {
         "version": "0.8.28",
@@ -29,9 +29,7 @@
           }
         }
       },
-      "imports": [
-        "@openzeppelin/contracts/access/Ownable.sol"
-      ],
+      "imports": [],
       "versionPragmas": [
         "^0.8.20"
       ],

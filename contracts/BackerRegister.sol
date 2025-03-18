@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-
-contract BackerRegister is Ownable {
+contract BackerRegister {
     
     struct Backer {
         address walletAddress;
@@ -15,8 +13,6 @@ contract BackerRegister is Ownable {
     mapping(address => Backer) public backers;
 
     event BackerRegistered(address indexed backer, bytes32 emailHash);
-
-    constructor() Ownable(msg.sender) {}
 
     function registerInvestor(string memory email) public {
         require(!backers[msg.sender].isRegistered, "Investor already registered");
