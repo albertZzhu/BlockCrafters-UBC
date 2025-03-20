@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 import 'StartPage.dart';
 import 'package:flutter/material.dart';
@@ -10,6 +11,7 @@ import 'HomePage.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:coach_link/Model/UpdateUser.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:coach_link/Control/EthernetControl.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -19,57 +21,35 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  String _email = "";
-  String _password = "";
+  String _passphrase = "";
   bool _success = false;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  User? user;
+  final Ethernetcontrol _ethernetControl = Ethernetcontrol();
 
   Future<void> redirect() async {
-    final currentuser =
-        await UpdateUser(
-          uid: FirebaseAuth.instance.currentUser!.uid,
-        ).getCoach();
-
-    if (currentuser.sport == "" || currentuser.sport == null) {
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => OnboardingPage()),
-        (route) => route == null,
-      );
-    } else {
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => StartPage()),
-        (route) => route == null,
-      );
-    }
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => StartPage(isLogin: true)),
+      (route) => route == null,
+    );
   }
 
   void loginAction() async {
     try {
-      final UserCredential credential = (await _auth.signInWithEmailAndPassword(
-        email: _email,
-        password: _password,
-      ));
-      user = credential.user;
+      if (_passphrase.isNotEmpty) {
+        final address = _ethernetControl.getKeysFromMnemonic(_passphrase);
+        final balance = await _ethernetControl.getBalance(address);
+        setState(() {
+          _success = false;
+        });
+      } else {
+        setState(() {
+          _success = false;
+        });
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Login failed. Please try again.")),
-      );
-    }
-    if (user == null) {
+      Fluttertoast.showToast(msg: e.toString());
       setState(() {
         _success = false;
-        print("Sign in failed");
-      });
-    } else {
-      setState(() {
-        _success = true;
-        print("Sign in success");
-        print(user!.uid);
-        //TODO: need to add check to see if onbaording has been completed. If it has jump to the main page not onboarding.
-        redirect();
       });
     }
   }
@@ -78,98 +58,78 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(title: const Text("User Login")),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        leading: IconButton(
+          style: const ButtonStyle(elevation: MaterialStatePropertyAll(10)),
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+      ),
       body: SingleChildScrollView(
         physics: const NeverScrollableScrollPhysics(),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.only(top: 60.0),
-              child: Center(
-                child: Container(
-                  width: 200,
-                  height: 150,
-                  child: Image.asset('assets/banner.png'),
-                ),
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 15),
-              child: TextField(
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(),
-                  labelText: 'Email',
-                  hintText: 'Enter valid email id as abc@gmail.com',
-                ),
-                onChanged: (email) {
-                  this._email = email;
-                },
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.only(
-                left: 15.0,
-                right: 15.0,
-                top: 15,
-                bottom: 0,
-              ),
-              child: TextField(
-                obscureText: true,
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(),
-                  labelText: 'Password',
-                  hintText: 'Enter secure password',
-                ),
-                onChanged: (password) {
-                  this._password = password;
-                },
-              ),
-            ),
-            const SizedBox(height: 30),
             Container(
-              height: 50,
-              width: 250,
-              decoration: BoxDecoration(
-                color: Colors.blue,
-                borderRadius: BorderRadius.circular(20),
+              alignment: Alignment.center,
+              margin: EdgeInsets.only(
+                top: MediaQuery.of(context).size.height * 0.1,
               ),
-              child: TextButton(
+              child: Icon(Icons.copy_outlined, size: 30, color: Colors.grey),
+            ),
+            Container(
+              alignment: Alignment.center,
+              margin: const EdgeInsets.only(top: 20),
+              child: const Text(
+                "Enter your recovery phrase",
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: "arial",
+                  color: Colors.grey,
+                ),
+              ),
+            ),
+            Container(
+              margin: const EdgeInsets.only(
+                top: 20,
+                left: 20,
+                right: 20,
+                bottom: 20,
+              ),
+              child: TextField(
+                maxLines: 5,
+                onChanged: (value) {
+                  _passphrase = value;
+                },
+                decoration: InputDecoration(
+                  hintText: "Recovery Phrase",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Colors.grey),
+                  ),
+                ),
+              ),
+            ),
+            Container(
+              child: FloatingActionButton.extended(
+                backgroundColor: Colors.lightBlue,
                 onPressed: () {
                   loginAction();
                 },
-                child: const Text(
-                  'Login',
-                  style: TextStyle(color: Colors.white, fontSize: 25),
+                label: const Text(
+                  "Login",
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: "arial",
+                    color: Colors.black54,
+                  ),
                 ),
-              ),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute<void>(
-                    builder: (BuildContext context) => const ResetPwdPage(),
-                  ),
-                );
-              },
-              child: const Text(
-                'Forgot Password',
-                style: TextStyle(color: Colors.blue, fontSize: 15),
-              ),
-            ),
-            const SizedBox(height: 100),
-            TextButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute<void>(
-                    builder: (BuildContext context) => const NewUserPage(),
-                  ),
-                );
-              },
-              child: const Text(
-                'New User? Create Account',
-                style: TextStyle(color: Colors.blue, fontSize: 15),
+                elevation: 10,
               ),
             ),
           ],

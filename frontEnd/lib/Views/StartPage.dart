@@ -8,32 +8,34 @@ import "HomePage.dart";
 import 'FavoritePage.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:jazzicon/jazzicon.dart';
 
 class StartPage extends StatefulWidget {
   String uid = "";
   bool isLogin = false;
-  StartPage({Key? key}) : super(key: key);
+  StartPage({Key? key, bool isLogin = false}) : super(key: key);
 
   @override
   // ignore: no_logic_in_create_state
-  _StartPageState createState() => _StartPageState();
+  _StartPageState createState() => _StartPageState(isLogin: isLogin);
 }
 
 class _StartPageState extends State<StartPage> {
   int _currentIndex = 0;
   List<Widget> _bottomNavPages = [];
   String uid = "";
+  String address = "";
   bool isLogin = false;
 
-  _StartPageState();
+  _StartPageState({required this.isLogin});
   @override
   void initState() {
+    super.initState();
     _bottomNavPages
       ..add(MyHomePage(title: "Now Projects"))
       ..add(HistoryPage())
       ..add(SearchPage())
       ..add(ProfilePage(isLogin: isLogin));
-    super.initState();
   }
 
   FloatingActionButton newPostWidget() {
@@ -50,13 +52,18 @@ class _StartPageState extends State<StartPage> {
       ));
     } else {
       return (FloatingActionButton(
+        backgroundColor: Colors.lightBlue,
         onPressed: () {
-          Fluttertoast.showToast(
-            msg: "Please login before post any information",
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => LoginPage()),
           );
         },
         shape: CircleBorder(),
-        child: Icon(Icons.add),
+        child:
+            isLogin
+                ? Icon(Icons.add)
+                : Icon(Icons.login_sharp, color: Colors.black54, size: 30),
       ));
     }
   }
@@ -64,15 +71,16 @@ class _StartPageState extends State<StartPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       backgroundColor: Colors.white,
       body: _bottomNavPages[_currentIndex],
       bottomNavigationBar: Container(
         height: MediaQuery.of(context).size.height / 10,
         decoration: BoxDecoration(
-          boxShadow: <BoxShadow>[BoxShadow(color: Colors.grey, blurRadius: 10)],
+          boxShadow: <BoxShadow>[BoxShadow(color: Colors.grey, blurRadius: 5)],
         ),
         child: BottomAppBar(
-          color: Colors.white,
+          color: Colors.white.withOpacity(0.8),
           child: Row(
             children: <Widget>[
               IconButton(
@@ -111,7 +119,7 @@ class _StartPageState extends State<StartPage> {
               ),
               IconButton(
                 icon: Icon(
-                  Icons.person,
+                  Icons.swap_vert_outlined,
                   color: _currentIndex == 3 ? Colors.blue : Colors.grey,
                 ),
                 onPressed: () {
