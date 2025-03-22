@@ -116,6 +116,7 @@ class _LoginPageState extends State<LoginPage> {
             ),
             Container(
               child: FloatingActionButton.extended(
+                heroTag: 'passphrase',
                 backgroundColor: Colors.lightBlue,
                 onPressed: () {
                   loginAction();

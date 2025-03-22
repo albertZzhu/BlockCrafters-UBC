@@ -6,11 +6,10 @@ import 'package:coach_link/Model/UpdateUser.dart';
 import 'package:coach_link/Control/NewPostControl.dart';
 
 class newPost extends StatefulWidget {
-  String uid = "";
-  newPost({Key? key, required this.uid}) : super(key: key);
+  newPost({Key? key}) : super(key: key);
 
   @override
-  _NewPostPageState createState() => _NewPostPageState(uid: uid);
+  _NewPostPageState createState() => _NewPostPageState();
 }
 
 class _NewPostPageState extends State<newPost> {
@@ -19,16 +18,20 @@ class _NewPostPageState extends State<newPost> {
   String _content = "";
   NewPostControl? postControl;
 
-  _NewPostPageState({required this.uid});
+  _NewPostPageState();
 
   @override
   void initState() {
     super.initState();
-    postControl = NewPostControl(uid);
   }
 
   @override
   Widget build(BuildContext context) {
+    final arguments =
+        (ModalRoute.of(context)?.settings.arguments ?? <String, dynamic>{})
+            as Map;
+    uid = arguments['uid'] ?? "";
+    postControl = NewPostControl(uid);
     return Scaffold(
       backgroundColor: Colors.white,
       body: Stack(

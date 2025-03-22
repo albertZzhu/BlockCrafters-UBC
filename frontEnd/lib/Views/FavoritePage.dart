@@ -103,12 +103,6 @@ class _HistoryPageState extends State<HistoryPage> {
       );
     }
     return Scaffold(
-      appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text("My History Transactions"),
-        //backgroundColor: Colors.white,
-      ),
       body: body,
       // This trailing comma makes auto-formatting nicer for build methods.
     );

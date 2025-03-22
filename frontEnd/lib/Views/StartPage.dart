@@ -6,9 +6,13 @@ import 'ProfilePage.dart';
 import "SearchPage.dart";
 import "HomePage.dart";
 import 'FavoritePage.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:jazzicon/jazzicon.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:coach_link/Control/WalletConnectControl.dart';
+import 'package:reown_appkit/reown_appkit.dart';
+import 'package:flutter/scheduler.dart';
+import 'package:coach_link/Model/enum.dart';
+import 'package:coach_link/Views/loader.dart';
 
 class StartPage extends StatefulWidget {
   String uid = "";
@@ -21,6 +25,7 @@ class StartPage extends StatefulWidget {
 }
 
 class _StartPageState extends State<StartPage> {
+  ReownAppKitModal? w3mService;
   int _currentIndex = 0;
   List<Widget> _bottomNavPages = [];
   String uid = "";
@@ -36,106 +41,152 @@ class _StartPageState extends State<StartPage> {
       ..add(HistoryPage())
       ..add(SearchPage())
       ..add(ProfilePage(isLogin: isLogin));
+    SchedulerBinding.instance.addPostFrameCallback(
+      (_) => context.read<WalletConnectControl>().instantiate(context),
+    );
   }
 
-  FloatingActionButton newPostWidget() {
-    if (isLogin) {
-      return (FloatingActionButton(
-        onPressed: () {
+  FloatingActionButton addNewProjectWidget() {
+    return (FloatingActionButton(
+      onPressed: () {
+        if (isLogin) {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => newPost(uid: uid)),
+            MaterialPageRoute(builder: (context) => newPost()),
           );
-        },
-        shape: CircleBorder(),
-        child: Icon(Icons.add),
-      ));
-    } else {
-      return (FloatingActionButton(
-        backgroundColor: Colors.lightBlue,
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => LoginPage()),
+        } else {
+          Fluttertoast.showToast(
+            msg: "Please login to create a new project",
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.BOTTOM,
+            timeInSecForIosWeb: 1,
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
+            fontSize: 16.0,
           );
-        },
-        shape: CircleBorder(),
-        child:
-            isLogin
-                ? Icon(Icons.add)
-                : Icon(Icons.login_sharp, color: Colors.black54, size: 30),
-      ));
-    }
+        }
+      },
+      shape: CircleBorder(),
+      child: Icon(Icons.add),
+    ));
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      backgroundColor: Colors.white,
-      body: _bottomNavPages[_currentIndex],
-      bottomNavigationBar: Container(
-        height: MediaQuery.of(context).size.height / 10,
-        decoration: BoxDecoration(
-          boxShadow: <BoxShadow>[BoxShadow(color: Colors.grey, blurRadius: 5)],
-        ),
-        child: BottomAppBar(
-          color: Colors.white.withOpacity(0.8),
-          child: Row(
-            children: <Widget>[
-              IconButton(
-                icon: Icon(
-                  Icons.home,
-                  color: _currentIndex == 0 ? Colors.blue : Colors.grey,
-                ),
-                onPressed: () {
-                  setState(() {
-                    _currentIndex = 0;
-                  });
-                },
-              ),
-              IconButton(
-                icon: Icon(
-                  Icons.history,
-                  color: _currentIndex == 1 ? Colors.blue : Colors.grey,
-                ),
-                onPressed: () {
-                  setState(() {
-                    _currentIndex = 1;
-                  });
-                },
-              ),
-              const SizedBox(),
-              IconButton(
-                icon: Icon(
-                  Icons.search,
-                  color: _currentIndex == 2 ? Colors.blue : Colors.grey,
-                ),
-                onPressed: () {
-                  setState(() {
-                    _currentIndex = 2;
-                  });
-                },
-              ),
-              IconButton(
-                icon: Icon(
-                  Icons.swap_vert_outlined,
-                  color: _currentIndex == 3 ? Colors.blue : Colors.grey,
-                ),
-                onPressed: () {
-                  setState(() {
-                    _currentIndex = 3;
-                  });
-                },
-              ),
-            ],
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
+    return BlocListener<WalletConnectControl, Web3State>(
+      listenWhen:
+          (Web3State previous, Web3State current) =>
+              current is InitializeWeb3MSuccess ||
+              current is FetchHomeScreenActionButtonSuccess,
+      listener: (BuildContext context, Web3State state) {
+        if (state is InitializeWeb3MSuccess) {
+          setState(() => w3mService = state.service);
+          context.read<WalletConnectControl>().fetchHomeScreenActionButton();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          leadingWidth: MediaQuery.of(context).size.width / 2,
+          leading: BlocBuilder<WalletConnectControl, Web3State>(
+            buildWhen:
+                (Web3State previous, Web3State current) =>
+                    current is FetchHomeScreenActionButtonSuccess,
+            builder: (BuildContext context, Web3State state) {
+              if (state is FetchHomeScreenActionButtonSuccess &&
+                  state.action == HomeScreenActionButton.connectWallet) {
+                return (GestureDetector(
+                  onTap: () {
+                    w3mService!.openModalView();
+                  },
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      CircleAvatar(
+                        minRadius: AppBar().preferredSize.height,
+                        maxRadius: AppBar().preferredSize.height,
+                        child: Icon(Icons.question_mark),
+                      ),
+                      Text(
+                        "Login",
+                        style: TextStyle(color: Colors.black, fontSize: 18),
+                      ),
+                    ],
+                  ),
+                ));
+              } else {
+                return Loader(height: AppBar().preferredSize.height);
+              }
+            },
           ),
-          shape: const CircularNotchedRectangle(),
         ),
+        extendBodyBehindAppBar: true,
+        backgroundColor: Colors.white,
+        body: _bottomNavPages[_currentIndex],
+        bottomNavigationBar: Container(
+          height: MediaQuery.of(context).size.height / 10,
+          decoration: BoxDecoration(
+            boxShadow: <BoxShadow>[
+              BoxShadow(color: Colors.grey, blurRadius: 5),
+            ],
+          ),
+          child: BottomAppBar(
+            color: Colors.white.withOpacity(0.8),
+            child: Row(
+              children: <Widget>[
+                IconButton(
+                  icon: Icon(
+                    Icons.home,
+                    color: _currentIndex == 0 ? Colors.blue : Colors.grey,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _currentIndex = 0;
+                    });
+                  },
+                ),
+                IconButton(
+                  icon: Icon(
+                    Icons.history,
+                    color: _currentIndex == 1 ? Colors.blue : Colors.grey,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _currentIndex = 1;
+                    });
+                  },
+                ),
+                const SizedBox(),
+                IconButton(
+                  icon: Icon(
+                    Icons.search,
+                    color: _currentIndex == 2 ? Colors.blue : Colors.grey,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _currentIndex = 2;
+                    });
+                  },
+                ),
+                IconButton(
+                  icon: Icon(
+                    Icons.swap_vert_outlined,
+                    color: _currentIndex == 3 ? Colors.blue : Colors.grey,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _currentIndex = 3;
+                    });
+                  },
+                ),
+              ],
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+            ),
+            shape: const CircularNotchedRectangle(),
+          ),
+        ),
+        floatingActionButton: addNewProjectWidget(),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       ),
-      floatingActionButton: newPostWidget(),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 }
