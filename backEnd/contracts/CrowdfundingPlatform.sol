@@ -18,6 +18,7 @@ contract CrowdfundingPlatform {
         Finished // when backers receive dividend first time, remaining 10% fund released to the founder (1% to platform)
     }
 
+    // TODO: milstone release && Milestone Approval Process
     struct Project {
         address founder;
         uint256 goal;
@@ -202,6 +203,7 @@ contract CrowdfundingPlatform {
         emit ProjectStatusUpdated(_projectId, ProjectStatus.Failed);
     }
 
+    // TODO: need to consider all-or-nothing
     // first 90% released after goal reached and voting approved
     function firstRelease(
         uint256 _projectId
