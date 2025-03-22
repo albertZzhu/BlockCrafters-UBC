@@ -1,39 +1,35 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-contract BackerRegister {
+contract UserRegister {
     
-    struct Backer {
+    struct User {
         address walletAddress;
-        bytes32 emailHash;
         bool isRegistered;
     }
 
-    // map wallet address to a corresponding backer
-    mapping(address => Backer) public backers;
+    // map wallet address to a corresponding users
+    mapping(address => User) public users;
 
-    event BackerRegistered(address indexed backer, bytes32 emailHash);
+    modifier onlyRegsiterOnce() {
+        require(!users[msg.sender].isRegistered, "Already registered");
+        _;
+    }
 
-    function registerInvestor(string memory email) public {
-        require(!backers[msg.sender].isRegistered, "Investor already registered");
+    modifier onlyRegistered() {
+        require(users[msg.sender].isRegistered, "User not registered");
+        _;
+    }
 
-        bytes32 emailHash = keccak256(abi.encodePacked(email));
+    event UserRegistered(address indexed users);
 
-        backers[msg.sender] = Backer({
-            walletAddress: msg.sender,
-            emailHash: emailHash,
-            isRegistered: true
+    function registerUser() public onlyRegsiterOnce() {
+
+        users[msg.sender] = User({
+            isRegistered: true,
+            walletAddress: msg.sender
         });
 
-        emit BackerRegistered(msg.sender, emailHash);
-    }
-
-    function isBackerRegistered(address walletAddress) public view returns (bool) {
-        return backers[walletAddress].isRegistered;
-    }
-
-    function getInvestorEmailHash(address walletAddress) public view returns (bytes32) {
-        require(backers[walletAddress].isRegistered, "Investor not registered");
-        return backers[walletAddress].emailHash;
+        emit UserRegistered(msg.sender);
     }
 }
