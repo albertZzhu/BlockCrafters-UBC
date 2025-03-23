@@ -1,6 +1,6 @@
 {
-    "name": "coach_link",
-    "short_name": "coach_link",
+    "name": "blockercrafter",
+    "short_name": "blockercrafter",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
