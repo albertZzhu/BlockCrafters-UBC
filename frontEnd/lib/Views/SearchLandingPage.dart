@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:coach_link/Control/SearchMethod.dart';
+//import 'package:coach_link/Control/SearchMethod.dart';
 import 'package:coach_link/Model/User.dart';
-import 'package:coach_link/Model/UpdateUser.dart';
+//import 'package:coach_link/Model/UpdateUser.dart';
 
 class SearchLandingPage extends StatefulWidget {
   String keyword = "";
@@ -17,19 +17,19 @@ class _SearchLandingPageState extends State<SearchLandingPage> {
   String keyword = "";
   String uid = "";
   List<CoachUser> coachList = [];
-  UpdateUser? updateUser;
+  //UpdateUser? updateUser;
 
   _SearchLandingPageState({required this.keyword, required this.uid});
 
   Future<void> _getCoachList() async {
-    coachList = await SearchMethod.searchCoach(keyword);
+    //coachList = await SearchMethod.searchCoach(keyword);
     if (mounted) setState(() {});
   }
 
   @override
   void initState() {
     _getCoachList();
-    updateUser = UpdateUser(uid: uid);
+    //updateUser = UpdateUser(uid: uid);
     super.initState();
   }
 
@@ -72,13 +72,13 @@ class _SearchLandingPageState extends State<SearchLandingPage> {
                 TextButton(
                   child: const Text("CONNECT"),
                   onPressed: () {
-                    updateUser!.addFriend(user.uid);
+                    //updateUser!.addFriend(user.uid);
                   },
                 ),
                 TextButton(
                   child: Text('UNCONNECT'),
                   onPressed: () {
-                    updateUser!.removeFriend(user.uid);
+                    //updateUser!.removeFriend(user.uid);
                   },
                 ),
               ],

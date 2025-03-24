@@ -1,11 +1,10 @@
 import 'package:coach_link/Views/newPost.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'LoginPage.dart';
 import 'ProfilePage.dart';
 import "SearchPage.dart";
 import "HomePage.dart";
-import 'FavoritePage.dart';
+import 'HistoryPage.dart';
 import 'package:jazzicon/jazzicon.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:coach_link/Control/WalletConnectControl.dart';
@@ -13,6 +12,7 @@ import 'package:reown_appkit/reown_appkit.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:coach_link/Model/enum.dart';
 import 'package:coach_link/Views/loader.dart';
+import 'package:coach_link/Views/TokenSwapPage.dart';
 
 class StartPage extends StatefulWidget {
   String uid = "";
@@ -31,6 +31,8 @@ class _StartPageState extends State<StartPage> {
   String uid = "";
   String address = "";
   bool isLogin = false;
+  bool firstTimeHitLogin = true;
+  static bool _isInitialized = false;
 
   _StartPageState({required this.isLogin});
   @override
@@ -40,20 +42,21 @@ class _StartPageState extends State<StartPage> {
       ..add(MyHomePage(title: "Now Projects"))
       ..add(HistoryPage())
       ..add(SearchPage())
-      ..add(ProfilePage(isLogin: isLogin));
-    SchedulerBinding.instance.addPostFrameCallback(
-      (_) => context.read<WalletConnectControl>().instantiate(context),
-    );
+      ..add(TokenSwapPage());
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      if (!_isInitialized) {
+        //Important!!! Avoid calling instantiate() after the connection is already established
+        _isInitialized = true;
+        context.read<WalletConnectControl>().instantiate(context);
+      }
+    });
   }
 
   FloatingActionButton addNewProjectWidget() {
     return (FloatingActionButton(
       onPressed: () {
         if (isLogin) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => newPost()),
-          );
+          Navigator.pushNamed(context, '/proposeProject');
         } else {
           Fluttertoast.showToast(
             msg: "Please login to create a new project",
@@ -82,10 +85,27 @@ class _StartPageState extends State<StartPage> {
         if (state is InitializeWeb3MSuccess) {
           setState(() => w3mService = state.service);
           context.read<WalletConnectControl>().fetchHomeScreenActionButton();
+        } else if (state is FetchHomeScreenActionButtonSuccess) {
+          if (state.action == HomeScreenActionButton.connectWallet) {
+            setState(() {
+              if (isLogin) {
+                context.read<WalletConnectControl>().endSession();
+                _isInitialized = false;
+              } else {
+                isLogin = false;
+              }
+            });
+          } else if (state.action == HomeScreenActionButton.writeToContract) {
+            setState(() {
+              isLogin = true;
+              uid = state.uid!;
+            });
+          }
         }
       },
       child: Scaffold(
         appBar: AppBar(
+          backgroundColor: Colors.white.withOpacity(0.8),
           leadingWidth: MediaQuery.of(context).size.width / 2,
           leading: BlocBuilder<WalletConnectControl, Web3State>(
             buildWhen:
@@ -113,11 +133,64 @@ class _StartPageState extends State<StartPage> {
                     ],
                   ),
                 ));
+              } else if (state is FetchHomeScreenActionButtonSuccess &&
+                  state.action == HomeScreenActionButton.writeToContract) {
+                isLogin = true;
+                final uid = state.uid?.toString() ?? "";
+                return (GestureDetector(
+                  onTap: () {
+                    w3mService!.openModalView();
+                    /*setState(() {
+                      isLogin = w3mService!.isConnected;
+                    });*/
+                  },
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      CircleAvatar(
+                        minRadius: AppBar().preferredSize.height,
+                        maxRadius: AppBar().preferredSize.height,
+                        child: Jazzicon.getIconWidget(
+                          Jazzicon.getJazziconData(
+                            AppBar().preferredSize.height,
+                            address: uid,
+                          ),
+                        ),
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Address",
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            uid.substring(0, 4) +
+                                "..." +
+                                uid.substring(uid.length - 4),
+                            style: TextStyle(color: Colors.black, fontSize: 15),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ));
               } else {
                 return Loader(height: AppBar().preferredSize.height);
               }
             },
           ),
+          actions: [
+            Image.asset(
+              'assets/images/CrowdFund_Logo.png',
+              height: AppBar().preferredSize.height * 0.6,
+            ),
+          ],
         ),
         extendBodyBehindAppBar: true,
         backgroundColor: Colors.white,

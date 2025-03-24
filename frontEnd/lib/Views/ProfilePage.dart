@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:coach_link/Model/UpdateUser.dart';
+//import 'package:coach_link/Model/UpdateUser.dart';
 import 'package:coach_link/Model/User.dart';
-import 'package:coach_link/Model/UpdateUser.dart';
 import 'package:coach_link/Views/LoginPage.dart';
-import 'UpdateProfilePage.dart';
 
 class ProfilePage extends StatefulWidget {
   String uid = "";
@@ -21,7 +19,7 @@ class _ProfilePageState extends State<ProfilePage> {
   String uid = " ";
   bool isLogin;
   CoachUser? _coachUser;
-  UpdateUser? _userProfile;
+  //UpdateUser? _userProfile;
 
   _ProfilePageState({required this.uid, required this.isLogin});
 
@@ -32,8 +30,8 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _GetUserState() async {
-    _userProfile = UpdateUser(uid: uid);
-    _coachUser = await _userProfile?.getCoach();
+    //_userProfile = UpdateUser(uid: uid);
+    //_coachUser = await _userProfile?.getCoach();
     if (mounted) setState(() {});
   }
 
@@ -56,13 +54,13 @@ class _ProfilePageState extends State<ProfilePage> {
           left: 10,
           child: TextButton(
             onPressed: () {
-              Navigator.push(
+              /*Navigator.push(
                 context,
                 MaterialPageRoute<void>(
                   builder:
                       (BuildContext context) => UpdateProfilePage(uid: uid),
                 ),
-              );
+              );*/
             },
             child: const Text(
               "Update Profile",

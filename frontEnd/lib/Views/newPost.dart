@@ -2,8 +2,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:coach_link/Model/UpdateUser.dart';
-import 'package:coach_link/Control/NewPostControl.dart';
+//import 'package:coach_link/Model/UpdateUser.dart';
+//import 'package:coach_link/Control/NewPostControl.dart';
 
 class newPost extends StatefulWidget {
   newPost({Key? key}) : super(key: key);
@@ -16,7 +16,7 @@ class _NewPostPageState extends State<newPost> {
   String uid = " ";
   String _title = "";
   String _content = "";
-  NewPostControl? postControl;
+  //NewPostControl? postControl;
 
   _NewPostPageState();
 
@@ -31,7 +31,7 @@ class _NewPostPageState extends State<newPost> {
         (ModalRoute.of(context)?.settings.arguments ?? <String, dynamic>{})
             as Map;
     uid = arguments['uid'] ?? "";
-    postControl = NewPostControl(uid);
+    //postControl = NewPostControl(uid);
     return Scaffold(
       backgroundColor: Colors.white,
       body: Stack(
@@ -53,7 +53,7 @@ class _NewPostPageState extends State<newPost> {
             child: TextButton(
               style: TextButton.styleFrom(foregroundColor: Colors.grey),
               onPressed: () {
-                postControl?.newPost(_title, _content);
+                //postControl?.newPost(_title, _content);
                 Navigator.pop(context);
               },
               child: const Text(
