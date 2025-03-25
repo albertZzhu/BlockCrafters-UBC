@@ -12,17 +12,19 @@ contract CrowdfundingPlatform {
     address public platformOwner; // Receive the 1% fee
     ProjectVoting public votingPlatform = new ProjectVoting(address(this));
     enum ProjectStatus {
-        Inactive,
-        Funding,
-        Active,
+        Inactive,    // Project created but not started (editing available)
+        Funding,     // Project is open for funding, no more modifications can be done.
+        Active,      // Funding done,no more fundings can be done(fundingBalance==getProjectFundingGoal()), 
+                     // project is active (founder can withdraw)
         // Voting,
         // Approved, // voting passed
-        Failed,   // voting failed or passed deadline
-        Finished  // fund released to the founder
+        Failed,     // voting failed or passed deadline
+        Finished    // all milestones completed
     }
-    enum FundingStatus{
-        Funding,
-        Done
+    enum MilestoneStatus{ //not currently used, may be redundant
+        Pending,  // milestone not started or working in progress
+        Failed,   // milestone failed (deadline passed/extention failed)
+        Completed // milestone advance request approved
     }
 
     struct Milestone {
@@ -30,7 +32,7 @@ contract CrowdfundingPlatform {
         string description;
         uint256 fundingGoal;
         uint256 deadline;
-        bool isCompleted;
+        MilestoneStatus status; //not currently used, may be redundant
     }
 
     struct Project {
@@ -125,8 +127,7 @@ contract CrowdfundingPlatform {
             uint256 fundingDeadline,
             string memory descIPFSHash
         ) external {
-        // require(_goal > 0, "Goal must be a positive number");
-        // require(_deadline > block.timestamp, "Deadline must be in the future");
+        // Create a new project, the Project starts without a milestone.
         require(bytes(projectName).length > 0 && bytes(projectName).length <= 100, "Project name length must be between 1 and 100 characters");
         require(bytes(descIPFSHash).length == 32, "Invalid IPFS hash");
         require(fundingDeadline > block.timestamp, "Deadline must be in the future");
@@ -165,13 +166,35 @@ contract CrowdfundingPlatform {
             description: description,
             fundingGoal: fundingGoal,
             deadline: deadline,
-            isCompleted: false
+            status: MilestoneStatus.Pending
         });
         project.milestones.push();
         project.milestones[project.milestones.length-1] = milestone;
         // project.goal += fundingGoal;
         emit MilestoneAdded(projectID, project.milestones.length, name, description, fundingGoal, deadline);
-    }    
+    }
+
+    function editProject(
+            uint256 projectID,
+            string memory projectName,
+            uint256 fundingDeadline,
+            string memory descIPFSHash
+        ) external {
+            //PlaceHolder, founders may edit projects when project is inactive
+            //TODO: Implement this function
+    }
+
+    function editMilestone(
+            uint256 projectID,
+            uint256 milestoneID,
+            string memory name,
+            string memory description,
+            uint256 fundingGoal,
+            uint256 deadline
+        ) external {
+            //PlaceHolder, founders may edit milestones when project is inactive
+            //TODO: Implement this function            
+    }
 
     function startFunding(uint256 projectID) external onlyFounder(projectID) {
         Project storage p = projects[projectID];
@@ -348,7 +371,7 @@ contract CrowdfundingPlatform {
         require(voting.voteType == ProjectVoting.VoteType.Advance, "Invalid voting type");
         require(voting.result == ProjectVoting.VoteResult.Approved, "Voting not approved");
         // advance the milestone based on the voting objectives
-        milestone.isCompleted = true;
+        milestone.status = MilestoneStatus.Completed;
         project.CurrentMilestone += 1;
     }
     function getBackerCredibility(address backer) external view returns(uint){
