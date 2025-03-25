@@ -23,7 +23,6 @@ class WalletConnectControl extends Cubit<Web3State> {
   late ReownAppKitModal _appKitModal;
   late ReownAppKitModalSession session;
   bool _isConnected = false;
-  bool _isInitialized = false;
   bool get isLoggedInViaEmail =>
       _appKitModal.session?.connectedWalletName == 'Email Wallet';
   String chainId = "";
@@ -33,7 +32,7 @@ class WalletConnectControl extends Cubit<Web3State> {
     try {
       _appKitModal = ReownAppKitModal(
         context: context,
-        projectId: 'd1711622cb4cda1dd4fdb3d5aeba9413',
+        projectId: 'ca39991258c8cb8f99a5ff8eae88b6c5',
         metadata: const PairingMetadata(
           name: 'CrowdFund App',
           description:
@@ -67,19 +66,14 @@ class WalletConnectControl extends Cubit<Web3State> {
         ),
       );
       fetchHomeScreenActionButton();
-      if (!_appKitModal.isConnected) {
-        listenToWalletConnection();
-      }
+
+      listenToWalletConnection();
+      listenToWalletNetworkChange();
+      listenToWalletDisconnect();
+
       emit(InitializeWeb3MSuccess(service: _appKitModal));
-      _isInitialized = true;
     } catch (e) {
       emit(InitializeWeb3MFailed());
-    }
-  }
-
-  void exit() {
-    if (_appKitModal != null && _appKitModal.isConnected) {
-      _appKitModal.dispose();
     }
   }
 
@@ -90,12 +84,9 @@ class WalletConnectControl extends Cubit<Web3State> {
   Future<void> listenToWalletConnection() async {
     try {
       _appKitModal.onModalConnect.subscribe((ModalConnect? event) {
-        if (event != null) {
-          _isConnected = true;
-          session = event.session;
-          chainId = event.session.chainId;
-          Fluttertoast.showToast(msg: "Connected to MetaMask");
-        }
+        _isConnected = true;
+        Fluttertoast.showToast(msg: "Connected to MetaMask");
+        fetchHomeScreenActionButton();
       });
     } catch (e) {
       emit(
@@ -110,16 +101,32 @@ class WalletConnectControl extends Cubit<Web3State> {
   Future<void> listenToWalletNetworkChange() async {
     try {
       _appKitModal.onModalNetworkChange.subscribe((ModalNetworkChange? event) {
-        if (event != null) {
-          event.chainId;
-          Fluttertoast.showToast(msg: "Network changed");
-        }
+        chainId = event!.chainId;
+        Fluttertoast.showToast(msg: "Network changed");
       });
     } catch (e) {
       emit(
         const WalletConnectionFailed(
           errorCode: '',
           message: 'Wallet Network Change Failed',
+        ),
+      );
+    }
+  }
+
+  Future<void> listenToWalletDisconnect() async {
+    try {
+      _appKitModal.onModalDisconnect.subscribe((ModalDisconnect? event) {
+        _isConnected = false;
+        Fluttertoast.showToast(msg: "Disconnected from MetaMask");
+
+        fetchHomeScreenActionButton();
+      });
+    } catch (e) {
+      emit(
+        const WalletConnectionFailed(
+          errorCode: '',
+          message: 'Wallet Disconnection Failed',
         ),
       );
     }
@@ -132,16 +139,22 @@ class WalletConnectControl extends Cubit<Web3State> {
           action: HomeScreenActionButton.upgradeWallet,
         ),
       );
-    } else if (!_appKitModal.isConnected) {
+    } else if (!_isConnected) {
       emit(
         const FetchHomeScreenActionButtonSuccess(
           action: HomeScreenActionButton.connectWallet,
         ),
       );
-    } else if (_appKitModal.isConnected) {
+    } else if (_isConnected) {
+      chainId = await _appKitModal.selectedChain!.chainId;
+      final namespace = ReownAppKitModalNetworks.getNamespaceForChainId(
+        chainId,
+      );
+      final uid = _appKitModal.session!.getAddress(namespace)!;
       emit(
-        const FetchHomeScreenActionButtonSuccess(
+        FetchHomeScreenActionButtonSuccess(
           action: HomeScreenActionButton.writeToContract,
+          uid: uid,
         ),
       );
     }

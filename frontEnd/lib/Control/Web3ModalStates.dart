@@ -20,6 +20,10 @@ class WalletConnectionSuccess extends Web3State {
   const WalletConnectionSuccess();
 }
 
+class WalletDisconnectionSuccess extends Web3State {
+  const WalletDisconnectionSuccess();
+}
+
 class WalletConnectionFailed extends Web3State {
   const WalletConnectionFailed({
     required this.errorCode,
@@ -31,7 +35,8 @@ class WalletConnectionFailed extends Web3State {
 }
 
 class FetchHomeScreenActionButtonSuccess extends Web3State {
-  const FetchHomeScreenActionButtonSuccess({required this.action});
+  const FetchHomeScreenActionButtonSuccess({required this.action, this.uid});
 
   final HomeScreenActionButton action;
+  final String? uid;
 }

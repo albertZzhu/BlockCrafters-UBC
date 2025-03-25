@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:coach_link/Control/SearchMethod.dart';
 import 'package:coach_link/Model/User.dart';
-import 'package:coach_link/Control/CoachesDBHelperFunctions_sqlite.dart';
-import 'package:coach_link/Model/UpdateUser.dart';
 
 class HistoryPage extends StatefulWidget {
   //String uid = "";
@@ -23,8 +20,8 @@ class _HistoryPageState extends State<HistoryPage> {
   Future<void> _getCoachList() async {
     //coachUids = await UpdateUser(uid: uid).getFriends();
     for (String uid in coachUids) {
-      CoachUser? user = await CoachesDBHelperFunctions.instance.getUser(uid);
-      coachList.add(user!);
+      //CoachUser? user = await CoachesDBHelperFunctions.instance.getUser(uid);
+      //coachList.add(user!);
     }
     if (mounted) setState(() {});
   }

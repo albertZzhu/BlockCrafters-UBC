@@ -1,16 +1,7 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
 import 'StartPage.dart';
 import 'package:flutter/material.dart';
-import 'newProfile.dart';
-import 'onboarding.dart';
-import 'resetPassword.dart';
-import 'StartPage.dart';
-import 'HomePage.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:coach_link/Model/UpdateUser.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:coach_link/Control/EthernetControl.dart';
 
 class LoginPage extends StatefulWidget {
