@@ -1,6 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
-
+enum MilestoneStatus{ //not currently used, may be redundant
+        Pending,  // milestone not started or working in progress
+        Failed,   // milestone failed (deadline passed/extention failed)
+        Completed // milestone advance request approved
+    }
+struct Milestone {
+        string name;
+        string description;
+        uint256 fundingGoal;
+        uint256 deadline;
+        MilestoneStatus status; //not currently used, may be redundant
+    }
 interface ICrowdfundingPlatform{
     function createProject(
         string memory projectName,

@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./ProjectVoting.sol";
 // import "./IProjectVoting.sol";
+import "./ICrowdfundingPlatform.sol";
 
 // TODO: is CFDToken following ERC20?
 // search 'cfdToken' for replacement
@@ -21,19 +22,21 @@ contract CrowdfundingPlatform {
         Failed,     // voting failed or passed deadline
         Finished    // all milestones completed
     }
-    enum MilestoneStatus{ //not currently used, may be redundant
-        Pending,  // milestone not started or working in progress
-        Failed,   // milestone failed (deadline passed/extention failed)
-        Completed // milestone advance request approved
-    }
+    // ------Moved to ICrowdfundingPlatform.sol-----
+    // enum MilestoneStatus{ //not currently used, may be redundant
+    //     Pending,  // milestone not started or working in progress
+    //     Failed,   // milestone failed (deadline passed/extention failed)
+    //     Completed // milestone advance request approved
+    // }
 
-    struct Milestone {
-        string name;
-        string description;
-        uint256 fundingGoal;
-        uint256 deadline;
-        MilestoneStatus status; //not currently used, may be redundant
-    }
+    // struct Milestone {
+    //     string name;
+    //     string description;
+    //     uint256 fundingGoal;
+    //     uint256 deadline;
+    //     MilestoneStatus status; //not currently used, may be redundant
+    // }
+    // -----Moved to ICrowdfundingPlatform.sol-----
 
     struct Project {
         address founder;
