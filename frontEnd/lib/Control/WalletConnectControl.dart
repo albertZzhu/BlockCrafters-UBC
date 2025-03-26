@@ -37,7 +37,7 @@ class WalletConnectControl extends Cubit<Web3State> {
           name: 'CrowdFund App',
           description:
               'We are CrowdFund, a decentralized crowdfunding platform.',
-          url: 'http://localhost:4200',
+          url: 'http://localhost:4300',
           icons: ['assets/banner.png'],
           redirect: Redirect(
             native: 'crowdfund://',
@@ -56,15 +56,8 @@ class WalletConnectControl extends Cubit<Web3State> {
         },
       );
       await _appKitModal.init();
-      await _appKitModal.selectChain(
-        ReownAppKitModalNetworkInfo(
-          chainId: '11155111',
-          name: 'Sepolia',
-          currency: 'ETH',
-          rpcUrl: 'https://1rpc.io/sepolia',
-          explorerUrl: 'https://sepolia.etherscan.io/',
-        ),
-      );
+      selectChain();
+
       fetchHomeScreenActionButton();
 
       listenToWalletConnection();
@@ -75,6 +68,18 @@ class WalletConnectControl extends Cubit<Web3State> {
     } catch (e) {
       emit(InitializeWeb3MFailed());
     }
+  }
+
+  Future<void> selectChain() async {
+    await _appKitModal.selectChain(
+      ReownAppKitModalNetworkInfo(
+        chainId: '11155111',
+        name: 'Sepolia',
+        currency: 'ETH',
+        rpcUrl: 'https://1rpc.io/sepolia',
+        explorerUrl: 'https://sepolia.etherscan.io/',
+      ),
+    );
   }
 
   Future<void> endSession() async {
@@ -146,6 +151,10 @@ class WalletConnectControl extends Cubit<Web3State> {
         ),
       );
     } else if (_isConnected) {
+      /*if (_appKitModal.selectedChain == null) {
+        await _appKitModal.init();
+        await selectChain();
+      }*/
       chainId = await _appKitModal.selectedChain!.chainId;
       final namespace = ReownAppKitModalNetworks.getNamespaceForChainId(
         chainId,

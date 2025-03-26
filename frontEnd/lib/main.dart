@@ -4,8 +4,6 @@ import 'package:coach_link/Views/newPost.dart';
 import 'Views/LoginPage.dart';
 import 'package:flutter/material.dart';
 import 'Views/StartPage.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 //import 'package:coach_link/Control/CoachesDBHelperFunctions_sqlite.dart';
 import 'Control/WalletConnectControl.dart';

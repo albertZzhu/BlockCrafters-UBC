@@ -1,7 +1,6 @@
 // ignore_for_file: prefer_const_constructors
 
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 //import 'package:coach_link/Model/UpdateUser.dart';
 //import 'package:coach_link/Control/NewPostControl.dart';
 

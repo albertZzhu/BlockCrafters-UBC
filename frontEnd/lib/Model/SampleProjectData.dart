@@ -1,3 +1,5 @@
+import 'package:flutter/rendering.dart';
+
 final projects = [
   {
     'projectName': 'SolGG',
@@ -26,5 +28,24 @@ final projects = [
     'raised': 150.0,
     'deadline': '2025-04-10',
     'status': 'Completed',
+  },
+];
+
+final proposals = [
+  {
+    'address': '',
+    'title': 'Dividends calculation change',
+    'description':
+        'To improve the distribution of dividends among stakeholders, we propose a new calculation method that takes into account recent market trends and stakeholder contributions.',
+    'views': 23,
+    'date': DateTime.now(),
+  },
+  {
+    'address': '',
+    'title': 'Contract Modification',
+    'description':
+        'We would like to upgrade our contract to improve performance and security.',
+    'views': 13,
+    'date': DateTime.now(),
   },
 ];

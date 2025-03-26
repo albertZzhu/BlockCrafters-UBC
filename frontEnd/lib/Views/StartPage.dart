@@ -1,8 +1,6 @@
 import 'package:coach_link/Views/newPost.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'ProfilePage.dart';
-import "SearchPage.dart";
 import "HomePage.dart";
 import 'HistoryPage.dart';
 import 'package:jazzicon/jazzicon.dart';
@@ -13,6 +11,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:coach_link/Model/enum.dart';
 import 'package:coach_link/Views/loader.dart';
 import 'package:coach_link/Views/TokenSwapPage.dart';
+import 'package:coach_link/Views/GovernancePage.dart';
 
 class StartPage extends StatefulWidget {
   String uid = "";
@@ -41,7 +40,7 @@ class _StartPageState extends State<StartPage> {
     _bottomNavPages
       ..add(MyHomePage(title: "Now Projects"))
       ..add(HistoryPage())
-      ..add(SearchPage())
+      ..add(Governancepage())
       ..add(TokenSwapPage());
     SchedulerBinding.instance.addPostFrameCallback((_) {
       if (!_isInitialized) {
@@ -89,13 +88,15 @@ class _StartPageState extends State<StartPage> {
           if (state.action == HomeScreenActionButton.connectWallet) {
             setState(() {
               if (isLogin) {
-                context.read<WalletConnectControl>().endSession();
-                _isInitialized = false;
+                //context.read<WalletConnectControl>().endSession();
+                //_isInitialized = false;
+                isLogin = false;
               } else {
                 isLogin = false;
               }
             });
           } else if (state.action == HomeScreenActionButton.writeToContract) {
+            Navigator.popUntil(context, (route) => route.isFirst);
             setState(() {
               isLogin = true;
               uid = state.uid!;
@@ -231,7 +232,7 @@ class _StartPageState extends State<StartPage> {
                 const SizedBox(),
                 IconButton(
                   icon: Icon(
-                    Icons.search,
+                    Icons.how_to_vote_outlined,
                     color: _currentIndex == 2 ? Colors.blue : Colors.grey,
                   ),
                   onPressed: () {

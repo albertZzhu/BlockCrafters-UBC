@@ -36,9 +36,6 @@ dependencies:
   cupertino_icons: ^1.0.2
   # add this line to your dependencies
   fluttertoast: ^8.0.9
-  firebase_core: ^3.6.0
-  firebase_auth: ^5.3.1
-  cloud_firestore: ^5.6.5
   sqflite:
   path:
   uuid: ^4.3.3
