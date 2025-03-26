@@ -12,16 +12,9 @@ contract CrowdfundingPlatform {
     // IERC20 public cfdToken;
     address public platformOwner; // Receive the 1% fee
     ProjectVoting public votingPlatform = new ProjectVoting(address(this));
-    enum ProjectStatus {
-        Inactive,    // Project created but not started (editing available)
-        Funding,     // Project is open for funding, no more modifications can be done.
-        Active,      // Funding done,no more fundings can be done(fundingBalance==getProjectFundingGoal()), 
-                     // project is active (founder can withdraw)
-        // Voting,
-        // Approved, // voting passed
-        Failed,     // voting failed or passed deadline
-        Finished    // all milestones completed
-    }
+    
+    // -----Moved ProjectStatus and Project to ICrowdfundingPlatform.sol-----
+
     // ------Moved to ICrowdfundingPlatform.sol-----
     // enum MilestoneStatus{ //not currently used, may be redundant
     //     Pending,  // milestone not started or working in progress
@@ -38,23 +31,10 @@ contract CrowdfundingPlatform {
     // }
     // -----Moved to ICrowdfundingPlatform.sol-----
 
-    struct Project {
-        address founder;
-        string name;
-        // uint256 goal; call getProjectFundingGoal instead
-        uint256 funded;
-        uint256 fundingBalance;
-        mapping(address => uint256) investment;
-        ProjectStatus status;
-        bool fundingDone;
-        uint256 fundingDeadline;
-        string descIPFSHash; // IPFS hash for project description
-        Milestone[] milestones;
-        uint CurrentMilestone;
-    }
-
     mapping(uint256 => Project) public projects;
     uint256 public projectCount;
+
+    mapping(address => uint256[]) public founders;
 
     uint256 public constant PLATFORM_FEE_PERCENT = 1; // percentage
     
@@ -85,8 +65,9 @@ contract CrowdfundingPlatform {
         uint256 indexed projectId,
         address indexed founder,
         uint256 fundingDeadline,
-        string descIPFSHash
-        // uint256 goal
+        string descCID,
+        string photoCID,
+        string socialMediaLinkCID
     );
     event MilestoneAdded(
         uint256 indexed projectId,
@@ -128,25 +109,35 @@ contract CrowdfundingPlatform {
     function createProject(
             string memory projectName,
             uint256 fundingDeadline,
-            string memory descIPFSHash
+            string memory descCID,
+            string memory photoCID,
+            string memory socialMediaLinkCID
         ) external {
         // Create a new project, the Project starts without a milestone.
         require(bytes(projectName).length > 0 && bytes(projectName).length <= 100, "Project name length must be between 1 and 100 characters");
-        require(bytes(descIPFSHash).length == 32, "Invalid IPFS hash");
+        require(bytes(descCID).length == 32, "Invalid IPFS hash");
         require(fundingDeadline > block.timestamp, "Deadline must be in the future");
         projectCount++;
         Project storage p = projects[projectCount];
         p.founder = msg.sender;
         p.name = projectName;
-        // p.goal //this value would be set by the sum of the milestone goals
-        // p.funded = 0;
-        // p.fundingBalance = 0;
-        // p.status = ProjectStatus.Inactive; // this is the default value
-        // p.fundingDone = FundingStatus.Funding; // this is the default value
+        
         p.fundingDeadline = fundingDeadline;
-        p.descIPFSHash = descIPFSHash;       
+        p.descCID = descCID;
+        p.photoCID = photoCID;
+        p.socialMediaLinkCID = socialMediaLinkCID;
 
-        emit ProjectCreated(projectCount, msg.sender, p.fundingDeadline, descIPFSHash);
+        // founders info
+        founders[msg.sender].push(projectCount);
+
+        emit ProjectCreated(
+            projectCount,
+            msg.sender,
+            p.fundingDeadline,
+            descCID,
+            photoCID,
+            socialMediaLinkCID
+        );        
     }
     
     function addMilestone(
@@ -181,7 +172,7 @@ contract CrowdfundingPlatform {
             uint256 projectID,
             string memory projectName,
             uint256 fundingDeadline,
-            string memory descIPFSHash
+            string memory descCID
         ) external {
             //PlaceHolder, founders may edit projects when project is inactive
             //TODO: Implement this function
@@ -215,13 +206,14 @@ contract CrowdfundingPlatform {
     }
     
     function invest(uint256 _projectId, uint256 _amount) external payable isFundingProject(_projectId) {
-        require(msg.value == _amount, "Send exact amount");
         Project storage p = projects[_projectId];
+        require(
+            block.timestamp < p.fundingDeadline,
+            "Milestone deadline has passed"
+        );
+
         require(_amount > 0, "investment must be > 0");     
         require(p.fundingBalance + _amount <= getProjectFundingGoal(_projectId), "Investment exceeds funding goal"); // limit investment to not exceed the goal
-
-        // transfer CFD from backer to this contract
-        // cfdToken.transferFrom(msg.sender, address(this), _amount);
 
         p.fundingBalance += _amount;
         p.investment[msg.sender] += _amount; // record total investment
@@ -242,21 +234,6 @@ contract CrowdfundingPlatform {
         emit ProjectStatusUpdated(projectID, p.status, p.fundingDone);
     }
 
-    // // TODO: call the voting function
-    // // OR voting function sets the corresponding Project struct
-    // function setProjectApproved(uint256 projectId) external {
-    //     // bool approved = votingApproved(_projectId);
-
-    //     bool approved = true; // dummy simulation
-
-    //     Project storage p = projects[projectId];
-    //     require(p.status == ProjectStatus.Active, "Project is not active");
-
-    //     p.status = approved ? ProjectStatus.Approved : ProjectStatus.Failed;
-
-    //     emit ProjectStatusUpdated(projectId, p.status);
-    // }
-
     // set the status to fail
     function setProjectFailed(uint256 projectId) external {
         Project storage p = projects[projectId];
@@ -268,32 +245,52 @@ contract CrowdfundingPlatform {
     }
 
     //Founder withdraw after success
-    function withdraw(uint256 _projectId) external {
+    function withdraw(uint256 _projectId) external onlyFounder(_projectId){
         Project storage p = projects[_projectId];
-        require(msg.sender == p.founder, "Only founder can withdraw");
-        require(p.status==ProjectStatus.Active, "Project is not active");
-        // require(p.fundingBalance >= p.goal, "Goal not reached");
-        // require(p.status == ProjectStatus.Approved, "Project not approved");
+        require(p.status == ProjectStatus.Active, "Project is not active");
 
+        uint256 currentMilestone = p.CurrentMilestone;
+        require(
+            currentMilestone < p.milestones.length,
+            "All milestones completed"
+        );
+
+        Milestone storage m = p.milestones[currentMilestone];
+        require(
+            m.fundingGoal <= p.fundingBalance,
+            "Insufficient funds for this milestone"
+        );
+
+        // get voting result
+        ProjectVoting.VoteResult votingResult = votingPlatform.getVotingResult(
+            _projectId,
+            currentMilestone,
+            -1
+        );
+        require(
+            votingResult == ProjectVoting.VoteResult.Approved,
+            "Milestone not approved by voting"
+        );
+        
         // transaction fee (1%) and founder's share (99%)
-        uint256 total = p.fundingBalance;
+        uint256 total = m.fundingGoal;
         uint256 transactionFee = (total * PLATFORM_FEE_PERCENT) / 100;
         uint256 founderShare = total - transactionFee;
 
-        // reset funded to 0
-        p.fundingBalance = 0;
-        p.status = ProjectStatus.Finished;
+        // minus the withdrawing fund from balance
+        p.fundingBalance -= total;
+        m.status = MilestoneStatus.Completed;
+        p.CurrentMilestone++;
+
+        payable(platformOwner).transfer(transactionFee);
+        payable(p.founder).transfer(founderShare);
+
+        // update the entire project status if that's the ending milstone
+        if (p.CurrentMilestone == p.milestones.length) {
+            p.status = ProjectStatus.Finished;
+        }
 
         emit ProjectStatusUpdated(_projectId, ProjectStatus.Finished, p.fundingDone);
-
-        // Transfer the fee to platformOwner
-        if (transactionFee > 0) {
-            // cfdToken.transfer(platformOwner, transactionFee);
-            payable(platformOwner).transfer(transactionFee);
-        }
-        // Transfer the remainder to founder
-        // cfdToken.transfer(p.founder, founderShare);
-        payable(p.founder).transfer(founderShare);
 
         emit FundsWithdrawn(
             _projectId,
@@ -401,4 +398,9 @@ contract CrowdfundingPlatform {
         require(milestoneID < project.milestones.length, "Milestone does not exist");
         return project.milestones[milestoneID];
     }
+
+    function getFounderProjects(address founderAddr) external view returns (uint256[] memory) {
+        return founders[founderAddr];
+    }
+
 }

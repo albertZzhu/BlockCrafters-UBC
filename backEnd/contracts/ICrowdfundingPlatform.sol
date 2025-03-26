@@ -12,11 +12,41 @@ struct Milestone {
         uint256 deadline;
         MilestoneStatus status; //not currently used, may be redundant
     }
+
+enum ProjectStatus {
+        Inactive,    // Project created but not started (editing available)
+        Funding,     // Project is open for funding, no more modifications can be done.
+        Active,      // Funding done,no more fundings can be done(fundingBalance==getProjectFundingGoal()), 
+                     // project is active (founder can withdraw)
+        // Voting,
+        // Approved, // voting passed
+        Failed,     // voting failed or passed deadline
+        Finished    // all milestones completed
+    }
+
+struct Project {
+        address founder;
+        string name;
+        // uint256 goal; call getProjectFundingGoal instead
+        uint256 funded;
+        uint256 fundingBalance;
+        mapping(address => uint256) investment;
+        ProjectStatus status;
+        bool fundingDone;
+        uint256 fundingDeadline;
+        string descCID; // IPFS cid for project description
+        string photoCID; // IPFS cid for project photo
+        string socialMediaLinkCID; // IPFS cid for project social media link
+        Milestone[] milestones;
+        uint CurrentMilestone;
+    }
 interface ICrowdfundingPlatform{
     function createProject(
         string memory projectName,
         uint256 fundingDeadline,
-        string memory descIPFSHash
+        string memory descCID,
+        string memory photoCID,
+        string memory socialMediaLinkCID
     ) external;
     function addMilestone(
         uint256 projectID, 
@@ -40,4 +70,5 @@ interface ICrowdfundingPlatform{
     function getInvestment(uint256 projectID, address backer) external view returns(uint256);
     function getProjectFundingGoal(uint256 projectID) external view returns(uint256);
     function getMilestone(uint256 projectID, uint256 milestoneID) external view returns(Milestone memory);
+    function getFounderProjects(address founderAddr) external view returns (uint256[] memory);
 }
