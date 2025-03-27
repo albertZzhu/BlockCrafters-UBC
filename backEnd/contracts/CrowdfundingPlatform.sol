@@ -5,31 +5,37 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./ProjectVoting.sol";
 // import "./IProjectVoting.sol";
 import "./ICrowdfundingPlatform.sol";
+import "./ProjectToken.sol";
 
-// TODO: is CFDToken following ERC20?
-// search 'cfdToken' for replacement
+import "./ProjectToken.sol";
+
+
 contract CrowdfundingPlatform {
     // IERC20 public cfdToken;
     address public platformOwner; // Receive the 1% fee
+
+    // Token
+    address public projectToken;
+    string public tokenName;
+    string public tokenSymbol;
+    uint256 public tokenSupply;
+    bytes32 public salt;
+
+
+    // Token
+    address public projectToken;
+    string public tokenName;
+    string public tokenSymbol;
+    uint256 public tokenSupply;
+    bytes32 public salt;
+
     ProjectVoting public votingPlatform = new ProjectVoting(address(this));
     
     // -----Moved ProjectStatus and Project to ICrowdfundingPlatform.sol-----
 
-    // ------Moved to ICrowdfundingPlatform.sol-----
-    // enum MilestoneStatus{ //not currently used, may be redundant
-    //     Pending,  // milestone not started or working in progress
-    //     Failed,   // milestone failed (deadline passed/extention failed)
-    //     Completed // milestone advance request approved
-    // }
 
-    // struct Milestone {
-    //     string name;
-    //     string description;
-    //     uint256 fundingGoal;
-    //     uint256 deadline;
-    //     MilestoneStatus status; //not currently used, may be redundant
-    // }
-    // -----Moved to ICrowdfundingPlatform.sol-----
+    // all the investors' addresses in a project 
+    address[] public investors;
 
     mapping(uint256 => Project) public projects;
     uint256 public projectCount;
@@ -99,9 +105,28 @@ contract CrowdfundingPlatform {
         address indexed newOwner
     );
 
-    constructor() {
+    constructor(
+        string memory _tokenName,
+        string memory _tokenSymbol,
+        uint256 _tokenSupply,
+        bytes32 _salt
+    ) {
+    constructor(
+        string memory _tokenName,
+        string memory _tokenSymbol,
+        uint256 _tokenSupply,
+        bytes32 _salt
+    ) {
         // add `address _cfdToken` to argument
         // cfdToken = IERC20(_cfdToken);
+        tokenName = _tokenName;
+        tokenSymbol = _tokenSymbol;
+        tokenSupply = _tokenSupply;
+        salt = _salt;
+        tokenName = _tokenName;
+        tokenSymbol = _tokenSymbol;
+        tokenSupply = _tokenSupply;
+        salt = _salt;
         platformOwner = msg.sender;
     }
 
@@ -217,6 +242,8 @@ contract CrowdfundingPlatform {
 
         p.fundingBalance += _amount;
         p.investment[msg.sender] += _amount; // record total investment
+        investors.push(msg.sender);
+        investors.push(msg.sender);
         
         // activate the project if the funding goal is reached
         if (p.fundingBalance >= getProjectFundingGoal(_projectId)) {
@@ -401,6 +428,58 @@ contract CrowdfundingPlatform {
 
     function getFounderProjects(address founderAddr) external view returns (uint256[] memory) {
         return founders[founderAddr];
+    }
+
+
+    // invoke this method when the project raise enough money
+    function deployTokenIfSuccessful(uint256 _projectId) external isWorkingProject(_projectId) {
+        require(projectToken == address(0), "Token already deployed");
+
+        address tokenAddr = deployToken();
+        projectToken = tokenAddr;
+    }
+
+    function deployToken() internal returns (address tokenAddress) {
+        bytes memory bytecode = abi.encodePacked(
+            type(ProjectToken).creationCode,
+            abi.encode(tokenName, tokenSymbol, tokenSupply, address(this))
+        );
+
+        assembly {
+            tokenAddress := create2(0, add(bytecode, 0x20), mload(bytecode), sload(salt.slot))
+            if iszero(extcodesize(tokenAddress)) {
+                revert(0, 0)
+            }
+        }
+    }
+
+    function distributeTokens(uint256 _projectId) external {
+        require(projectToken != address(0), "Token not deployed yet");
+
+        Project storage p = projects[_projectId];
+
+        for (uint i = 0; i < investors.length; i++) {
+            address investor = investors[i];
+            uint256 share = (p.investment[investor] * tokenSupply) / getProjectFundingGoal(_projectId);
+            IERC20(projectToken).transfer(investor, share);
+        }
+    }
+
+    function computeTokenAddress() external view returns (address) {
+        bytes memory bytecode = abi.encodePacked(
+            type(ProjectToken).creationCode,
+            abi.encode(tokenName, tokenSymbol, tokenSupply, address(this))
+        );
+        bytes32 bytecodeHash = keccak256(bytecode);
+        return address(
+            uint160(
+                uint256(
+                    keccak256(
+                        abi.encodePacked(bytes1(0xff), address(this), salt, bytecodeHash)
+                    )
+                )
+            )
+        );
     }
 
 }

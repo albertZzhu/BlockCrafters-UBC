@@ -2,7 +2,7 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
 describe("ProjectVoting", function () {
-    let app, votingPlatform;
+    let app, votingPlatform, votingPlatformFactory;
     let platformOwner
     let founder1, founder2;
     let backer1, backer2;
@@ -13,12 +13,15 @@ describe("ProjectVoting", function () {
     const halfEther = ethers.parseEther("0.5");
     const fiveEther = ethers.parseEther("5");
     const descIPFSHash = 'Description. Should be 32b Hash.';  
+    const tokenSupply = ethers.parseEther("1000");
+    const salt = ethers.id("salt123");
 
     beforeEach(async function () {
         [plaftformOwner, founder1, founder2, backer1, backer2] = await ethers.getSigners();
         fundingDeadline = Math.floor(Date.now() / 1000) + 86400; 
         milestoneDeadline = fundingDeadline + 86400;
-        app = await ethers.deployContract("CrowdfundingPlatform");
+        const CrowdfundingPlatformFactory = await ethers.getContractFactory("CrowdfundingPlatform");
+        app = await CrowdfundingPlatformFactory.deploy("Temp", "TMP", tokenSupply, salt);
         votingPlatform = await ethers.getContractAt("ProjectVoting", await app.votingPlatform());
         // console.log("CrowdfundingPlatform address:", app.address);
         // votingPlatform = await ethers.deployContract("ProjectVoting", [app.address]);

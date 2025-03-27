@@ -2,7 +2,8 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
 describe("CrowdfundingPlatform", function () {
-    let crowdfundingPlatform;
+    let crowdfundingPlatform, ProjectToken;
+    let crowdfundingPlatform, ProjectToken;
     let plaftformOwner;
     let founder1;
     let founder2;
@@ -20,6 +21,10 @@ describe("CrowdfundingPlatform", function () {
     const descCid = 'Description. Should be 32b Hash.';
     const photoCid = 'placeholder';
     const twtterCid = 'placeholder';
+    const descIPFSHash = 'Description. Should be 32b Hash.';
+    const tokenSupply = ethers.parseEther("1000");
+    const salt = ethers.id("salt123");
+    let platform;
     let fundingDeadline;
     let milestoneDeadline;
     beforeEach(async function () {
@@ -32,7 +37,30 @@ describe("CrowdfundingPlatform", function () {
         // cfdTokenAddress = "0x1234";
 
         // crowdfundingPlatform = await ethers.deployContract("CrowdfundingPlatform", [cfdTokenAddress]);
-        crowdfundingPlatform = await ethers.deployContract("CrowdfundingPlatform");
+        const CrowdfundingPlatformFactory = await ethers.getContractFactory("CrowdfundingPlatform");
+        crowdfundingPlatform = await CrowdfundingPlatformFactory.deploy("Temp", "TMP", tokenSupply, salt);
+
+         // Deploy ProjectToken logic contract
+        const ProjectTokenFactory = await ethers.getContractFactory("ProjectToken");
+        ProjectToken = await ProjectTokenFactory.deploy("Temp", "TMP", 1, owner.address); 
+
+        platform = await crowdfundingPlatform.connect(founder1).createProject(
+            projectName,
+            fundingDeadline,
+            descIPFSHash
+        );
+        const CrowdfundingPlatformFactory = await ethers.getContractFactory("CrowdfundingPlatform");
+        crowdfundingPlatform = await CrowdfundingPlatformFactory.deploy("Temp", "TMP", tokenSupply, salt);
+
+         // Deploy ProjectToken logic contract
+        const ProjectTokenFactory = await ethers.getContractFactory("ProjectToken");
+        ProjectToken = await ProjectTokenFactory.deploy("Temp", "TMP", 1, owner.address); 
+
+        platform = await crowdfundingPlatform.connect(founder1).createProject(
+            projectName,
+            fundingDeadline,
+            descIPFSHash
+        );
 
     });
 
@@ -365,6 +393,79 @@ describe("CrowdfundingPlatform", function () {
                 crowdfundingPlatform.connect(plaftformOwner).updatePlatformOwner(ethers.ZeroAddress)
             ).to.be.revertedWith("Invalid address");
         });
+    });
+
+    describe("Project toekn", function() {
+        it("should compute the expected token address", async () => {
+            const computedAddr = await platform.computeTokenAddress();
+            console.log("Predicted token address:", computedAddr);
+            expect(computedAddr).to.properAddress;
+          });
+        
+          it("should deploy the token when funding is successful", async () => {
+            // Simulate investments (you may need to adjust this based on your function signatures)
+            await platform.connect(investor1).invest(projectId, { value: ethers.utils.parseEther("6") });
+            await platform.connect(investor2).invest(projectId, { value: ethers.utils.parseEther("4") });
+        
+            // Trigger token deployment
+            await platform.deployTokenIfSuccessful(projectId);
+            const tokenAddr = await platform.projectToken();
+            expect(tokenAddr).to.properAddress;
+          });
+        
+          it("should distribute tokens to investors proportionally", async () => {
+            await platform.connect(investor1).invest(projectId, { value: ethers.utils.parseEther("6") });
+            await platform.connect(investor2).invest(projectId, { value: ethers.utils.parseEther("4") });
+        
+            await platform.deployTokenIfSuccessful(projectId);
+            const tokenAddr = await platform.projectToken();
+            const tokenInstance = await ethers.getContractAt("ProjectToken", tokenAddr);
+        
+            await platform.distributeTokens(projectId);
+        
+            const balance1 = await tokenInstance.balanceOf(investor1.address);
+            const balance2 = await tokenInstance.balanceOf(investor2.address);
+        
+            expect(balance1).to.equal(ethers.utils.parseEther("600")); // 60% of total supply
+            expect(balance2).to.equal(ethers.utils.parseEther("400")); // 40% of total supply
+          });
+        });
+    });
+
+    describe("Project toekn", function() {
+        it("should compute the expected token address", async () => {
+            const computedAddr = await platform.computeTokenAddress();
+            console.log("Predicted token address:", computedAddr);
+            expect(computedAddr).to.properAddress;
+          });
+        
+          it("should deploy the token when funding is successful", async () => {
+            // Simulate investments (you may need to adjust this based on your function signatures)
+            await platform.connect(investor1).invest(projectId, { value: ethers.utils.parseEther("6") });
+            await platform.connect(investor2).invest(projectId, { value: ethers.utils.parseEther("4") });
+        
+            // Trigger token deployment
+            await platform.deployTokenIfSuccessful(projectId);
+            const tokenAddr = await platform.projectToken();
+            expect(tokenAddr).to.properAddress;
+          });
+        
+          it("should distribute tokens to investors proportionally", async () => {
+            await platform.connect(investor1).invest(projectId, { value: ethers.utils.parseEther("6") });
+            await platform.connect(investor2).invest(projectId, { value: ethers.utils.parseEther("4") });
+        
+            await platform.deployTokenIfSuccessful(projectId);
+            const tokenAddr = await platform.projectToken();
+            const tokenInstance = await ethers.getContractAt("ProjectToken", tokenAddr);
+        
+            await platform.distributeTokens(projectId);
+        
+            const balance1 = await tokenInstance.balanceOf(investor1.address);
+            const balance2 = await tokenInstance.balanceOf(investor2.address);
+        
+            expect(balance1).to.equal(ethers.utils.parseEther("600")); // 60% of total supply
+            expect(balance2).to.equal(ethers.utils.parseEther("400")); // 40% of total supply
+          });
     });
 
 });
