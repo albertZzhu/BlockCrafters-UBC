@@ -1,0 +1,88 @@
+
+
+interface ICrowdfundingProject{
+    enum ProjectStatus {
+        Inactive,    // Project created but not started (editing available)
+        Funding,     // Project is open for funding, no more modifications can be done.
+        Active,      // Funding done,no more fundings can be done(fundingBalance==getProjectFundingGoal()), 
+                     // project is active (founder can withdraw)
+        Failed,     // voting failed or passed deadline
+        Finished    // all milestones completed
+    }
+    enum MilestoneStatus{ //not currently used, may be redundant
+        Pending,  // milestone not started or working in progress
+        Failed,   // milestone failed (deadline passed/extention failed)
+        Completed // milestone advance request approved
+    }
+    struct Milestone {
+        string name;
+        string descCID;
+        uint256 fundingGoal;
+        uint256 deadline;
+        MilestoneStatus status; //not currently used, may be redundant
+    }
+
+    function addMilestone(
+        string memory _name, 
+        string memory _descCID,
+        uint256 _fundingGoal, 
+        uint256 _deadline
+    ) external;
+
+    function editProject(
+            string memory projectName,
+            uint256 fundingDeadline,
+            string memory descIPFSHash
+            // Token info can be edited as well
+        ) external;
+
+    function startFunding() external;
+
+    function endProject() external;
+
+    function invest(uint256 _amount) external payable;
+
+    // function activateProject() internal;
+
+    function setProjectFailed() external;
+
+    function setProjectStatus(ProjectStatus _status) external;
+
+    function getProjectFundingGoal() external view returns(uint256);
+
+    function requestExtension(uint256 milestoneID, uint256 newDeadline) external;
+
+    function getMilestone(uint256 milestoneID) external view returns(Milestone memory);
+
+    function requestAdvance(uint256 projectID) external;
+
+    function extendDeadline(uint256 milestoneID) external;
+
+    function advanceMilestone() external;
+
+    function getBackerCredibility(address backer) external view returns(uint);
+
+    function getInvestment(address investor) external view returns(uint256);
+
+    function getFounder() external view returns(address);
+
+    function getStatus() external view returns(ProjectStatus);
+
+    function getFundingBalance() external view returns(uint256);
+
+    function getCurrentMilestone() external view returns(uint256);
+
+    function getMilestoneList() external view returns(Milestone[] memory);
+
+    function setFounder(address founderAddr) external;
+
+    function setFundingBalance(uint256 balance) external;
+
+    function pushFounder(address investorAddr) external;
+
+    // function completeOneMilestone() external;
+
+    function setStatus(ProjectStatus _status) external;
+
+    // function getFounderProjects(address founderAddr) external view
+}

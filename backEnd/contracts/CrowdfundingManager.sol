@@ -2,9 +2,10 @@
 pragma solidity ^0.8.19;
 
 import "./CrowdfundingProject.sol";
+// import "./ICrowdfundingProject.sol";
 import "./ProjectVoting.sol";
 
-contract CrowdfundingManager {
+contract CrowdfundingManager{
     // Constant
     uint256 public constant PLATFORM_FEE_PERCENT = 1; // percentage
 
@@ -31,6 +32,7 @@ contract CrowdfundingManager {
         address indexed founder,
         uint256 fundingDeadline,
         string tokenName,
+        string tokenSymbol,
         uint256 tokenSupply,
         string descCID,
         string photoCID,
@@ -57,6 +59,10 @@ contract CrowdfundingManager {
     constructor() {
         platformOwner = msg.sender;
     }
+    
+    function getFounderProjects(address founder) external view returns (uint256[] memory) {
+        return founderProjectMap[founder];
+    }
 
     // assumption (supportive) function
     function createProject(
@@ -72,33 +78,37 @@ contract CrowdfundingManager {
         ) external {
         // Create a new project, the Project starts without a milestone.
         require(bytes(projectName).length > 0 && bytes(projectName).length <= 100, "Project name length must be between 1 and 100 characters");
-        require(bytes(descCID).length == 32, "Invalid IPFS hash");        
+        require(bytes(descCID).length == 32, "Invalid IPFS hash");      
+        require(bytes(photoCID).length == 32, "Invalid IPFS hash");      
+        require(bytes(socialMediaLinkCID).length == 32, "Invalid IPFS hash");      
         require(fundingDeadline > block.timestamp, "Deadline must be in the future");
         projectCount++;
         CrowdfundingProject project = new CrowdfundingProject(
+            msg.sender,
             projectCount,
             projectName,
-            CrowdfundingProject.ProjectStatus.Inactive,
+            fundingDeadline,
             tokenName,
             tokenSymbol,
             tokenSupply,
             salt,
             descCID,
             photoCID,
-            socialMediaLinkCID);
+            socialMediaLinkCID
+        );
 
         projects[projectCount] = project;
 
         founderProjectMap[msg.sender].push(projectCount);
 
-        emit ProjectCreated(projectCount, msg.sender, fundingDeadline, tokenName, tokenSupply, descCID, photoCID, socialMediaLinkCID);
+        emit ProjectCreated(projectCount, msg.sender, fundingDeadline, tokenName, tokenSymbol, tokenSupply, descCID, photoCID, socialMediaLinkCID);
     }
 
     //Founder withdraw after success
     function withdraw(uint256 _projectId) external {
         CrowdfundingProject p = projects[_projectId];
         require(p.getFounder() == msg.sender, "Only founder can withdraw");
-        require(p.getStatus() == CrowdfundingProject.ProjectStatus.Active, "Project is not active");
+        require(p.getStatus() == ICrowdfundingProject.ProjectStatus.Active, "Project is not active");
 
         uint256 currentMilestone = p.getCurrentMilestone();
         CrowdfundingProject.Milestone[] memory milestones = p.getMilestoneList();
@@ -116,7 +126,6 @@ contract CrowdfundingManager {
 
          // get voting result
         ProjectVoting.VoteResult votingResult = votingPlatform.getVotingResult(
-            _projectId,
             currentMilestone,
             -1
         );
@@ -134,18 +143,18 @@ contract CrowdfundingManager {
         // minus the withdrawing fund from balance
         uint256 balance = p.getFundingBalance() - total;
         p.setFundingBalance(balance);
-        m.status = MilestoneStatus.Completed;
-        p.completeOneMilestone();
+        // m.status = MilestoneStatus.Completed;
+        // p.completeOneMilestone();
 
         payable(platformOwner).transfer(transactionFee);
         payable(p.getFounder()).transfer(founderShare);
 
         // update the entire project status if that's the ending milstone
          if (currentMilestone == milestones.length) {
-             p.setStatus(CrowdfundingProject.ProjectStatus.Finished);
+             p.setStatus(ICrowdfundingProject.ProjectStatus.Finished);
          }
 
-        emit ProjectStatusUpdated(_projectId, CrowdfundingProject.ProjectStatus.Finished);
+        emit ProjectStatusUpdated(_projectId, ICrowdfundingProject.ProjectStatus.Finished);
 
         emit FundsWithdrawn(
             _projectId,

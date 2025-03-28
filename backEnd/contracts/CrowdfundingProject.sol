@@ -3,10 +3,11 @@ pragma solidity ^0.8.19;
 
 import "./ProjectToken.sol";
 import "./ProjectVoting.sol";
-
+import "./ICrowdfundingProject.sol";
+import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract CrowdfundingProject {
+contract CrowdfundingProject is ICrowdfundingProject {
     // Token
     address public projectToken;
     string public tokenName;
@@ -24,29 +25,29 @@ contract CrowdfundingProject {
     ProjectStatus public status;
     bool public fundingDone;
     uint256 public fundingDeadline;
-    string public descIPFSHash; // IPFS hash for project description
+    // string public descIPFSHash; // IPFS hash for project description
     Milestone[] public milestones;
     uint256 public currentMilestone;
-    string descCID; // IPFS cid for project description
-    string photoCID; // IPFS cid for project photo
-    string socialMediaLinkCID;
+    string public descCID; // IPFS cid for project description
+    string public photoCID; // IPFS cid for project photo
+    string public socialMediaLinkCID;
 
-    struct Milestone {
-        string name;
-        string description;
-        uint256 fundingGoal;
-        uint256 deadline;
-        MilestoneStatus status; //not currently used, may be redundant
-    }
+    // struct Milestone {
+    //     string name;
+    //     string descCID;
+    //     uint256 fundingGoal;
+    //     uint256 deadline;
+    //     MilestoneStatus status; //not currently used, may be redundant
+    // }
 
-    enum ProjectStatus {
-        Inactive,    // Project created but not started (editing available)
-        Funding,     // Project is open for funding, no more modifications can be done.
-        Active,      // Funding done,no more fundings can be done(fundingBalance==getProjectFundingGoal()), 
-                     // project is active (founder can withdraw)
-        Failed,     // voting failed or passed deadline
-        Finished    // all milestones completed
-    }
+    // enum ProjectStatus {
+    //     Inactive,    // Project created but not started (editing available)
+    //     Funding,     // Project is open for funding, no more modifications can be done.
+    //     Active,      // Funding done,no more fundings can be done(fundingBalance==getProjectFundingGoal()), 
+    //                  // project is active (founder can withdraw)
+    //     Failed,     // voting failed or passed deadline
+    //     Finished    // all milestones completed
+    // }
 
     ProjectVoting public votingPlatform = new ProjectVoting(address(this));
 
@@ -71,7 +72,7 @@ contract CrowdfundingProject {
     event MilestoneAdded(
         uint256 indexed milestoneId,
         string name,
-        string description,
+        string descCID,
         uint fundingGoal,
         uint deadline
     );
@@ -92,54 +93,62 @@ contract CrowdfundingProject {
     );
 
     constructor(
+        address _founder,
         uint256 _projectId,
         string memory _name,
-        ProjectStatus  _status,
+        uint256 _fundingDeadline,
         string memory _tokenName,
         string memory _tokenSymbol,
         uint256 _tokenSupply,
         bytes32 _salt,
-        string memory descCID,
-        string memory photoCID,
-        string memory socialMediaLinkCID
+        string memory _descCID,
+        string memory _photoCID,
+        string memory _socialMediaLinkCID
     ) {
+        founder = _founder;
         projectId = _projectId;
+        fundingDeadline = _fundingDeadline;
         name = _name;
-        status = _status;
         tokenName = _tokenName;
         tokenSymbol = _tokenSymbol;
         tokenSupply = _tokenSupply;
         salt = _salt;
-        founder = msg.sender;
+        descCID = _descCID;
+        photoCID = _photoCID;
+        socialMediaLinkCID = _socialMediaLinkCID;
     }
 
     function addMilestone(
-        string memory name, 
-        string memory description, 
-        uint256 fundingGoal, 
-        uint256 deadline,
-        string memory descCID
+        string memory _name, 
+        string memory _descCID,
+        uint256 _fundingGoal, 
+        uint256 _deadline
     ) external onlyFounder() {
         // Add a new milestone to the project
-        require(fundingGoal > 0, "Milestone goal must be positive");
-        require(deadline > block.timestamp, "Deadline must be in the future");
-
+        require(_fundingGoal > 0, "Milestone goal must be positive");
+        require(_deadline > block.timestamp, "Deadline must be in the future");
+        if (milestones.length > 0) {
+            Milestone memory prevMilestone = milestones[milestones.length-1];
+        require(prevMilestone.deadline < _deadline, "Milestone deadline must be after the previous milestone");
+        }
+        
         Milestone memory milestone = Milestone({
-            name: name,
-            description: description,
-            fundingGoal: fundingGoal,
-            deadline: deadline,
+            name: _name,
+            descCID: _descCID,
+            fundingGoal: _fundingGoal,
+            deadline: _deadline,
             status: MilestoneStatus.Pending
         });
+        milestones.push();
         milestones[milestones.length-1] = milestone;
 
-        emit MilestoneAdded(milestones.length, name, description, fundingGoal, deadline);
+        emit MilestoneAdded(milestones.length, _name, _descCID, _fundingGoal, _deadline);
     }
 
     function editProject(
-            string memory projectName,
-            uint256 fundingDeadline,
-            string memory descIPFSHash
+            string memory _projectName,
+            uint256 _fundingDeadline,
+            string memory _descIPFSHash
             // Token info can be edited as well
         ) external {
             //PlaceHolder, investors may edit projects when project is inactive
@@ -162,14 +171,13 @@ contract CrowdfundingProject {
     function invest(uint256 _amount) external payable isFundingProject() {
         require(msg.value == _amount, "Send exact amount");
         require(_amount > 0, "investment must be > 0");     
-        require(fundingBalance + _amount <= getProjectFundingGoal(), "Investment exceeds funding goal"); // limit investment to not exceed the goal
-
+        require(fundingBalance + _amount <= this.getProjectFundingGoal(), "Investment exceeds funding goal"); // limit investment to not exceed the goal
         fundingBalance += _amount;
         investment[msg.sender] += _amount; // record total investment
         investors.push(msg.sender);
         
         // activate the project if the funding goal is reached
-        if (fundingBalance >= getProjectFundingGoal()) {
+        if (fundingBalance >= this.getProjectFundingGoal()) {
             activateProject();
         }
 
@@ -178,7 +186,7 @@ contract CrowdfundingProject {
 
     function activateProject() internal isFundingProject() {
         // activate the project if the funding goal is reached
-        require(fundingBalance >= getProjectFundingGoal(), "Goal not reached");
+        require(fundingBalance >= this.getProjectFundingGoal(), "Goal not reached");
         status = ProjectStatus.Active;
         fundingDone = true;
 
@@ -193,13 +201,13 @@ contract CrowdfundingProject {
         emit ProjectStatusUpdated(status, fundingDone);
     }
 
-    function setProjectStatue(ProjectStatus _status) external {
+    function setProjectStatus(ProjectStatus _status) external {
         status = _status;
 
         emit ProjectStatusUpdated(status, fundingDone);
     }
 
-    function getProjectFundingGoal() public view returns(uint256){
+    function getProjectFundingGoal() external view returns(uint256){
         uint256 goal = 0; 
         for(uint i = 0; i < milestones.length; i++){
             goal += milestones[i].fundingGoal;
@@ -216,7 +224,7 @@ contract CrowdfundingProject {
         require(milestone.deadline > block.timestamp, "Milestone deadline has already passed");
         require(newDeadline > milestone.deadline, "New deadline must be after the current deadline");
         require(newDeadline > block.timestamp, "New deadline must be in the future");
-        votingPlatform.startNewVoting(projectId, milestoneID, newDeadline);    
+        votingPlatform.startNewVoting(milestoneID, newDeadline);    
     } 
 
     function getMilestone(uint256 milestoneID) public view returns(Milestone memory){
@@ -235,7 +243,7 @@ contract CrowdfundingProject {
         // Extend the deadline of the milestone if the voting is approved
         Milestone storage milestone = milestones[milestoneID];
         // check voting results
-        ProjectVoting.Voting memory voting = votingPlatform.getVoting(projectId, milestoneID, -1);
+        ProjectVoting.Voting memory voting = votingPlatform.getVoting(milestoneID, -1);
         require(voting.voteType == ProjectVoting.VoteType.Extension, "Invalid voting type");
         require(voting.result == ProjectVoting.VoteResult.Approved, "Voting not approved");
         // extend the deadline based on the voting objectives
@@ -246,7 +254,7 @@ contract CrowdfundingProject {
         // Advance the milestone if the voting is approved
         Milestone storage milestone = milestones[currentMilestone];
         // check voting results
-        ProjectVoting.Voting memory voting = votingPlatform.getVoting(projectId, currentMilestone, -1);
+        ProjectVoting.Voting memory voting = votingPlatform.getVoting(currentMilestone, -1);
         require(voting.voteType == ProjectVoting.VoteType.Advance, "Invalid voting type");
         require(voting.result == ProjectVoting.VoteResult.Approved, "Voting not approved");
         // advance the milestone based on the voting objectives
@@ -299,9 +307,6 @@ contract CrowdfundingProject {
         investors.push(investorAddr);
     }
 
-    function completeOneMilestone() external {
-        currentMilestone++;
-    }
 
     function setStatus(ProjectStatus _status) external {
         status = _status;
@@ -339,7 +344,7 @@ contract CrowdfundingProject {
 
         for (uint i = 0; i < investors.length; i++) {
             address investor = investors[i];
-            uint256 share = (investment[investor] * tokenSupply) / getProjectFundingGoal();
+            uint256 share = (investment[investor] * tokenSupply) / this.getProjectFundingGoal();
             IERC20(projectToken).transfer(investor, share);
         }
     }
