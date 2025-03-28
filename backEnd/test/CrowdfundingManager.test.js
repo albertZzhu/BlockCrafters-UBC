@@ -261,7 +261,7 @@ describe("CrowdfundingManager", function () {
         // });
         it("Should revert if the project is already active", async function () {
             await project1.connect(founder1).startFunding();
-            await project1.connect(backer1).invest(oneEther, { value: oneEther });
+            await project1.connect(backer1).invest({ value: oneEther });
             await expect(
                 project1.connect(founder1).startFunding()
             ).to.be.revertedWith("Can only start funding if project is inactive");
@@ -291,7 +291,7 @@ describe("CrowdfundingManager", function () {
         });
 
         it("Should allow invest to an funding project", async function () {
-            await expect(project1.connect(backer1).invest(oneEther, { value: oneEther }))
+            await expect(project1.connect(backer1).invest({ value: oneEther }))
                 .to.emit(project1, "InvestmentMade")
                 .withArgs(backer1.address, oneEther);
 
@@ -300,8 +300,8 @@ describe("CrowdfundingManager", function () {
         });
 
         it("Should allow multiple investments from the same backer", async function () {
-            await project1.connect(backer1).invest(halfEther, { value: halfEther });
-            await project1.connect(backer1).invest(halfEther, { value: halfEther });
+            await project1.connect(backer1).invest({ value: halfEther });
+            await project1.connect(backer1).invest({ value: halfEther });
 
             // check project funded amount
             expect(await project1.fundingBalance()).to.equal(ethers.parseEther("1"));
@@ -312,7 +312,7 @@ describe("CrowdfundingManager", function () {
             await createValidProject(founder2);
             let project2 = await ethers.getContractAt("CrowdfundingProject", await app.projects(2));
             await expect(
-                project2.connect(backer1).invest(oneEther, { value: oneEther })
+                project2.connect(backer1).invest({ value: oneEther })
             ).to.be.revertedWith("Project is not funding");
         });
         it("Should not allow investment after funding deadline", async function () {
@@ -332,23 +332,23 @@ describe("CrowdfundingManager", function () {
 
             // Attempt to invest after the deadline
             await expect(
-            project2.connect(backer1).invest(oneEther, { value: oneEther })
+            project2.connect(backer1).invest({ value: oneEther })
             ).to.be.revertedWith("Expired project");
         });
         it("Should end funding and activate project if goal is reached", async function () {
-            await project1.connect(backer1).invest(oneEther, { value: oneEther });
+            await project1.connect(backer1).invest({ value: oneEther });
             // check project status changed to Approved
             expect(await project1.status()).to.equal(2); // ProjectStatus.Active
         });
         it("Should revert if investment is larger than the remaining funding goal", async function () {
             await expect(
-                project1.connect(backer1).invest(projectGoal + oneEther, { value: projectGoal + oneEther })
+                project1.connect(backer1).invest({ value: projectGoal + oneEther })
             ).to.be.revertedWith("Investment exceeds funding goal");
         });
         it("Should revert if project goal is already reached", async function () {
-            await project1.connect(backer1).invest(oneEther, { value: oneEther });
+            await project1.connect(backer1).invest({ value: oneEther });
             await expect(
-                project1.connect(backer1).invest(oneEther, { value: oneEther })
+                project1.connect(backer1).invest({ value: oneEther })
             ).to.be.revertedWith("Project is not funding");
         });
     });
@@ -365,7 +365,7 @@ describe("CrowdfundingManager", function () {
         });
 
         it("Should allow founder to withdraw funds after approval", async function () {
-            await expect(app.connect(backer1).invest(1, oneEther, { value: oneEther }))
+            await expect(app.connect(backer1).invest({ value: oneEther }))
                 .to.emit(app, "InvestmentMade")
                 .withArgs(1, backer1.address, oneEther);
             
@@ -433,8 +433,8 @@ describe("CrowdfundingManager", function () {
         
           it("should deploy the token when funding is successful", async () => {
             // Simulate investments (you may need to adjust this based on your function signatures)
-            await projectContract.connect(investor1).invest(projectId, { value: ethers.utils.parseEther("6") });
-            await projectContract.connect(investor2).invest(projectId, { value: ethers.utils.parseEther("4") });
+            await projectContract.connect(investor1).invest({ value: ethers.utils.parseEther("6") });
+            await projectContract.connect(investor2).invest({ value: ethers.utils.parseEther("4") });
         
             // Trigger token deployment
             await projectContract.deployTokenIfSuccessful(projectId);
@@ -443,8 +443,8 @@ describe("CrowdfundingManager", function () {
           });
         
           it("should distribute tokens to investors proportionally", async () => {
-            await projectContract.connect(investor1).invest(projectId, { value: ethers.utils.parseEther("6") });
-            await projectContract.connect(investor2).invest(projectId, { value: ethers.utils.parseEther("4") });
+            await projectContract.connect(investor1).invest({ value: ethers.utils.parseEther("6") });
+            await projectContract.connect(investor2).invest({ value: ethers.utils.parseEther("4") });
         
             await projectContract.deployTokenIfSuccessful(projectId);
             const tokenAddr = await projectContract.projectToken();

@@ -40,7 +40,7 @@ interface ICrowdfundingProject{
 
     function endProject() external;
 
-    function invest(uint256 _amount) external payable;
+    function invest() external payable;
 
     // function activateProject() internal;
 
@@ -81,8 +81,4 @@ interface ICrowdfundingProject{
     function pushFounder(address investorAddr) external;
 
     // function completeOneMilestone() external;
-
-    function setStatus(ProjectStatus _status) external;
-
-    // function getFounderProjects(address founderAddr) external view
 }

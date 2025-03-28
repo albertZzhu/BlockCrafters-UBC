@@ -18,40 +18,25 @@ contract CrowdfundingProject is ICrowdfundingProject {
     uint256 public projectId;
     address public founder;
     string public name;
-    // uint256 goal; call getProjectFundingGoal instead
+
     uint256 public funded;
     uint256 public fundingBalance;
     mapping(address => uint256) public investment;
     ProjectStatus public status;
     bool public fundingDone;
     uint256 public fundingDeadline;
-    // string public descIPFSHash; // IPFS hash for project description
+
     Milestone[] public milestones;
     uint256 public currentMilestone;
     string public descCID; // IPFS cid for project description
     string public photoCID; // IPFS cid for project photo
     string public socialMediaLinkCID;
 
-    // struct Milestone {
-    //     string name;
-    //     string descCID;
-    //     uint256 fundingGoal;
-    //     uint256 deadline;
-    //     MilestoneStatus status; //not currently used, may be redundant
-    // }
-
-    // enum ProjectStatus {
-    //     Inactive,    // Project created but not started (editing available)
-    //     Funding,     // Project is open for funding, no more modifications can be done.
-    //     Active,      // Funding done,no more fundings can be done(fundingBalance==getProjectFundingGoal()), 
-    //                  // project is active (founder can withdraw)
-    //     Failed,     // voting failed or passed deadline
-    //     Finished    // all milestones completed
-    // }
 
     ProjectVoting public votingPlatform = new ProjectVoting(address(this));
 
     // all the investors' addresses in a project 
+    // auto-generated getter: address[] public investors;
     address[] public investors;
 
     modifier onlyFounder() {
@@ -168,12 +153,11 @@ contract CrowdfundingProject is ICrowdfundingProject {
         status = ProjectStatus.Failed;
     }
 
-    function invest(uint256 _amount) external payable isFundingProject() {
-        require(msg.value == _amount, "Send exact amount");
-        require(_amount > 0, "investment must be > 0");     
-        require(fundingBalance + _amount <= this.getProjectFundingGoal(), "Investment exceeds funding goal"); // limit investment to not exceed the goal
-        fundingBalance += _amount;
-        investment[msg.sender] += _amount; // record total investment
+    function invest() external payable isFundingProject() {
+        require(msg.value > 0, "investment must be > 0");     
+        require(fundingBalance + msg.value <= this.getProjectFundingGoal(), "Investment exceeds funding goal"); // limit investment to not exceed the goal
+        fundingBalance += msg.value;
+        investment[msg.sender] += msg.value; // record total investment
         investors.push(msg.sender);
         
         // activate the project if the funding goal is reached
@@ -181,7 +165,7 @@ contract CrowdfundingProject is ICrowdfundingProject {
             activateProject();
         }
 
-        emit InvestmentMade(msg.sender, _amount);
+        emit InvestmentMade(msg.sender, msg.value);
     }
 
     function activateProject() internal isFundingProject() {
@@ -293,6 +277,10 @@ contract CrowdfundingProject is ICrowdfundingProject {
         return milestones;
     }
 
+    function getInvestorsList() external view returns (address[] memory) {
+        return investors;
+    }
+
     function setFounder(address founderAddr) external {
         founder = founderAddr;
     }
@@ -306,15 +294,6 @@ contract CrowdfundingProject is ICrowdfundingProject {
     function pushFounder(address investorAddr) external {
         investors.push(investorAddr);
     }
-
-
-    function setStatus(ProjectStatus _status) external {
-        status = _status;
-    }
-
-    // function getFounderProjects(address founderAddr) external view returns (uint256[] memory) {
-    //     return investors[founderAddr];
-    // }
 
 
     // invoke this method when the project raise enough money

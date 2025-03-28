@@ -16,12 +16,6 @@ contract CrowdfundingManager{
     mapping(address => uint256[]) public founderProjectMap;
     ProjectVoting public votingPlatform = new ProjectVoting(address(this));
 
-
-    modifier onlyPlatformOwner() {
-        require(msg.sender == platformOwner, "Not the platform owner");
-        _;
-    }
-
     // modifier onlyDistinctProject(uint256 _projectID) {
     //     require(_projectID <= projectCount, "Project does not exist");
     //     _;
@@ -83,6 +77,7 @@ contract CrowdfundingManager{
         require(bytes(socialMediaLinkCID).length == 32, "Invalid IPFS hash");      
         require(fundingDeadline > block.timestamp, "Deadline must be in the future");
         projectCount++;
+
         CrowdfundingProject project = new CrowdfundingProject(
             msg.sender,
             projectCount,
@@ -151,7 +146,7 @@ contract CrowdfundingManager{
 
         // update the entire project status if that's the ending milstone
          if (currentMilestone == milestones.length) {
-             p.setStatus(ICrowdfundingProject.ProjectStatus.Finished);
+             p.setProjectStatus(ICrowdfundingProject.ProjectStatus.Finished);
          }
 
         emit ProjectStatusUpdated(_projectId, ICrowdfundingProject.ProjectStatus.Finished);
@@ -165,7 +160,8 @@ contract CrowdfundingManager{
     }
 
     // change platformOwner to a new address, ONLY the current owner can change
-    function updatePlatformOwner(address newOwner) external onlyPlatformOwner {
+    function updatePlatformOwner(address newOwner) external {
+        require(msg.sender == platformOwner, "Not the platform owner");
         address prevOwner = platformOwner;
         require(newOwner != address(0), "Invalid address");
         platformOwner = newOwner;
