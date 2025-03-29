@@ -62,9 +62,6 @@ describe("CrowdfundingManager", function () {
             expect(await app.platformOwner()).to.equal(appOwner.address);
         });
 
-        it("Should set the correct platform fee", async function () {
-            expect(await app.PLATFORM_FEE_PERCENT()).to.equal(1);
-        });
     });
 
     describe("Project creation", function () {
@@ -355,57 +352,116 @@ describe("CrowdfundingManager", function () {
 
 
     describe("Fund withdrawal", function () {
+        let votingPlatform1;
         beforeEach(async function () {
             // create a project
-            await app.connect(founder1).createProject(projectName, fundingDeadline, descCID, photoCID, socialMediaLinkCID);
+            await createValidProject(founder1);
+            project1Address = await app.projects(1);
+            project1 = await ethers.getContractAt("CrowdfundingProject", project1Address);
 
             // add milestone
-            await app.connect(founder1).addMilestone(1, "Milestone 1", descCID, oneEther, milestoneDeadline);
-            await app.connect(founder1).startFunding();
+            await project1.connect(founder1).addMilestone("Milestone 1", descCID, halfEther, milestoneDeadline);
+            await project1.connect(founder1).addMilestone("Milestone 2", descCID, halfEther, milestoneDeadline + oneDay);
+
+            // fund to full
+            await project1.connect(founder1).startFunding();
+            await expect(project1.connect(backer1).invest({ value: oneEther }))
+                .to.emit(project1, "InvestmentMade")
+                .withArgs(backer1.address, oneEther);
+            
+            // prepare voting
+            votingPlatform1 = await ethers.getContractAt("ProjectVoting", await project1.votingPlatform());
         });
 
         it("Should allow founder to withdraw funds after approval", async function () {
-            await expect(app.connect(backer1).invest({ value: oneEther }))
-                .to.emit(app, "InvestmentMade")
-                .withArgs(1, backer1.address, oneEther);
+            expect(await project1.getFundingBalance()).to.equal(oneEther);
+            expect(await project1.getFundingPool()).to.equal(oneEther);
+            expect(await project1.getFrozenFunding()).to.equal(0);
+
+            let prevFounderBalance = await ethers.provider.getBalance(founder1.address);
+            let prevOwnerBalance = await ethers.provider.getBalance(appOwner.address);
+
+            // m1
+            let milestone1Fund = halfEther;
+            let releasing = halfEther * BigInt(80) / BigInt(100); // 80% release =0.4
+            let frozen = milestone1Fund - releasing; // 20% frozen =0.1
+
+            let transactionFee = releasing * BigInt(1) / BigInt(100); // 1% fee
+            let founderShare = releasing - transactionFee;
+
+            // non-founder withdraws funds
+            await expect(
+                project1.connect(backer1).withdraw(appOwner.address)
+            ).to.be.revertedWith("Only the founder can perform this action");
+
+            let withdrawTx = await project1.connect(founder1).withdraw( appOwner.address);
+            let receipt = await withdrawTx.wait();
+            let gasUsed = receipt.gasUsed * receipt.gasPrice;
+
+            // check pool, frozen, and balance
+            expect(await project1.getFundingBalance()).to.equal(oneEther);
+            expect(await project1.getFrozenFunding()).to.equal(frozen);
+
+            expect(await project1.getFundingPool()).to.equal(oneEther - releasing);
             
+            // plaftformOwner receives txn fee
+            let currOwnerBalance = await ethers.provider.getBalance(appOwner.address);
+            expect(currOwnerBalance - prevOwnerBalance).to.equal(transactionFee);
 
-            const initialFounderBalance = await ethers.provider.getBalance(founder1.address);
-            const initialOwnerBalance = await ethers.provider.getBalance(appOwner.address);
+            // founder received their share (minus gas costs)
+            let currFounderBalance = await ethers.provider.getBalance(founder1.address);
+            expect(currFounderBalance - prevFounderBalance + gasUsed).to.equal(founderShare);
 
-            // txn fee and founder share
-            const projectGoalBigInt = projectGoal;
-            const transactionFee = projectGoalBigInt * BigInt(1) / BigInt(100); // 1% fee
-            const founderShare = projectGoalBigInt - transactionFee;
+            //m1 vote
+            await project1.connect(founder1).requestAdvance();
+            expect(await project1.getCurrentMilestone()).to.equal(0);
+            
+            await expect(
+                project1.connect(founder1).withdraw(appOwner.address)
+            ).to.be.revertedWith("Vote not passed or started");
+            
+            await votingPlatform1.connect(backer1).vote(0, true);
 
-            // // founder withdraws funds
-            // const withdrawTx = await crowdfundingPlatform.connect(founder1).withdraw(1);
-            // const receipt = await withdrawTx.wait();
-            // const gasUsed = receipt.gasUsed * receipt.gasPrice;
+            // m1 unfrozen
+            releasing = frozen // unfrozen: all of frozen is released
+            transactionFee = releasing * BigInt(1) / BigInt(100); // 1% fee
+            founderShare = releasing - transactionFee;
 
-            // // check project status changed to Finished
-            // const project = await crowdfundingPlatform.projects(1);
-            // expect(project.status).to.equal(3); // ProjectStatus.Finished
-            // expect(project.fundingBalance).to.equal(0); // Funds should be reset to 0
+            prevFounderBalance = await ethers.provider.getBalance(founder1.address);
+            prevOwnerBalance = await ethers.provider.getBalance(appOwner.address);
 
-            // // plaftformOwner receives txn fee
-            // const finalOwnerBalance = await ethers.provider.getBalance(plaftformOwner.address);
-            // expect(finalOwnerBalance - initialOwnerBalance).to.equal(transactionFee);
+            withdrawTx = await project1.connect(founder1).withdraw(appOwner.address);
+            receipt = await withdrawTx.wait();
+            gasUsed = receipt.gasUsed * receipt.gasPrice;
 
-            // // founder received their share (minus gas costs)
-            // const finalFounderBalance = await ethers.provider.getBalance(founder1.address);
-            // expect(finalFounderBalance - initialFounderBalance + gasUsed).to.equal(founderShare);
+            // check pool, frozen, and balance
+            expect(await project1.getFrozenFunding()).to.equal(0);
+            expect(await project1.getFundingPool()).to.equal(halfEther);
+            
+            // plaftformOwner receives txn fee
+            currOwnerBalance = await ethers.provider.getBalance(appOwner.address);
+            expect(currOwnerBalance - prevOwnerBalance).to.equal(transactionFee);
+
+            // founder received their share (minus gas costs)
+            currFounderBalance = await ethers.provider.getBalance(founder1.address);
+            expect(currFounderBalance - prevFounderBalance + gasUsed).to.equal(founderShare);
+
+            // m2 -- check ProjectStatus
+            await project1.connect(founder1).withdraw(appOwner.address);
+            await project1.connect(founder1).requestAdvance();
+            await votingPlatform1.connect(backer1).vote(1, true);
+            await project1.connect(founder1).withdraw(appOwner.address);
+
+            expect(await project1.getStatus()).to.equal(4);
         });
-
         
     });
 
 
-
     describe("Plaftform owner transfer", function () {
         it("Should allow platform owner to transfer ownership", async function () {
-            await expect(app.connect(appOwner).updatePlatformOwner(backer1.address))
-                .to.emit(app, "PlatformOwnerUpdated")
+            await expect(app.connect(appOwner).setPlatformOwner(backer1.address))
+                .to.emit(app, "CrowdfundingManagerUpdated")
                 .withArgs(appOwner.address, backer1.address);
 
             expect(await app.platformOwner()).to.equal(backer1.address);
@@ -413,13 +469,13 @@ describe("CrowdfundingManager", function () {
 
         it("Should revert if non-plaftformowner tries to transfer ownership", async function () {
             await expect(
-                app.connect(backer1).updatePlatformOwner(backer2.address)
+                app.connect(backer1).setPlatformOwner(backer2.address)
             ).to.be.revertedWith("Not the platform owner");
         });
 
         it("Should revert if transfer ownership to zero address", async function () {
             await expect(
-                app.connect(appOwner).updatePlatformOwner(ethers.ZeroAddress)
+                app.connect(appOwner).setPlatformOwner(ethers.ZeroAddress)
             ).to.be.revertedWith("Invalid address");
         });
     });

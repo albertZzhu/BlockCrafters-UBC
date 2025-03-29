@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 interface ICrowdfundingManager{
-    function getFounderProjects(address founder) external view returns (uint256[] memory);
-    
     function createProject(
         string memory projectName,
         uint256 fundingDeadline,
@@ -15,7 +13,9 @@ interface ICrowdfundingManager{
         string memory socialMediaLinkCID
     ) external;
 
-    function withdraw(uint256 _projectId) external;
+    function getFounderProjects(address founder) external view returns (uint256[] memory);
 
-    function updatePlatformOwner(address newOwner) external;
+    function getPlatformOwner() external view returns (address);
+
+    function setPlatformOwner(address newOwner) external;
 }

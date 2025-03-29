@@ -6,15 +6,16 @@ import "./CrowdfundingProject.sol";
 import "./ProjectVoting.sol";
 
 contract CrowdfundingManager{
-    // Constant
-    uint256 public constant PLATFORM_FEE_PERCENT = 1; // percentage
-
     address public platformOwner;
     mapping(uint256 => CrowdfundingProject) public projects;
     uint256 public projectCount;
 
     mapping(address => uint256[]) public founderProjectMap;
-    ProjectVoting public votingPlatform = new ProjectVoting(address(this));
+
+    modifier onlyPlatformOwner(){
+        require(msg.sender == platformOwner, "Not the platform owner");
+        _;
+    }
 
     // modifier onlyDistinctProject(uint256 _projectID) {
     //     require(_projectID <= projectCount, "Project does not exist");
@@ -33,13 +34,6 @@ contract CrowdfundingManager{
         string socialMediaLinkCID
     );
 
-    event FundsWithdrawn(
-        uint256 projectId,
-        address indexed founder,
-        uint256 amount,
-        uint256 fee
-    );
-
     event ProjectStatusUpdated(
         uint256 projectId,
         CrowdfundingProject.ProjectStatus status
@@ -54,10 +48,6 @@ contract CrowdfundingManager{
         platformOwner = msg.sender;
     }
     
-    function getFounderProjects(address founder) external view returns (uint256[] memory) {
-        return founderProjectMap[founder];
-    }
-
     // assumption (supportive) function
     function createProject(
             string memory projectName,
@@ -99,69 +89,16 @@ contract CrowdfundingManager{
         emit ProjectCreated(projectCount, msg.sender, fundingDeadline, tokenName, tokenSymbol, tokenSupply, descCID, photoCID, socialMediaLinkCID);
     }
 
-    //Founder withdraw after success
-    function withdraw(uint256 _projectId) external {
-        CrowdfundingProject p = projects[_projectId];
-        require(p.getFounder() == msg.sender, "Only founder can withdraw");
-        require(p.getStatus() == ICrowdfundingProject.ProjectStatus.Active, "Project is not active");
+    function getFounderProjects(address founder) external view returns (uint256[] memory) {
+        return founderProjectMap[founder];
+    }
 
-        uint256 currentMilestone = p.getCurrentMilestone();
-        CrowdfundingProject.Milestone[] memory milestones = p.getMilestoneList();
-        require(
-            currentMilestone < milestones.length,
-            "All milestones completed"
-        );
-
-        CrowdfundingProject.Milestone memory m = milestones[currentMilestone];
-
-        require(
-            m.fundingGoal <= p.getFundingBalance(),
-            "Insufficient funds for this milestone"
-        );
-
-         // get voting result
-        ProjectVoting.VoteResult votingResult = votingPlatform.getVotingResult(
-            currentMilestone,
-            -1
-        );
-
-        require(
-            votingResult == ProjectVoting.VoteResult.Approved,
-            "Milestone not approved by voting"
-        );
-
-        // transaction fee (1%) and founder's share (99%)
-        uint256 total = m.fundingGoal;
-        uint256 transactionFee = (total * PLATFORM_FEE_PERCENT) / 100;
-        uint256 founderShare = total - transactionFee;
-
-        // minus the withdrawing fund from balance
-        uint256 balance = p.getFundingBalance() - total;
-        p.setFundingBalance(balance);
-        // m.status = MilestoneStatus.Completed;
-        // p.completeOneMilestone();
-
-        payable(platformOwner).transfer(transactionFee);
-        payable(p.getFounder()).transfer(founderShare);
-
-        // update the entire project status if that's the ending milstone
-         if (currentMilestone == milestones.length) {
-             p.setProjectStatus(ICrowdfundingProject.ProjectStatus.Finished);
-         }
-
-        emit ProjectStatusUpdated(_projectId, ICrowdfundingProject.ProjectStatus.Finished);
-
-        emit FundsWithdrawn(
-            _projectId,
-            p.getFounder(),
-            founderShare,
-            transactionFee
-        );
+    function getPlatformOwner() external view returns (address) {
+        return platformOwner;
     }
 
     // change platformOwner to a new address, ONLY the current owner can change
-    function updatePlatformOwner(address newOwner) external {
-        require(msg.sender == platformOwner, "Not the platform owner");
+    function setPlatformOwner(address newOwner) external onlyPlatformOwner() {
         address prevOwner = platformOwner;
         require(newOwner != address(0), "Invalid address");
         platformOwner = newOwner;

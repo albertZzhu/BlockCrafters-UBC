@@ -4,6 +4,7 @@ pragma solidity ^0.8.19;
 import "./ProjectToken.sol";
 import "./ProjectVoting.sol";
 import "./ICrowdfundingProject.sol";
+
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -19,8 +20,9 @@ contract CrowdfundingProject is ICrowdfundingProject {
     address public founder;
     string public name;
 
-    uint256 public funded;
+    uint256 public fundingPool;         // current funding in this project, used for refund
     uint256 public fundingBalance;
+    uint256 public frozenFund;
     mapping(address => uint256) public investment;
     ProjectStatus public status;
     bool public fundingDone;
@@ -28,16 +30,19 @@ contract CrowdfundingProject is ICrowdfundingProject {
 
     Milestone[] public milestones;
     uint256 public currentMilestone;
+
     string public descCID; // IPFS cid for project description
     string public photoCID; // IPFS cid for project photo
     string public socialMediaLinkCID;
-
 
     ProjectVoting public votingPlatform = new ProjectVoting(address(this));
 
     // all the investors' addresses in a project 
     // auto-generated getter: address[] public investors;
     address[] public investors;
+
+    uint8 public PLATFORM_FEE_PERCENT = 1; // percentage of the platform fee (transfer to wallet of platform owner)
+    uint8 public FROZEN_PERCENTAGE = 20; // percentage of fund frozen until investors acknowledge completion of milestone
 
     modifier onlyFounder() {
         require(founder == msg.sender, "Only the founder can perform this action");
@@ -64,6 +69,12 @@ contract CrowdfundingProject is ICrowdfundingProject {
     event InvestmentMade(
         address indexed backer,
         uint256 amount
+    );
+    event FundsWithdrawn(
+        uint256 projectId,
+        address indexed founder,
+        uint256 amount,
+        uint256 fee
     );
     event ProjectStatusUpdated(
         ProjectStatus status,
@@ -156,9 +167,15 @@ contract CrowdfundingProject is ICrowdfundingProject {
     function invest() external payable isFundingProject() {
         require(msg.value > 0, "investment must be > 0");     
         require(fundingBalance + msg.value <= this.getProjectFundingGoal(), "Investment exceeds funding goal"); // limit investment to not exceed the goal
+        
         fundingBalance += msg.value;
+        fundingPool += msg.value;
         investment[msg.sender] += msg.value; // record total investment
-        investors.push(msg.sender);
+
+        // check if this is a new investor
+        if (investment[msg.sender] == 0) {
+            investors.push(msg.sender);
+        }
         
         // activate the project if the funding goal is reached
         if (fundingBalance >= this.getProjectFundingGoal()) {
@@ -171,11 +188,54 @@ contract CrowdfundingProject is ICrowdfundingProject {
     function activateProject() internal isFundingProject() {
         // activate the project if the funding goal is reached
         require(fundingBalance >= this.getProjectFundingGoal(), "Goal not reached");
+        
         status = ProjectStatus.Active;
         fundingDone = true;
 
         emit ProjectStatusUpdated(status, fundingDone);
     }
+
+    //Founder withdraw after success
+    function withdraw(address platformOwner) external onlyFounder() {
+        require(status == ProjectStatus.Active, "Project is not active");
+
+        Milestone memory m = milestones[currentMilestone];
+
+        uint256 total = 0;
+
+        // if there's frozen funding (an uncompleted milestone), then check if that's withdraw-able
+        if(frozenFund > 0){
+            require(m.status == MilestoneStatus.Completed, "Vote not passed or started");
+            total = frozenFund;
+            frozenFund = 0;
+            currentMilestone += 1;
+        } else{
+            frozenFund = (m.fundingGoal * FROZEN_PERCENTAGE)/100;    // FROZEN_PERCENTAGE (20%) 
+            total = m.fundingGoal - frozenFund;      // 1-FROZEN_PERCENTAGE (80%) to founder
+        }
+
+        // transaction fee (1%) and founder's share (99%)
+        uint256 transactionFee = (total * PLATFORM_FEE_PERCENT) / 100;
+        uint256 founderShare = total - transactionFee;
+
+        // minus the withdrawing frm funding pool
+        fundingPool -= total;
+
+        require(address(this).balance >= transactionFee, "Insufficient balance for fee");
+
+        payable(platformOwner).transfer(transactionFee);
+        payable(founder).transfer(founderShare);
+
+        // update the entire project status if that's finishing the ending milstone
+        if (currentMilestone == milestones.length && frozenFund == 0) {
+            status = ProjectStatus.Finished;
+        }
+
+        emit ProjectStatusUpdated(status, fundingDone);
+
+        emit FundsWithdrawn(projectId, founder, founderShare, transactionFee);
+    }
+
 
     // set the status to fail
     function setProjectFailed() external {
@@ -216,11 +276,13 @@ contract CrowdfundingProject is ICrowdfundingProject {
         return milestones[milestoneID];
     }
 
-    function requestAdvance(uint256 projectID) external onlyFounder(){
+    function requestAdvance() external onlyFounder(){
         // Founders can request an advance before the deadline.
         // The voting will start after the deadline, and last for VOTE_LENGTH.
         // approved based on the voting results of the Users. (Project canceled if fails -> refund)
-        //TODO: Implement this function    
+        Milestone memory milestone = getMilestone(currentMilestone);  
+        require(milestone.status == MilestoneStatus.Pending, "This milestone is already failed or completed");
+        votingPlatform.startNewVoting(currentMilestone, 0);     // 0 for VoteType.Advance  
     } 
 
     function extendDeadline(uint256 milestoneID) external isWorkingProject(){
@@ -237,13 +299,16 @@ contract CrowdfundingProject is ICrowdfundingProject {
     function advanceMilestone() external isWorkingProject(){
         // Advance the milestone if the voting is approved
         Milestone storage milestone = milestones[currentMilestone];
+        
         // check voting results
         ProjectVoting.Voting memory voting = votingPlatform.getVoting(currentMilestone, -1);
         require(voting.voteType == ProjectVoting.VoteType.Advance, "Invalid voting type");
         require(voting.result == ProjectVoting.VoteResult.Approved, "Voting not approved");
+        
         // advance the milestone based on the voting objectives
         milestone.status = MilestoneStatus.Completed;
-        currentMilestone += 1;
+        
+        // currentMilestone += 1;   // move to withdraw(), only after success withdraw, can advance
     }
 
     function getBackerCredibility(address backer) external view returns(uint){
@@ -269,6 +334,14 @@ contract CrowdfundingProject is ICrowdfundingProject {
         return fundingBalance;
     }
 
+    function getFrozenFunding() external view returns(uint256) {
+        return frozenFund;
+    }
+
+    function getFundingPool() external view returns(uint256) {
+        return fundingPool;
+    }
+
     function getCurrentMilestone() external view returns(uint256) {
         return currentMilestone;
     }
@@ -289,6 +362,18 @@ contract CrowdfundingProject is ICrowdfundingProject {
         fundingBalance = balance;
 
         emit ProjectBalanceUpdated(balance);
+    }
+
+    function setFrozenFunding(uint256 _frozenFund) external {
+        frozenFund = _frozenFund;
+    }
+
+    function setFundingPool(uint256 _fund) external {
+        fundingPool = _fund;
+    }
+
+    function setCurrentMilestone(uint256 _currMilestone) external {
+        currentMilestone = _currMilestone;
     }
 
     function pushFounder(address investorAddr) external {
