@@ -36,4 +36,11 @@ describe("PriceFeed Contract", function () {
     console.log("1 BTC in USD:", usdValue.toString());
     expect(usdValue).to.be.gt(0);
   });
+
+  it("should not convert any token other than BTC and ETH", async function () {
+    const btcAmount = ethers.parseEther("1"); // 1 ABC
+    await expect(
+      priceFeedContract.convertToUSD("ABC", btcAmount)
+    ).to.be.revertedWith("Only accept either ETH or BTC");
+  });
 });

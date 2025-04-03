@@ -27,7 +27,7 @@ contract PriceFeed {
 
     function getBTCPrice() public view returns (uint256) {
         (, int256 price,,,) = btcUsdPriceFeed.latestRoundData();
-        require(price > 0, "Invalid ETH price from Chainlink");
+        require(price > 0, "Invalid BTC price from Chainlink");
         return uint256(price); // 8 decimals
     }
 
