@@ -5,7 +5,7 @@ import "./CrowdfundingProject.sol";
 // import "./ICrowdfundingProject.sol";
 // import "./ProjectVoting.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-contract CrowdfundingManager is Initializable {
+contract CrowdfundingManagerV2 is Initializable {
     address public platformOwner;
     mapping(address => CrowdfundingProject) public projects;
     uint256 public projectCount;
@@ -105,6 +105,9 @@ contract CrowdfundingManager is Initializable {
         platformOwner = newOwner;
 
         emit CrowdfundingManagerUpdated(prevOwner, newOwner);
+    }
+    function dummyFunction() external pure returns (string memory) {
+        return "Dummy function to test contract upgradeability";
     }
     
 }

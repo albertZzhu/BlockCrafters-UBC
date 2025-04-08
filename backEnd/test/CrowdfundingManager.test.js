@@ -53,7 +53,7 @@ describe("CrowdfundingManager", function () {
         // cfdTokenAddress = "0x1234";
         // crowdfundingPlatform = await ethers.deployContract("CrowdfundingPlatform", [cfdTokenAddress]);
         let appFactory = await ethers.getContractFactory("CrowdfundingManager", appOwner);
-        app = await appFactory.deploy();
+        app = await upgrades.deployProxy(appFactory);
         // app = await appFactory.deploy("Temp", "TMP", tokenSupply, salt);
 
          // Deploy ProjectToken logic contract

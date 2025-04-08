@@ -1,4 +1,5 @@
 require("@nomicfoundation/hardhat-toolbox");
+require("@openzeppelin/hardhat-upgrades");
 require("dotenv").config();
 // require("hardhat-contract-sizer");
 /** @type import('hardhat/config').HardhatUserConfig */
@@ -8,7 +9,7 @@ module.exports = {
     settings: {
       optimizer: {
         enabled: true,
-        runs: 200,
+        runs: 100,
       },
     },
   },
@@ -20,9 +21,9 @@ module.exports = {
     // hardhat: {
     //   allowUnlimitedContractSize: true
     // },
-    sepolia: {
-      url: process.env.SEPOLIA_RPC_URL,
-      accounts: [process.env.PRIVATE_KEY]
-    }    
+    // sepolia: {
+    //   url: process.env.SEPOLIA_RPC_URL,
+    //   accounts: [process.env.PRIVATE_KEY]
+    // }    
   }
 };
