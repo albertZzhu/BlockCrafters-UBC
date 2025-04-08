@@ -24,12 +24,17 @@ describe("ProjectVoting", function () {
     let fundingDeadline;
     let milestoneDeadline;
     const oneDay = 86400;
-    function createValidProject(founder) {
-        return app.connect(founder).createProject(
+    async function createValidProject(founder) {
+        const tx = await app.connect(founder).createProject(
             projectName, fundingDeadline,
             tokenName, tokenSymbol, tokenSupply,
             salt, descCID, photoCID, socialMediaLinkCID
         );
+    
+        const receipt = await tx.wait();
+        const args = app.interface.parseLog(receipt.logs[0]).args;
+        const projectAddress = args[0]; 
+        return { tx,  projectAddress};
     }
     beforeEach(async function () {
         [appOwner, founder1, founder2, backer1, backer2] = await ethers.getSigners();
@@ -54,13 +59,12 @@ describe("ProjectVoting", function () {
         // votingPlatform = await ethers.deployContract("ProjectVoting", [app.address]);
     });    
     describe("Milestone Extension", function () {
-        let project1Address, project1;
-        let votingPlatform1;
+        let  project1;
+        let votingPlatform;
         beforeEach(async function () {
-            await createValidProject(founder1);
-            project1Address = await app.projects(1);
+            const {tx: tx1, projectAddress:project1Address} = await createValidProject(founder1)
             project1 = await ethers.getContractAt("CrowdfundingProject", project1Address);
-            await project1.connect(founder1).addMilestone("Milestone 1",descCID,fiveEther,milestoneDeadline)
+            await project1.connect(founder1).addMilestone("Milestone 1", descCID, fiveEther, milestoneDeadline);
             await project1.connect(founder1).startFunding();
             votingPlatform = await ethers.getContractAt("ProjectVoting", await project1.votingPlatform());
         });
