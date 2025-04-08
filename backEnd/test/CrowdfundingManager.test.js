@@ -28,12 +28,17 @@ describe("CrowdfundingManager", function () {
     let milestoneDeadline;
     const oneDay = 86400;
 
-    function createValidProject(founder) {
-        return app.connect(founder).createProject(
+    async function createValidProject(founder) {
+        const tx = await app.connect(founder).createProject(
             projectName, fundingDeadline,
             tokenName, tokenSymbol, tokenSupply,
             salt, descCID, photoCID, socialMediaLinkCID
         );
+    
+        const receipt = await tx.wait();
+        const args = app.interface.parseLog(receipt.logs[0]).args;
+        const projectAddress = args[0]; 
+        return { tx,  projectAddress};
     }
 
 
@@ -70,15 +75,15 @@ describe("CrowdfundingManager", function () {
             expect(await app.projectCount()).to.equal(0);
 
             // create a project
-            expect(await createValidProject(founder1))
+            const {tx, projectAddress} = await createValidProject(founder1)
+            expect(tx)
                 .to.emit(app, "ProjectCreated")
-                .withArgs(1, founder1.address, fundingDeadline, descCID, photoCID, socialMediaLinkCID);
+                .withArgs(projectAddress, founder1.address, fundingDeadline, descCID, photoCID, socialMediaLinkCID);
 
             // check project count increased
             expect(await app.projectCount()).to.equal(1);
 
             // Get project details
-            const projectAddress = await app.projects(1);
             const project = await ethers.getContractAt("CrowdfundingProject", projectAddress);
             // Verify project details
             expect(await project.founder()).to.equal(founder1.address);
@@ -152,42 +157,40 @@ describe("CrowdfundingManager", function () {
         });
       
         it("Should record multiple projects for a founder in the founders mapping", async function () {
-          // founder1 creates two projects
-            await expect(
-                await createValidProject(founder1)
-            ).to.emit(app, "ProjectCreated").withArgs(
-                1, founder1.address, fundingDeadline, 
-                tokenName, tokenSymbol, tokenSupply,
-                descCID, photoCID, socialMediaLinkCID
-            );
-
-            await expect(
-                await createValidProject(founder1)
-            ).to.emit(app, "ProjectCreated").withArgs(
-                2, founder1.address, fundingDeadline, 
-                tokenName, tokenSymbol, tokenSupply,
-                descCID, photoCID, socialMediaLinkCID
-            );
-
-            // check projects mapping has two projects
-            expect(await app.projectCount()).to.equal(2);
-
-            // check founders mapping 
-            const projectIds = await app.getFounderProjects(founder1.address);
-            expect(projectIds.length).to.equal(2);
-            expect(projectIds[0]).to.equal(1);
-            expect(projectIds[1]).to.equal(2);
-      });
+            // founder1 creates two projects
+              const {projectAddress:project1Address, tx:tx1} = await createValidProject(founder1)
+              
+              await expect(tx1).to.emit(app, "ProjectCreated").withArgs(
+                  project1Address,
+                  founder1.address, fundingDeadline, 
+                  tokenName, tokenSymbol, tokenSupply,
+                  descCID, photoCID, socialMediaLinkCID
+              );
+              
+              const {projectAddress:project2Address, tx:tx2} = await createValidProject(founder1)
+              await expect(tx2).to.emit(app, "ProjectCreated").withArgs(
+                  project2Address,
+                  founder1.address, fundingDeadline, 
+                  tokenName, tokenSymbol, tokenSupply,
+                  descCID, photoCID, socialMediaLinkCID
+              );
+  
+              // check projects mapping has two projects
+              expect(await app.projectCount()).to.equal(2);
+  
+              // check founders mapping 
+              const projects = await app.getFounderProjects(founder1.address);
+              expect(projects.length).to.equal(2);
+              expect(projects[0]).to.equal(project1Address);
+              expect(projects[1]).to.equal(project2Address);
+        });
     });
     describe("Adding Milestones", function () {
-        let project1Address, project1;
-        let project2Address, project2;
+        let project1, project2;
         beforeEach(async function () {
             // each founder creates a project
-            await createValidProject(founder1);
-            await createValidProject(founder2);
-            project1Address = await app.projects(1);
-            project2Address = await app.projects(2);
+            const {tx: tx1, projectAddress:project1Address} = await createValidProject(founder1)
+            const {tx: tx2, projectAddress:project2Address} = await createValidProject(founder1)
             project1 = await ethers.getContractAt("CrowdfundingProject", project1Address);
             project2 = await ethers.getContractAt("CrowdfundingProject", project2Address);
         });
@@ -238,11 +241,10 @@ describe("CrowdfundingManager", function () {
         });
     });
     describe("Start Project Funding", function () {
-        let project1Address, project1;
+        let project1;
         beforeEach(async function () {
             // each founder creates a project
-            await createValidProject(founder1);
-            project1Address = await app.projects(1);
+            const {tx: tx1, projectAddress:project1Address} = await createValidProject(founder1)
             project1 = await ethers.getContractAt("CrowdfundingProject", project1Address);
             await project1.connect(founder1).addMilestone("Milestone 1", descCID, oneEther, milestoneDeadline);
         });
@@ -277,13 +279,12 @@ describe("CrowdfundingManager", function () {
     });
 
     describe("Project investment", function () {
-        let project1Address, project1;
+        let project1;
         beforeEach(async function () {
             // each founder creates a project
-            await createValidProject(founder1);
-            project1Address = await app.projects(1);
+            const {tx: tx1, projectAddress:project1Address} = await createValidProject(founder1)
             project1 = await ethers.getContractAt("CrowdfundingProject", project1Address);
-            await project1.connect(founder1).addMilestone("Milestone 1",descCID,oneEther,milestoneDeadline)
+            await project1.connect(founder1).addMilestone("Milestone 1", descCID, oneEther, milestoneDeadline);
             await project1.connect(founder1).startFunding();
         });
 
@@ -306,8 +307,8 @@ describe("CrowdfundingManager", function () {
 
         it("Should revert if project is not funding", async function () {
             // create and add milestone but not start funding
-            await createValidProject(founder2);
-            let project2 = await ethers.getContractAt("CrowdfundingProject", await app.projects(2));
+            const {tx:tx, projectAddress:projectAddress} = await createValidProject(founder2);
+            let project2 = await ethers.getContractAt("CrowdfundingProject", projectAddress);
             await expect(
                 project2.connect(backer1).invest({ value: oneEther })
             ).to.be.revertedWith("Project is not funding");
@@ -316,12 +317,15 @@ describe("CrowdfundingManager", function () {
             // Create a project with a short funding deadline
             let block = await ethers.provider.getBlock("latest");
             const shortDeadline = block.timestamp + 10; // 10 seconds from now
-            await app.connect(founder2).createProject(
+            tx = await app.connect(founder2).createProject(
             projectName, shortDeadline,
             tokenName, tokenSymbol, tokenSupply,
             salt, descCID, photoCID, socialMediaLinkCID
             );
-            let project2 = await ethers.getContractAt("CrowdfundingProject", await app.projects(2));
+            const receipt = await tx.wait();
+            const args = app.interface.parseLog(receipt.logs[0]).args;
+            const projectAddress = args[0]; // Get the project address from the event
+            let project2 = await ethers.getContractAt("CrowdfundingProject", projectAddress);
             await project2.connect(founder2).addMilestone("Milestone 1", descCID, oneEther, block.timestamp + 1000);
             await project2.connect(founder2).startFunding();
             await ethers.provider.send("evm_increaseTime", [500]); // Increase time by 20 seconds
@@ -352,11 +356,10 @@ describe("CrowdfundingManager", function () {
 
 
     describe("Fund withdrawal", function () {
-        let votingPlatform1;
+        let project1, votingPlatform1;
         beforeEach(async function () {
             // create a project
-            await createValidProject(founder1);
-            project1Address = await app.projects(1);
+            const {tx: tx1, projectAddress:project1Address} = await createValidProject(founder1)
             project1 = await ethers.getContractAt("CrowdfundingProject", project1Address);
 
             // add milestone

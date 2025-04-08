@@ -3,14 +3,14 @@ pragma solidity ^0.8.19;
 
 import "./CrowdfundingProject.sol";
 // import "./ICrowdfundingProject.sol";
-import "./ProjectVoting.sol";
+// import "./ProjectVoting.sol";
 
 contract CrowdfundingManager{
     address public platformOwner;
-    mapping(uint256 => CrowdfundingProject) public projects;
+    mapping(address => CrowdfundingProject) public projects;
     uint256 public projectCount;
 
-    mapping(address => uint256[]) public founderProjectMap;
+    mapping(address founderAddress => address[]) public founderProjectMap;
 
     modifier onlyPlatformOwner(){
         require(msg.sender == platformOwner, "Not the platform owner");
@@ -23,7 +23,8 @@ contract CrowdfundingManager{
     // }
 
     event ProjectCreated(
-        uint256 indexed projectId,
+        // uint256 indexed projectId,
+        address indexed projectAddress,
         address indexed founder,
         uint256 fundingDeadline,
         string tokenName,
@@ -35,6 +36,7 @@ contract CrowdfundingManager{
     );
 
     event ProjectStatusUpdated(
+        address indexed projectAddress,
         uint256 projectId,
         CrowdfundingProject.ProjectStatus status
     );
@@ -81,15 +83,14 @@ contract CrowdfundingManager{
             photoCID,
             socialMediaLinkCID
         );
+        address projectAddress = address(project);
+        projects[projectAddress] = project;
 
-        projects[projectCount] = project;
-
-        founderProjectMap[msg.sender].push(projectCount);
-
-        emit ProjectCreated(projectCount, msg.sender, fundingDeadline, tokenName, tokenSymbol, tokenSupply, descCID, photoCID, socialMediaLinkCID);
+        founderProjectMap[msg.sender].push(projectAddress);
+        emit ProjectCreated(projectAddress, msg.sender,fundingDeadline, tokenName, tokenSymbol, tokenSupply, descCID, photoCID, socialMediaLinkCID);
     }
 
-    function getFounderProjects(address founder) external view returns (uint256[] memory) {
+    function getFounderProjects(address founder) external view returns (address[] memory) {
         return founderProjectMap[founder];
     }
 
