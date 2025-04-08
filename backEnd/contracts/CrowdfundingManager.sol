@@ -2,9 +2,8 @@
 pragma solidity ^0.8.19;
 
 import "./CrowdfundingProject.sol";
-// import "./ICrowdfundingProject.sol";
-// import "./ProjectVoting.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+
 contract CrowdfundingManager is Initializable {
     address public platformOwner;
     mapping(address => CrowdfundingProject) public projects;
@@ -16,11 +15,6 @@ contract CrowdfundingManager is Initializable {
         require(msg.sender == platformOwner, "Not the platform owner");
         _;
     }
-
-    // modifier onlyDistinctProject(uint256 _projectID) {
-    //     require(_projectID <= projectCount, "Project does not exist");
-    //     _;
-    // }
 
     event ProjectCreated(
         // uint256 indexed projectId,

@@ -1,0 +1,105 @@
+{
+  "manifestVersion": "3.2",
+  "proxies": [
+    {
+      "address": "0xe69aC77D153cCE81DFE97EA97A18Fa130369D790",
+      "txHash": "0xef960186d7cb4ec8fea2fea6e4a6c7b82a9ec7cf3b6baf02ce1d9a924d866243",
+      "kind": "transparent"
+    }
+  ],
+  "impls": {
+    "631c51c9a1dcd41442de555cd93e5aedbb9c276d29057d1b4f1d0fe572d317cb": {
+      "address": "0xF50c0E993aE89A06492C6827Ce442BB6622f1977",
+      "txHash": "0x73d057d31074abdbdd8aadce98343d2c559dc821380bdf8ef37c31b7acb1db82",
+      "layout": {
+        "solcVersion": "0.8.28",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:63",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:68"
+          },
+          {
+            "label": "platformOwner",
+            "offset": 2,
+            "slot": "0",
+            "type": "t_address",
+            "contract": "CrowdfundingManager",
+            "src": "contracts/CrowdfundingManager.sol:8"
+          },
+          {
+            "label": "projects",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_mapping(t_address,t_contract(CrowdfundingProject)3065)",
+            "contract": "CrowdfundingManager",
+            "src": "contracts/CrowdfundingManager.sol:9"
+          },
+          {
+            "label": "projectCount",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_uint256",
+            "contract": "CrowdfundingManager",
+            "src": "contracts/CrowdfundingManager.sol:10"
+          },
+          {
+            "label": "founderProjectMap",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_mapping(t_address,t_array(t_address)dyn_storage)",
+            "contract": "CrowdfundingManager",
+            "src": "contracts/CrowdfundingManager.sol:12"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_address)dyn_storage": {
+            "label": "address[]",
+            "numberOfBytes": "32"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_contract(CrowdfundingProject)3065": {
+            "label": "contract CrowdfundingProject",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_address,t_array(t_address)dyn_storage)": {
+            "label": "mapping(address => address[])",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_contract(CrowdfundingProject)3065)": {
+            "label": "mapping(address => contract CrowdfundingProject)",
+            "numberOfBytes": "32"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        },
+        "namespaces": {}
+      }
+    }
+  }
+}

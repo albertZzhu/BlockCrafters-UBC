@@ -1,7 +1,7 @@
 require("@nomicfoundation/hardhat-toolbox");
 require("@openzeppelin/hardhat-upgrades");
 require("dotenv").config();
-// require("hardhat-contract-sizer");
+require("hardhat-contract-sizer");
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
   solidity: {
@@ -18,12 +18,12 @@ module.exports = {
   //   only: [], // Optionally specify contracts to include
   // },  
   networks: {
-    // hardhat: {
-    //   allowUnlimitedContractSize: true
-    // },
-    // sepolia: {
-    //   url: process.env.SEPOLIA_RPC_URL,
-    //   accounts: [process.env.PRIVATE_KEY]
-    // }    
+    hardhat: {
+      allowUnlimitedContractSize: true
+    },
+    sepolia: {
+      url: process.env.SEPOLIA_RPC_URL,
+      accounts: [process.env.PRIVATE_KEY]
+    }    
   }
 };
