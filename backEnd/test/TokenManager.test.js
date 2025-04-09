@@ -73,3 +73,40 @@ describe("TokenManager", function () {
     ).to.be.revertedWith("Not authorized");
   });
 });
+
+describe("TokenManager - setCrowdfundingProject", function () {
+  let TokenManager;
+  let manager;
+  let owner, initialProject, newProject, unauthorized;
+
+  beforeEach(async function () {
+    [owner, initialProject, newProject, unauthorized] = await ethers.getSigners();
+
+    TokenManager = await ethers.getContractFactory("TokenManager");
+    manager = await TokenManager.deploy(initialProject.address);
+    await manager.waitForDeployment();
+  });
+
+  it("should allow the owner to update the crowdfundingProject", async function () {
+    await manager.connect(owner).setCrowdfundingProject(newProject.address);
+    expect(await manager.crowdfundingProject()).to.equal(newProject.address);
+  });
+
+  it("should allow the current crowdfundingProject to update the crowdfundingProject", async function () {
+    await manager.connect(initialProject).setCrowdfundingProject(newProject.address);
+    expect(await manager.crowdfundingProject()).to.equal(newProject.address);
+  });
+
+  it("should revert if an unauthorized caller attempts to update", async function () {
+    await expect(
+      manager.connect(unauthorized).setCrowdfundingProject(newProject.address)
+    ).to.be.revertedWith("Not authorized");
+  });
+
+  it("should revert when trying to set the crowdfundingProject to the zero address", async function () {
+    await expect(
+      manager.connect(owner).setCrowdfundingProject(ethers.ZeroAddress)
+    ).to.be.revertedWith("Invalid address");
+  });
+});
+

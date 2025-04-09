@@ -167,8 +167,9 @@ contract CrowdfundingProject is ICrowdfundingProject {
         // TODO: integrate with PriceFeed
         uint256 usdAmount = msg.value;
 
+        tokenManager.mintTo(msg.sender, usdAmount);
+
         fundingBalance += usdAmount;
-        // fundingPool += usdAmount;
         investment[msg.sender] += usdAmount; // record total investment
 
         // check if this is a new investor

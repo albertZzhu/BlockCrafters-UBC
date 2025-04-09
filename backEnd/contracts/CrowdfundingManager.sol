@@ -75,6 +75,8 @@ contract CrowdfundingManager is Initializable {
             socialMediaLinkCID,
             tokenManager
         );
+        tokenManager.setCrowdfundingProject(address(project));
+
         address projectAddress = address(project);
         projects[projectAddress] = project;
 

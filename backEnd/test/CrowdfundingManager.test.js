@@ -294,30 +294,47 @@ describe("CrowdfundingManager", function () {
     });
 
     describe("Project investment", function () {
-        let project1;
+        let project1, tokenManager, tokenInstance;
         beforeEach(async function () {
             // each founder creates a project
             const {tx: tx1, projectAddress:project1Address} = await createValidProject(founder1)
             project1 = await ethers.getContractAt("CrowdfundingProject", project1Address);
             await project1.connect(founder1).addMilestone("Milestone 1", descCID, oneEther, milestoneDeadline);
             await project1.connect(founder1).startFunding();
+
+            const tokenManagerAddress = await project1.tokenManager();
+            tokenManager = await ethers.getContractAt("TokenManager", tokenManagerAddress);
+
+            const tokenAddress = await tokenManager.projectToken();
+            tokenInstance = await ethers.getContractAt("ProjectToken", tokenAddress);
         });
 
         it("Should allow invest to an funding project", async function () {
+            expect(await tokenInstance.balanceOf(backer1.address)).to.equal(0);
+
             await expect(project1.connect(backer1).invest({ value: oneEther }))
                 .to.emit(project1, "InvestmentMade")
                 .withArgs(backer1.address, oneEther);
 
             // check project funded amount
             expect(await project1.fundingBalance()).to.equal(oneEther);
+            // check token has minted to investor
+            // TODO: After integrat with price feed the exchange is not 1:1
+            const investorTokenBalance = await tokenInstance.balanceOf(backer1.address);
+            expect(investorTokenBalance).to.equal(oneEther);
         });
 
         it("Should allow multiple investments from the same backer", async function () {
+            expect(await tokenInstance.balanceOf(backer1.address)).to.equal(0);
+
             await project1.connect(backer1).invest({ value: halfEther });
             await project1.connect(backer1).invest({ value: halfEther });
 
             // check project funded amount
             expect(await project1.fundingBalance()).to.equal(ethers.parseEther("1"));
+            // TODO: After integrat with price feed the exchange is not 1:1
+            const investorTokenBalance = await tokenInstance.balanceOf(backer1.address);
+            expect(investorTokenBalance).to.equal(oneEther);
         });
 
         it("Should revert if project is not funding", async function () {
