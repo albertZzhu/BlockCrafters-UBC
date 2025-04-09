@@ -21,9 +21,6 @@ contract CrowdfundingManager is Initializable {
         address indexed projectAddress,
         address indexed founder,
         uint256 fundingDeadline,
-        string tokenName,
-        string tokenSymbol,
-        uint256 tokenSupply,
         string descCID,
         string photoCID,
         string socialMediaLinkCID
@@ -48,10 +45,6 @@ contract CrowdfundingManager is Initializable {
     function createProject(
             string memory projectName,
             uint256 fundingDeadline,
-            string memory tokenName,
-            string memory tokenSymbol,
-            uint256 tokenSupply,
-            bytes32 salt,
             string memory descCID,
             string memory photoCID,
             string memory socialMediaLinkCID
@@ -69,10 +62,6 @@ contract CrowdfundingManager is Initializable {
             projectCount,
             projectName,
             fundingDeadline,
-            tokenName,
-            tokenSymbol,
-            tokenSupply,
-            salt,
             descCID,
             photoCID,
             socialMediaLinkCID
@@ -81,7 +70,7 @@ contract CrowdfundingManager is Initializable {
         projects[projectAddress] = project;
 
         founderProjectMap[msg.sender].push(projectAddress);
-        emit ProjectCreated(projectAddress, msg.sender,fundingDeadline, tokenName, tokenSymbol, tokenSupply, descCID, photoCID, socialMediaLinkCID);
+        emit ProjectCreated(projectAddress, msg.sender,fundingDeadline, descCID, photoCID, socialMediaLinkCID);
     }
 
     function getFounderProjects(address founder) external view returns (address[] memory) {

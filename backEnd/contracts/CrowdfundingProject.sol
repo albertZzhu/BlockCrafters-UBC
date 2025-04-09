@@ -95,10 +95,6 @@ contract CrowdfundingProject is ICrowdfundingProject {
         uint256 _projectId,
         string memory _name,
         uint256 _fundingDeadline,
-        string memory _tokenName,
-        string memory _tokenSymbol,
-        uint256 _tokenSupply,
-        bytes32 _salt,
         string memory _descCID,
         string memory _photoCID,
         string memory _socialMediaLinkCID

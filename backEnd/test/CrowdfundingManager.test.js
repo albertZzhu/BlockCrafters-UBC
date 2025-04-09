@@ -19,10 +19,6 @@ describe("CrowdfundingManager", function () {
     const photoCID =   'photoCID____ Should be 32b Hash.';
     // const XdotComCID = 'XdotComCID__ Should be 32b Hash.';
     const socialMediaLinkCID = 'SocialMedia. Should be 32b Hash.';
-    const tokenSupply = ethers.parseEther("1000");
-    const salt = ethers.id("salt123");
-    const tokenName = "BCR";
-    const tokenSymbol = 'XdotComCID__ Should be 32b Hash.';
     let projectContract;
     let fundingDeadline;
     let milestoneDeadline;
@@ -31,8 +27,7 @@ describe("CrowdfundingManager", function () {
     async function createValidProject(founder) {
         const tx = await app.connect(founder).createProject(
             projectName, fundingDeadline,
-            tokenName, tokenSymbol, tokenSupply,
-            salt, descCID, photoCID, socialMediaLinkCID
+            descCID, photoCID, socialMediaLinkCID
         );
     
         const receipt = await tx.wait();
@@ -54,11 +49,10 @@ describe("CrowdfundingManager", function () {
         // crowdfundingPlatform = await ethers.deployContract("CrowdfundingPlatform", [cfdTokenAddress]);
         let appFactory = await ethers.getContractFactory("CrowdfundingManager", appOwner);
         app = await upgrades.deployProxy(appFactory);
-        // app = await appFactory.deploy("Temp", "TMP", tokenSupply, salt);
 
          // Deploy ProjectToken logic contract
         ProjectTokenFactory = await ethers.getContractFactory("ProjectToken");
-        ProjectToken = await ProjectTokenFactory.deploy("Temp", "TMP", 1, appOwner.address); 
+        ProjectToken = await ProjectTokenFactory.deploy("Temp", "TMP", appOwner.address); 
 
     });
 
@@ -102,34 +96,29 @@ describe("CrowdfundingManager", function () {
 
             await expect(app.connect(founder1).createProject(
                 projectName, pastDeadline,
-                tokenName, tokenSymbol, tokenSupply,
-                salt, descCID, photoCID, socialMediaLinkCID
+                descCID, photoCID, socialMediaLinkCID
             )).to.be.revertedWith("Deadline must be in the future");
         });
         it("Should revert if project name is empty or exceeds 100 characters", async function () {
             await expect(
                 app.connect(founder1).createProject(
                     "", fundingDeadline,
-                    tokenName, tokenSymbol, tokenSupply,
-                    salt, descCID, photoCID, socialMediaLinkCID)
+                    descCID, photoCID, socialMediaLinkCID)
             ).to.be.revertedWith("Project name length must be between 1 and 100 characters");
 
             await expect(
                 app.connect(founder1).createProject(
                     "a".repeat(200), fundingDeadline,
-                    tokenName, tokenSymbol, tokenSupply,
-                    salt, descCID, photoCID, socialMediaLinkCID)
+                    descCID, photoCID, socialMediaLinkCID)
             ).to.be.revertedWith("Project name length must be between 1 and 100 characters");
             // valid project names
             app.connect(founder1).createProject(
                 "a".repeat(1), fundingDeadline,
-                tokenName, tokenSymbol, tokenSupply,
-                salt, descCID, photoCID, socialMediaLinkCID
+                descCID, photoCID, socialMediaLinkCID
             );
             app.connect(founder1).createProject(
                 "a".repeat(100), fundingDeadline,
-                tokenName, tokenSymbol, tokenSupply,
-                salt, descCID, photoCID, socialMediaLinkCID
+                descCID, photoCID, socialMediaLinkCID
             )
         });
         it("Should revert if any IPFS has a wrong format", async function () {
@@ -138,20 +127,17 @@ describe("CrowdfundingManager", function () {
                 await expect(
                     app.connect(founder1).createProject(
                         projectName, fundingDeadline,
-                        tokenName, tokenSymbol, tokenSupply,
-                        salt, "a".repeat(x), photoCID, socialMediaLinkCID)
+                        "a".repeat(x), photoCID, socialMediaLinkCID)
                 ).to.be.revertedWith("Invalid IPFS hash");
                 await expect(
                     app.connect(founder1).createProject(
                         projectName, fundingDeadline,
-                        tokenName, tokenSymbol, tokenSupply,
-                        salt, descCID, "a".repeat(x), socialMediaLinkCID)
+                        descCID, "a".repeat(x), socialMediaLinkCID)
                 ).to.be.revertedWith("Invalid IPFS hash");
                 await expect(
                     app.connect(founder1).createProject(
                         projectName, fundingDeadline,
-                        tokenName, tokenSymbol, tokenSupply,
-                        salt, descCID, photoCID, "a".repeat(x))
+                        descCID, photoCID, "a".repeat(x))
                 ).to.be.revertedWith("Invalid IPFS hash");
             }
         });
@@ -162,16 +148,14 @@ describe("CrowdfundingManager", function () {
               
               await expect(tx1).to.emit(app, "ProjectCreated").withArgs(
                   project1Address,
-                  founder1.address, fundingDeadline, 
-                  tokenName, tokenSymbol, tokenSupply,
+                  founder1.address, fundingDeadline,
                   descCID, photoCID, socialMediaLinkCID
               );
               
               const {projectAddress:project2Address, tx:tx2} = await createValidProject(founder1)
               await expect(tx2).to.emit(app, "ProjectCreated").withArgs(
                   project2Address,
-                  founder1.address, fundingDeadline, 
-                  tokenName, tokenSymbol, tokenSupply,
+                  founder1.address, fundingDeadline,
                   descCID, photoCID, socialMediaLinkCID
               );
   
@@ -319,8 +303,7 @@ describe("CrowdfundingManager", function () {
             const shortDeadline = block.timestamp + 10; // 10 seconds from now
             tx = await app.connect(founder2).createProject(
             projectName, shortDeadline,
-            tokenName, tokenSymbol, tokenSupply,
-            salt, descCID, photoCID, socialMediaLinkCID
+            descCID, photoCID, socialMediaLinkCID
             );
             const receipt = await tx.wait();
             const args = app.interface.parseLog(receipt.logs[0]).args;
@@ -512,42 +495,6 @@ describe("CrowdfundingManager", function () {
                 app.connect(appOwner).setPlatformOwner(ethers.ZeroAddress)
             ).to.be.revertedWith("Invalid address");
         });
-    });
-
-    describe("Project token", function() {
-        it("should compute the expected token address", async () => {
-            const computedAddr = await projectContract.computeTokenAddress();
-            console.log("Predicted token address:", computedAddr);
-            expect(computedAddr).to.properAddress;
-          });
-        
-          it("should deploy the token when funding is successful", async () => {
-            // Simulate investments (you may need to adjust this based on your function signatures)
-            await projectContract.connect(investor1).invest({ value: ethers.utils.parseEther("6") });
-            await projectContract.connect(investor2).invest({ value: ethers.utils.parseEther("4") });
-        
-            // Trigger token deployment
-            await projectContract.deployTokenIfSuccessful(projectId);
-            const tokenAddr = await projectContract.projectToken();
-            expect(tokenAddr).to.properAddress;
-          });
-        
-          it("should distribute tokens to investors proportionally", async () => {
-            await projectContract.connect(investor1).invest({ value: ethers.utils.parseEther("6") });
-            await projectContract.connect(investor2).invest({ value: ethers.utils.parseEther("4") });
-        
-            await projectContract.deployTokenIfSuccessful(projectId);
-            const tokenAddr = await projectContract.projectToken();
-            const tokenInstance = await ethers.getContractAt("ProjectToken", tokenAddr);
-        
-            await projectContract.distributeTokens(projectId);
-        
-            const balance1 = await tokenInstance.balanceOf(investor1.address);
-            const balance2 = await tokenInstance.balanceOf(investor2.address);
-        
-            expect(balance1).to.equal(ethers.utils.parseEther("600")); // 60% of total supply
-            expect(balance2).to.equal(ethers.utils.parseEther("400")); // 40% of total supply
-          });
     });
 
 });
