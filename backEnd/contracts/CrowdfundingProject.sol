@@ -1,20 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "./ProjectToken.sol";
 import "./ProjectVoting.sol";
 import "./ICrowdfundingProject.sol";
+import "./PriceFeed.sol";
+import "./TokenManager.sol";
 
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract CrowdfundingProject is ICrowdfundingProject {
     // Token
-    address public projectToken;
-    string public tokenName;
-    string public tokenSymbol;
-    uint256 public tokenSupply;
-    bytes32 public salt;
+    // TokenManager public tokenManager;
 
     uint256 public projectId;
     address public founder;
@@ -105,13 +102,10 @@ contract CrowdfundingProject is ICrowdfundingProject {
         projectId = _projectId;
         fundingDeadline = _fundingDeadline;
         name = _name;
-        tokenName = _tokenName;
-        tokenSymbol = _tokenSymbol;
-        tokenSupply = _tokenSupply;
-        salt = _salt;
         descCID = _descCID;
         photoCID = _photoCID;
         socialMediaLinkCID = _socialMediaLinkCID;
+        // tokenManager = new TokenManager();
     }
 
     function addMilestone(
@@ -168,9 +162,12 @@ contract CrowdfundingProject is ICrowdfundingProject {
         require(msg.value > 0, "investment must be > 0");     
         require(fundingBalance + msg.value <= this.getProjectFundingGoal(), "Investment exceeds funding goal"); // limit investment to not exceed the goal
         
-        fundingBalance += msg.value;
-        fundingPool += msg.value;
-        investment[msg.sender] += msg.value; // record total investment
+        // TODO: integrate with PriceFeed
+        uint256 usdAmount = msg.value;
+
+        fundingBalance += usdAmount;
+        fundingPool += usdAmount;
+        investment[msg.sender] += usdAmount; // record total investment
 
         // check if this is a new investor
         if (investment[msg.sender] == 0) {
@@ -182,7 +179,7 @@ contract CrowdfundingProject is ICrowdfundingProject {
             activateProject();
         }
 
-        emit InvestmentMade(msg.sender, msg.value);
+        emit InvestmentMade(msg.sender, usdAmount);
     }
 
     function activateProject() internal isFundingProject() {
@@ -378,56 +375,6 @@ contract CrowdfundingProject is ICrowdfundingProject {
 
     function pushFounder(address investorAddr) external {
         investors.push(investorAddr);
-    }
-
-
-    // invoke this method when the project raise enough money
-    function deployTokenIfSuccessful() external isWorkingProject() {
-        require(projectToken == address(0), "Token already deployed");
-
-        address tokenAddr = deployToken();
-        projectToken = tokenAddr;
-    }
-
-    function deployToken() internal returns (address tokenAddress) {
-        bytes memory bytecode = abi.encodePacked(
-            type(ProjectToken).creationCode,
-            abi.encode(tokenName, tokenSymbol, tokenSupply, address(this))
-        );
-
-        assembly {
-            tokenAddress := create2(0, add(bytecode, 0x20), mload(bytecode), sload(salt.slot))
-            if iszero(extcodesize(tokenAddress)) {
-                revert(0, 0)
-            }
-        }
-    }
-
-    function distributeTokens() external {
-        require(projectToken != address(0), "Token not deployed yet");
-
-        for (uint i = 0; i < investors.length; i++) {
-            address investor = investors[i];
-            uint256 share = (investment[investor] * tokenSupply) / this.getProjectFundingGoal();
-            IERC20(projectToken).transfer(investor, share);
-        }
-    }
-
-    function computeTokenAddress() external view returns (address) {
-        bytes memory bytecode = abi.encodePacked(
-            type(ProjectToken).creationCode,
-            abi.encode(tokenName, tokenSymbol, tokenSupply, address(this))
-        );
-        bytes32 bytecodeHash = keccak256(bytecode);
-        return address(
-            uint160(
-                uint256(
-                    keccak256(
-                        abi.encodePacked(bytes1(0xff), address(this), salt, bytecodeHash)
-                    )
-                )
-            )
-        );
     }
 
 }
