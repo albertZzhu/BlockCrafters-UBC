@@ -95,7 +95,8 @@ class _StartPageState extends State<StartPage> {
                 isLogin = false;
               }
             });
-          } else if (state.action == HomeScreenActionButton.writeToContract) {
+          } else if (state.action ==
+              HomeScreenActionButton.interactWithContract) {
             Navigator.popUntil(context, (route) => route.isFirst);
             setState(() {
               isLogin = true;
@@ -135,7 +136,7 @@ class _StartPageState extends State<StartPage> {
                   ),
                 ));
               } else if (state is FetchHomeScreenActionButtonSuccess &&
-                  state.action == HomeScreenActionButton.writeToContract) {
+                  state.action == HomeScreenActionButton.interactWithContract) {
                 isLogin = true;
                 final uid = state.uid?.toString() ?? "";
                 return (GestureDetector(

@@ -1,10 +1,13 @@
 import 'package:coach_link/Views/PostDetailPage.dart';
 import 'package:flutter/material.dart';
 import 'package:coach_link/Model/Post.dart';
-
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:coach_link/Control/WalletConnectControl.dart';
 import 'package:coach_link/Model/SampleProjectData.dart';
 import 'package:coach_link/Views/SingleProjectCard.dart';
 import 'package:coach_link/Views/InvestModal.dart';
+import 'package:coach_link/Model/enum.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 class MyHomePage extends StatefulWidget {
   //String uid = "";
@@ -26,6 +29,8 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  bool isInitializing = true;
+  bool isLogin = false;
   _MyHomePageState();
 
   void showInvestModal(
@@ -86,7 +91,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   // }
 
-  Widget bodyState(List<Map<String, Object>> posts) {
+  Widget bodyState(List<Map<String, Object>> posts, bool isLogin) {
     return ListView.builder(
       itemCount: posts.length,
       itemBuilder: (BuildContext context, int index) {
@@ -99,15 +104,19 @@ class _MyHomePageState extends State<MyHomePage> {
           deadline: posts[index]['deadline'] as String,
           status: posts[index]['status'] as String,
           onInvest: () {
-            showInvestModal(
-              context,
-              (double amount) {
-                // Handle the investment logic here
-                print('Invested $amount in ${posts[index]['projectName']}');
-              },
-              posts[index]['projectName'] as String,
-              posts[index]['imageUrl'] as String,
-            );
+            if (isLogin) {
+              showInvestModal(
+                context,
+                (double amount) {
+                  // Handle the investment logic here
+                  print('Invested $amount in ${posts[index]['projectName']}');
+                },
+                posts[index]['projectName'] as String,
+                posts[index]['imageUrl'] as String,
+              );
+            } else {
+              Fluttertoast.showToast(msg: "Please login to invest");
+            }
           },
           onVote:
               () => print('Vote clicked for ${posts[index]['projectName']}'),
@@ -119,12 +128,26 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        child:
-            true /*Add loading determine logic here*/
-                ? bodyState(projects)
-                : const Center(child: CircularProgressIndicator()),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      body: BlocListener<WalletConnectControl, Web3State>(
+        listener: (context, state) {
+          if (state is FetchHomeScreenActionButtonSuccess) {
+            setState(() {
+              isInitializing = false;
+            });
+            if (state.action == HomeScreenActionButton.interactWithContract) {
+              setState(() {
+                isLogin = true;
+              });
+            }
+          }
+        },
+        child: Container(
+          child:
+              isInitializing
+                  ? const Center(child: CircularProgressIndicator())
+                  : bodyState(projects, isLogin),
+        ), // This trailing comma makes auto-formatting nicer for build methods.
+      ),
     );
   }
 }

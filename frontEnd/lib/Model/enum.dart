@@ -1,1 +1,5 @@
-enum HomeScreenActionButton { upgradeWallet, writeToContract, connectWallet }
+enum HomeScreenActionButton {
+  upgradeWallet,
+  interactWithContract,
+  connectWallet,
+}

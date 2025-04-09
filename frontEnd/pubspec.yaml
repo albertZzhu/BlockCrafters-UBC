@@ -77,6 +77,8 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
+    - .env
+    - lib/ContractInterface/CrowdFundProject.abi.json
     - assets/banner.png
     - assets/19602.jpg
     - assets/football.jpg

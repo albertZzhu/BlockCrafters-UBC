@@ -152,8 +152,7 @@ class WalletConnectControl extends Cubit<Web3State> {
     try {
       _appKitModal.onModalDisconnect.subscribe((ModalDisconnect? event) {
         _isConnected = false;
-        Fluttertoast.showToast(msg: "Disconnected from MetaMask");
-
+        Fluttertoast.showToast(msg: "Disconnected from Wallet");
         fetchHomeScreenActionButton();
       });
     } catch (e) {
@@ -171,23 +170,13 @@ class WalletConnectControl extends Cubit<Web3State> {
   /// * It emits different states based on the connection status.
   /// * @return A Future that completes when the fetching is done.
   Future<void> fetchHomeScreenActionButton() async {
-    if (isLoggedInViaEmail) {
-      emit(
-        const FetchHomeScreenActionButtonSuccess(
-          action: HomeScreenActionButton.upgradeWallet,
-        ),
-      );
-    } else if (!_isConnected) {
+    if (!_isConnected) {
       emit(
         const FetchHomeScreenActionButtonSuccess(
           action: HomeScreenActionButton.connectWallet,
         ),
       );
     } else if (_isConnected) {
-      /*if (_appKitModal.selectedChain == null) {
-        await _appKitModal.init();
-        await selectChain();
-      }*/
       chainId = await _appKitModal.selectedChain!.chainId;
       final namespace = ReownAppKitModalNetworks.getNamespaceForChainId(
         chainId,
@@ -195,7 +184,7 @@ class WalletConnectControl extends Cubit<Web3State> {
       final uid = _appKitModal.session!.getAddress(namespace)!;
       emit(
         FetchHomeScreenActionButtonSuccess(
-          action: HomeScreenActionButton.writeToContract,
+          action: HomeScreenActionButton.interactWithContract,
           uid: uid,
         ),
       );
