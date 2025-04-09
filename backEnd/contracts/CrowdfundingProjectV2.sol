@@ -10,7 +10,7 @@ import "./TokenManager.sol";
 // import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract CrowdfundingProject is ICrowdfundingProject {
+contract CrowdfundingProjectV2 is ICrowdfundingProject{
     
     // Token
     // TokenManager public tokenManager;

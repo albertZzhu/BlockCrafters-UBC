@@ -16,6 +16,7 @@ contract ProjectVoting {
         Approved,
         Rejected 
     }
+    event VotingStarted(uint256 milestoneID, VoteType voteType, uint256 startTime, uint256 endTime);
     event VotingValidated(uint256 milestoneID, VoteResult result);
     struct Vote{
         VoteResult decision;
@@ -35,7 +36,7 @@ contract ProjectVoting {
         Project = ICrowdfundingProject(_ProjectAddress);
     }
 
-    mapping(uint256 milestoneID => Voting[]) votings;
+    mapping(uint256 milestoneID => Voting[]) public votings;
     mapping(bytes32 hashVoterProjectMilestone => Vote) votes;
     function startNewVoting(uint256 milestoneID, uint256 newDeadline) external {
         /**
@@ -57,8 +58,11 @@ contract ProjectVoting {
         voting.startTime = block.timestamp;
         voting.endTime = block.timestamp+VOTE_LENGTH;
         voting.threshold = Project.getProjectFundingGoal()/2;
+        emit VotingStarted(milestoneID, voting.voteType, voting.startTime, voting.endTime);
     }
     function getVoting(uint256 milestoneID, int votingID) external view returns(Voting memory){
+        // a helper function to obtain the voting object
+        // if votingID is negative, it will be treated as a reverse index
         Voting[] storage _votings = votings[milestoneID];
         require(_votings.length > 0, "No voting has started yet");
         votingID = votingID<0?votingID%int(_votings.length):votingID;
@@ -68,6 +72,9 @@ contract ProjectVoting {
     }
     function validateVotingResult(uint256 milestoneID, int votingID ) external {
         // check if the voting can be ended already
+        // Validates the voting result, and performs milestone extension/advance.
+        // Needs to be run manually if voting not ended after deadline.
+        // (happens if reject/approved doesn’t pass the threshold.)
         // anyone can call this function (but will have to pay gas if vote is validated)
         Voting[] storage _votings = votings[milestoneID];
         require(_votings.length > 0, "No voting has started yet");
@@ -124,8 +131,14 @@ contract ProjectVoting {
         this.validateVotingResult(milestoneID, -1);
     }
 
-    function viewCurrentVoting(uint256 projectID) public view returns(uint, uint, uint){
-        //TODO: "Implement this function"
+    function viewCurrentVoting() public view returns(uint256, uint256, VoteType, VoteResult){
+        // return the current voting ID for the project
+        uint256 milestoneID = Project.getCurrentMilestone();
+        Voting[] storage _votings = votings[milestoneID];
+        require(_votings.length > 0, "No voting has started yet");
+        uint256 votingID = _votings.length-1;
+        Voting storage voting = _votings[votingID];
+        return (milestoneID, votingID, voting.voteType, this.getVotingResult(milestoneID, int(votingID)));
     }
 
     // function viewVoting(uint256 milestoneID, int votingID) public view returns(uint, uint, uint){

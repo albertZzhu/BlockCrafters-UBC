@@ -76,6 +76,14 @@ describe("ProjectVoting", function () {
             const voting = await votingPlatform.getVoting(0,-1);
             expect(voting.voteType).to.equal(0); //Extension
         });
+        it("can view the ongoing voting with viewCurrentVoting()", async function () {
+            // activate the project
+            await project1.connect(backer1).invest({value:  fiveEther});
+            // request extension
+            await project1.connect(founder1).requestExtension(0, milestoneDeadline + oneDay);
+            const res = await votingPlatform.viewCurrentVoting();
+            expect(res.map(n => Number(n))).to.deep.equal([0, 0, 0, 0]); // milestoneID, votingID, VoteType.Extension, VoteStatus.Pending
+        });
         it("Backers can vote for/against extension", async function () {
             // activate the project
             // console.log(project.fundingBalance);
@@ -144,7 +152,7 @@ describe("ProjectVoting", function () {
             const milestone = await project1.getMilestone(0);
             expect(milestone.deadline).to.equal(milestoneDeadline+oneDay);
         });
-        it("Extention Rejected if votepower<=50%, and deadline is extended", async function () {
+        it("Extention Rejected if votepower<=50%, and deadline is not extended", async function () {
             // activate the project
             await project1.connect(backer1).invest({value: ethers.parseEther('2.5')});
             await project1.connect(backer2).invest({value: ethers.parseEther('2.5')});
@@ -173,6 +181,150 @@ describe("ProjectVoting", function () {
     });
     describe("Milestone Advance", function () {
         //TODO: add tests for milestone advance
+        let  project1;
+        let votingPlatform;
+        beforeEach(async function () {
+            const {tx: tx1, projectAddress:project1Address} = await createValidProject(founder1)
+            project1 = await ethers.getContractAt("CrowdfundingProject", project1Address);
+            await project1.connect(founder1).addMilestone("Milestone 1", descCID, ethers.parseEther("2"), milestoneDeadline);
+            await project1.connect(founder1).addMilestone("Milestone 2", descCID, ethers.parseEther("3"), milestoneDeadline+1000);
+            await project1.connect(founder1).startFunding();
+            votingPlatform = await ethers.getContractAt("ProjectVoting", await project1.votingPlatform());
+        });
+        
+        it("Can Start an Advance request", async function () {
+            // activate the project
+            await project1.connect(backer1).invest({value:  fiveEther});
+            // request advance
+            await project1.connect(founder1).requestAdvance();
+            const voting = await votingPlatform.getVoting(0,-1);
+            expect(voting.voteType).to.equal(1); //Advance
+        });
+        it("Should fail an Advance request if project is not active", async function () {
+            await expect(
+                project1.connect(founder1).requestAdvance()
+            ).to.be.revertedWith("Project is not active");
+        });
+        it("Can view the ongoing voting with viewCurrentVoting()", async function () {
+            // activate the project
+            await project1.connect(backer1).invest({value:  fiveEther});
+            // request extension
+            await project1.connect(founder1).requestAdvance();
+            const res = await votingPlatform.viewCurrentVoting();
+            expect(res.map(n => Number(n))).to.deep.equal([0, 0, 1, 0]);  // milestoneID, VotingID, VoteType.Advance, VotingResult.Pending, 
+        });
+        it("Backers can vote for/against advance", async function () {
+            // activate the project
+            // console.log(project.fundingBalance);
+            await project1.connect(backer1).invest({value: ethers.parseEther('2')});
+            await project1.connect(backer2).invest({value: ethers.parseEther('3')});
+            await project1.connect(founder1).requestAdvance();
+            // vote
+            await votingPlatform.connect(backer1).vote(0, true);
+            let voting = await votingPlatform.getVoting(0,-1);
+            expect(voting.result).to.equal(0); //pending
+            await votingPlatform.connect(backer2).vote(0, false);
+            voting = await votingPlatform.getVoting(0,-1);
+            expect(voting.positives).to.equal( ethers.parseEther('2'));
+            expect(voting.negatives).to.equal( ethers.parseEther('3'));
+        });
+        it("Can't vote if no voting requested", async function () {
+            // activate the project
+            await project1.connect(backer1).invest({value: oneEther});
+            // vote
+            await expect(
+                votingPlatform.connect(backer1).vote(0, true)
+            ).to.be.revertedWith("No voting has started yet");
+        });
+        it("Can't vote twice", async function () {
+            // activate the project
+            await project1.connect(backer1).invest({value: fiveEther});
+            // request extension
+            await project1.connect(founder1).requestAdvance();
+            // vote
+            await votingPlatform.connect(backer1).vote(0, true);
+            await expect(
+                votingPlatform.connect(backer1).vote(0, false)
+            ).to.be.revertedWith("Already voted");
+        });
+
+        it("NonBackers can't vote", async function () {
+            // activate the project
+            await project1.connect(backer1).invest({value: fiveEther});
+            // request extension
+            await project1.connect(founder1).requestAdvance();
+            // vote
+            await expect(
+                votingPlatform.connect(backer2).vote(0, true)
+            ).to.be.revertedWith("You have no voting power");
+        });  
+        it("CurrentMilestone should remain before approval", async function () {
+            // activate the project
+            await project1.connect(backer1).invest({value: fiveEther});
+            // request extension
+            await project1.connect(founder1).requestAdvance();
+            // const project = await app.projects(1);
+            const currentMilestone = await project1.getCurrentMilestone();
+            expect(currentMilestone).to.equal(0);
+        });
+        it("Advance appoved if votepower>50%, and milestone advanced", async function () {
+            // activate the project
+            await project1.connect(backer1).invest({value: ethers.parseEther('2')});
+            await project1.connect(backer2).invest({value: ethers.parseEther('3')});
+            // request extension
+            await project1.connect(founder1).requestAdvance();
+            // vote
+            await votingPlatform.connect(backer1).vote(0, true);
+            await votingPlatform.connect(backer2).vote(0, true);
+            const voting = await votingPlatform.getVoting(0,-1);
+            expect(voting.result).to.equal(1); //Approved
+        });
+        it("Project flagged as completed if all milestones are completed", async function () {
+            expect(await project1.status()).to.equal(1); //Funding
+            await project1.connect(backer1).invest({value: ethers.parseEther('2')});
+            await project1.connect(backer2).invest({value: ethers.parseEther('3')});
+            // request extension
+            expect(await project1.status()).to.equal(2); //Active
+            await project1.connect(founder1).requestAdvance();
+            // vote
+            await votingPlatform.connect(backer1).vote(0, true);
+            await votingPlatform.connect(backer2).vote(0, true);
+            await project1.connect(founder1).withdraw(); // withdraw milestone 0
+            expect(await project1.getCurrentMilestone()).to.equal(1);
+            // request extension
+            await project1.connect(founder1).requestAdvance();
+            // vote
+            await votingPlatform.connect(backer1).vote(1, true);
+            await votingPlatform.connect(backer2).vote(1, true);
+            await project1.connect(founder1).withdraw(); // withdraw milestone 0
+            expect(await project1.getCurrentMilestone()).to.equal(1);
+
+            expect(await project1.status()).to.equal(4); //completed
+        });
+        it("Advance Rejected if votepower<=50%", async function () {
+            // activate the project
+            await project1.connect(backer1).invest({value: ethers.parseEther('2.5')});
+            await project1.connect(backer2).invest({value: ethers.parseEther('2.5')});
+            // request extension
+            await project1.connect(founder1).requestAdvance();
+            // vote
+            await votingPlatform.connect(backer1).vote(0, false);
+            await votingPlatform.connect(backer2).vote(0, true);
+            let voting = await votingPlatform.getVoting(0,-1);
+            expect(voting.result).to.equal(2); //rejected
+            expect(await project1.getCurrentMilestone()).to.equal(0);
+        });
+        it("Can't Start an Advance request if not founder", async function () {
+            await project1.connect(backer1).invest({value: ethers.parseEther('5')});
+            await expect(
+                project1.connect(founder2).requestAdvance()
+            ).to.be.revertedWith("Only the founder can perform this action");
+        });
+        it("Can's Start an Advance request if project not active", async function () {
+            await expect(
+                project1.connect(founder1).requestAdvance()
+            ).to.be.revertedWith("Project is not active");
+        });
         
         
         

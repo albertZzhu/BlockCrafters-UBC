@@ -357,56 +357,50 @@ describe("CrowdfundingManager", function () {
 
     describe("Fund withdrawal", function () {
         let project1, votingPlatform1;
-        beforeEach(async function () {
+        const fundingGoal = oneEther;
+        let frozen = fundingGoal; // 100% frozen at the beginning
+        let project1Address;
+        before(async function () {
             // create a project
-            const {tx: tx1, projectAddress:project1Address} = await createValidProject(founder1)
+            const {tx: tx1, projectAddress:_project1address} = await createValidProject(founder1)
+            project1Address = _project1address;            
             project1 = await ethers.getContractAt("CrowdfundingProject", project1Address);
-
             // add milestone
             await project1.connect(founder1).addMilestone("Milestone 1", descCID, halfEther, milestoneDeadline);
             await project1.connect(founder1).addMilestone("Milestone 2", descCID, halfEther, milestoneDeadline + oneDay);
-
             // fund to full
             await project1.connect(founder1).startFunding();
-            await expect(project1.connect(backer1).invest({ value: oneEther }))
-                .to.emit(project1, "InvestmentMade")
-                .withArgs(backer1.address, oneEther);
-            
-            // prepare voting
-            votingPlatform1 = await ethers.getContractAt("ProjectVoting", await project1.votingPlatform());
+            await expect(project1.connect(backer1).invest({ value: fundingGoal }))
+            .to.emit(project1, "InvestmentMade")
+                .withArgs(backer1.address, fundingGoal);
+                
+                // prepare voting
+                votingPlatform1 = await ethers.getContractAt("ProjectVoting", await project1.votingPlatform());
         });
-
-        it("Should allow founder to withdraw funds after approval", async function () {
-            expect(await project1.getFundingBalance()).to.equal(oneEther);
-            expect(await project1.getFundingPool()).to.equal(oneEther);
-            expect(await project1.getFrozenFunding()).to.equal(0);
-
+        it("non-founder should not be able to withdraw funds", async function () {
+            // non-founder withdraws funds
+            await expect(
+                project1.connect(backer1).withdraw()
+            ).to.be.revertedWith("Only the founder can perform this action");
+        });
+        it("Should allow founder to withdraw Milestone1's 80% after project activated", async function () {
+            expect(await project1.getFundingBalance()).to.equal(fundingGoal);
             let prevFounderBalance = await ethers.provider.getBalance(founder1.address);
             let prevOwnerBalance = await ethers.provider.getBalance(appOwner.address);
-
-            // m1
-            let milestone1Fund = halfEther;
-            let releasing = halfEther * BigInt(80) / BigInt(100); // 80% release =0.4
-            let frozen = milestone1Fund - releasing; // 20% frozen =0.1
-
+            
+            // milestone 1
+            let releasing = halfEther * BigInt(80) / BigInt(100); // 80% release = 0.4
+            frozen -= releasing; // milestone1*20%+mileston2*100% frozen = 0.6
             let transactionFee = releasing * BigInt(1) / BigInt(100); // 1% fee
             let founderShare = releasing - transactionFee;
 
-            // non-founder withdraws funds
-            await expect(
-                project1.connect(backer1).withdraw(appOwner.address)
-            ).to.be.revertedWith("Only the founder can perform this action");
-
-            let withdrawTx = await project1.connect(founder1).withdraw( appOwner.address);
+            let withdrawTx = await project1.connect(founder1).withdraw();// withdraw 80% of milestone1 = 0.4 ether
             let receipt = await withdrawTx.wait();
             let gasUsed = receipt.gasUsed * receipt.gasPrice;
 
-            // check pool, frozen, and balance
-            expect(await project1.getFundingBalance()).to.equal(oneEther);
-            expect(await project1.getFrozenFunding()).to.equal(frozen);
+            expect(await project1.frozenFund()).to.equal(frozen); // 0.1
+            expect(await project1.getFundingBalance()).to.equal(frozen); // 0.6
 
-            expect(await project1.getFundingPool()).to.equal(oneEther - releasing);
-            
             // plaftformOwner receives txn fee
             let currOwnerBalance = await ethers.provider.getBalance(appOwner.address);
             expect(currOwnerBalance - prevOwnerBalance).to.equal(transactionFee);
@@ -414,32 +408,40 @@ describe("CrowdfundingManager", function () {
             // founder received their share (minus gas costs)
             let currFounderBalance = await ethers.provider.getBalance(founder1.address);
             expect(currFounderBalance - prevFounderBalance + gasUsed).to.equal(founderShare);
-
+            
+        });
+        it("Should not allow founder to withdraw when no funds available (fronzen)", async function () {
+            it("Should revert if no funds available", async function () {
+                await expect(
+                    project1.connect(founder1).withdraw()
+                ).to.be.revertedWith("No funds available for withdrawal");
+            });
+        });
+        it("Should allow founder to withdraw Mileston2 funds after milestone advance request approved", async function () {
             //m1 vote
             await project1.connect(founder1).requestAdvance();
             expect(await project1.getCurrentMilestone()).to.equal(0);
             
-            await expect(
-                project1.connect(founder1).withdraw(appOwner.address)
-            ).to.be.revertedWith("Vote not passed or started");
-            
             await votingPlatform1.connect(backer1).vote(0, true);
-
-            // m1 unfrozen
-            releasing = frozen // unfrozen: all of frozen is released
-            transactionFee = releasing * BigInt(1) / BigInt(100); // 1% fee
-            founderShare = releasing - transactionFee;
-
+            expect(await project1.getCurrentMilestone()).to.equal(1);
+            
+            // m2 unfrozen
+            let releasing = halfEther * BigInt(80) / BigInt(100); // 80% release = 0.4
+            frozen -= releasing; // milestone1*20%+mileston2*100% frozen = 0.6
+            let transactionFee = releasing * BigInt(1) / BigInt(100); // 1% fee
+            let founderShare = releasing - transactionFee;
+            
             prevFounderBalance = await ethers.provider.getBalance(founder1.address);
             prevOwnerBalance = await ethers.provider.getBalance(appOwner.address);
 
-            withdrawTx = await project1.connect(founder1).withdraw(appOwner.address);
+            withdrawTx = await project1.connect(founder1).withdraw();
             receipt = await withdrawTx.wait();
             gasUsed = receipt.gasUsed * receipt.gasPrice;
 
-            // check pool, frozen, and balance
-            expect(await project1.getFrozenFunding()).to.equal(0);
-            expect(await project1.getFundingPool()).to.equal(halfEther);
+            // check frozen, and balance
+            expect(await project1.getFrozenFunding()).to.equal(frozen); //0.2
+            expect(await project1.getFundingBalance()).to.equal(frozen);
+            expect(await ethers.provider.getBalance(project1Address)).to.equal(frozen); //0.2
             
             // plaftformOwner receives txn fee
             currOwnerBalance = await ethers.provider.getBalance(appOwner.address);
@@ -449,14 +451,43 @@ describe("CrowdfundingManager", function () {
             currFounderBalance = await ethers.provider.getBalance(founder1.address);
             expect(currFounderBalance - prevFounderBalance + gasUsed).to.equal(founderShare);
 
-            // m2 -- check ProjectStatus
-            await project1.connect(founder1).withdraw(appOwner.address);
+        });
+        
+        it("Should allow founder to withdraw remaining funds after project completion", async function () {
+            expect(await project1.getCurrentMilestone()).to.equal(1);
             await project1.connect(founder1).requestAdvance();
             await votingPlatform1.connect(backer1).vote(1, true);
-            await project1.connect(founder1).withdraw(appOwner.address);
+            expect(await project1.getCurrentMilestone()).to.equal(1);
 
-            expect(await project1.getStatus()).to.equal(4);
+            expect(await project1.getStatus()).to.equal(4); // ProjectStatus.Completed
+            // m2 unfrozen
+            let releasing = fundingGoal * BigInt(20) / BigInt(100); // 80% release = 0.4
+            frozen -= releasing; // milestone1*20%+mileston2*100% frozen = 0.6
+            let transactionFee = releasing * BigInt(1) / BigInt(100); // 1% fee
+            let founderShare = releasing - transactionFee;
+            
+            prevFounderBalance = await ethers.provider.getBalance(founder1.address);
+            prevOwnerBalance = await ethers.provider.getBalance(appOwner.address);
+
+            withdrawTx = await project1.connect(founder1).withdraw();
+            receipt = await withdrawTx.wait();
+            gasUsed = receipt.gasUsed * receipt.gasPrice;
+
+            // check frozen, and balance
+            expect(await project1.getFrozenFunding()).to.equal(frozen); //0.2
+            expect(await project1.getFundingBalance()).to.equal(frozen);
+            expect(await ethers.provider.getBalance(project1Address)).to.equal(frozen); //0.2
+            
+            // plaftformOwner receives txn fee
+            currOwnerBalance = await ethers.provider.getBalance(appOwner.address);
+            expect(currOwnerBalance - prevOwnerBalance).to.equal(transactionFee);
+
+            // founder received their share (minus gas costs)
+            currFounderBalance = await ethers.provider.getBalance(founder1.address);
+            expect(currFounderBalance - prevFounderBalance + gasUsed).to.equal(founderShare);
         });
+        
+        
         
     });
 

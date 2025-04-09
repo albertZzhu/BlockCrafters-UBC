@@ -7,7 +7,7 @@ interface ICrowdfundingProject{
         Active,      // Funding done,no more fundings can be done(fundingBalance==getProjectFundingGoal()), 
                      // project is active (founder can withdraw)
         Failed,     // voting failed or passed deadline
-        Finished    // all milestones completed (all fund released), project END
+        Completed    // all milestones completed (all fund released), project END
     }
     enum MilestoneStatus{ //not currently used, may be redundant
         Pending,  // milestone not started or working in progress
@@ -44,11 +44,11 @@ interface ICrowdfundingProject{
 
     // function activateProject() internal;
 
-    function withdraw(address platformOwner) external;
+    function withdraw() external;
 
     function setProjectFailed() external;
 
-    function setProjectStatus(ProjectStatus _status) external;
+    // function setProjectStatus(ProjectStatus _status) external;
 
     function getProjectFundingGoal() external view returns(uint256);
 
@@ -78,17 +78,17 @@ interface ICrowdfundingProject{
 
     function getMilestoneList() external view returns(Milestone[] memory);
 
-    function setFounder(address founderAddr) external;
+    // function setFounder(address founderAddr) external;
 
-    function setFundingBalance(uint256 balance) external;
+    // function setFundingBalance(uint256 balance) external;
 
-    function setFrozenFunding(uint256 _frozenFund) external;
+    // function setFrozenFunding(uint256 _frozenFund) external;
 
-    function setFundingPool(uint256 _fund) external;
+    // function setFundingPool(uint256 _fund) external;
 
-    function setCurrentMilestone(uint256 _currMilestone) external;
+    // function setCurrentMilestone(uint256 _currMilestone) external;
 
-    function pushFounder(address investorAddr) external;
+    // function pushFounder(address investorAddr) external;
 
     // function completeOneMilestone() external;
 }
