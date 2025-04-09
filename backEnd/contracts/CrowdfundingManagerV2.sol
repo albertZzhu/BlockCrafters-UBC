@@ -23,7 +23,9 @@ contract CrowdfundingManagerV2 is Initializable {
         uint256 fundingDeadline,
         string descCID,
         string photoCID,
-        string socialMediaLinkCID
+        string socialMediaLinkCID,
+        string tokenName,
+        string tokenSymbolCID
     );
 
     event ProjectStatusUpdated(
@@ -47,7 +49,9 @@ contract CrowdfundingManagerV2 is Initializable {
             uint256 fundingDeadline,
             string memory descCID,
             string memory photoCID,
-            string memory socialMediaLinkCID
+            string memory socialMediaLinkCID,
+            string memory tokenName,
+            string memory tokenSymbolCID
         ) external {
         // Create a new project, the Project starts without a milestone.
         require(bytes(projectName).length > 0 && bytes(projectName).length <= 100, "Project name length must be between 1 and 100 characters");
@@ -57,6 +61,9 @@ contract CrowdfundingManagerV2 is Initializable {
         require(fundingDeadline > block.timestamp, "Deadline must be in the future");
         projectCount++;
 
+        TokenManager tokenManager = new TokenManager(msg.sender);
+        tokenManager.deployToken(tokenName, tokenSymbolCID);
+
         CrowdfundingProject project = new CrowdfundingProject(
             msg.sender,
             projectCount,
@@ -64,13 +71,14 @@ contract CrowdfundingManagerV2 is Initializable {
             fundingDeadline,
             descCID,
             photoCID,
-            socialMediaLinkCID
+            socialMediaLinkCID,
+            tokenManager
         );
         address projectAddress = address(project);
         projects[projectAddress] = project;
 
         founderProjectMap[msg.sender].push(projectAddress);
-        emit ProjectCreated(projectAddress, msg.sender,fundingDeadline, descCID, photoCID, socialMediaLinkCID);
+        emit ProjectCreated(projectAddress, msg.sender,fundingDeadline, descCID, photoCID, socialMediaLinkCID, tokenName, tokenSymbolCID);
     }
 
     function getFounderProjects(address founder) external view returns (address[] memory) {

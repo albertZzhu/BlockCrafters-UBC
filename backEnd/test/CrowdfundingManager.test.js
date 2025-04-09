@@ -2,7 +2,7 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
 describe("CrowdfundingManager", function () {
-    let app, ProjectToken;
+    let app;
     let appOwner;
     let founder1, founder2;
     let backer1, backer2;
@@ -24,14 +24,35 @@ describe("CrowdfundingManager", function () {
     let milestoneDeadline;
     const oneDay = 86400;
 
+    const tokenName = "BCR";
+    const tokenSymbol = 'XdotComCID__ Should be 32b Hash.';
+
     async function createValidProject(founder) {
         const tx = await app.connect(founder).createProject(
             projectName, fundingDeadline,
-            descCID, photoCID, socialMediaLinkCID
+            descCID, photoCID, socialMediaLinkCID,
+            tokenName, tokenSymbol
         );
     
         const receipt = await tx.wait();
-        const args = app.interface.parseLog(receipt.logs[0]).args;
+        // Iterate over all logs to find the event you're interested in
+        let projectCreatedEvent;
+        for (const log of receipt.logs) {
+        try {
+            const parsedLog = app.interface.parseLog(log);
+            if (parsedLog.name === "ProjectCreated") {
+            projectCreatedEvent = parsedLog;
+            break;
+            }
+        } catch (e) {
+            // This log doesn't match any event in the ABI, ignore it.
+        }
+        }
+
+        if (!projectCreatedEvent) {
+        throw new Error("ProjectCreated event not found in logs");
+        }
+        const args = projectCreatedEvent.args;
         const projectAddress = args[0]; 
         return { tx,  projectAddress};
     }
@@ -96,29 +117,34 @@ describe("CrowdfundingManager", function () {
 
             await expect(app.connect(founder1).createProject(
                 projectName, pastDeadline,
-                descCID, photoCID, socialMediaLinkCID
+                descCID, photoCID, socialMediaLinkCID,
+                tokenName, tokenSymbol
             )).to.be.revertedWith("Deadline must be in the future");
         });
         it("Should revert if project name is empty or exceeds 100 characters", async function () {
             await expect(
                 app.connect(founder1).createProject(
                     "", fundingDeadline,
-                    descCID, photoCID, socialMediaLinkCID)
+                    descCID, photoCID, socialMediaLinkCID,
+                    tokenName, tokenSymbol)
             ).to.be.revertedWith("Project name length must be between 1 and 100 characters");
 
             await expect(
                 app.connect(founder1).createProject(
                     "a".repeat(200), fundingDeadline,
-                    descCID, photoCID, socialMediaLinkCID)
+                    descCID, photoCID, socialMediaLinkCID,
+                    tokenName, tokenSymbol)
             ).to.be.revertedWith("Project name length must be between 1 and 100 characters");
             // valid project names
             app.connect(founder1).createProject(
                 "a".repeat(1), fundingDeadline,
-                descCID, photoCID, socialMediaLinkCID
+                descCID, photoCID, socialMediaLinkCID,
+                tokenName, tokenSymbol
             );
             app.connect(founder1).createProject(
                 "a".repeat(100), fundingDeadline,
-                descCID, photoCID, socialMediaLinkCID
+                descCID, photoCID, socialMediaLinkCID,
+                tokenName, tokenSymbol
             )
         });
         it("Should revert if any IPFS has a wrong format", async function () {
@@ -127,17 +153,20 @@ describe("CrowdfundingManager", function () {
                 await expect(
                     app.connect(founder1).createProject(
                         projectName, fundingDeadline,
-                        "a".repeat(x), photoCID, socialMediaLinkCID)
+                        "a".repeat(x), photoCID, socialMediaLinkCID,
+                        tokenName, tokenSymbol)
                 ).to.be.revertedWith("Invalid IPFS hash");
                 await expect(
                     app.connect(founder1).createProject(
                         projectName, fundingDeadline,
-                        descCID, "a".repeat(x), socialMediaLinkCID)
+                        descCID, "a".repeat(x), socialMediaLinkCID,
+                        tokenName, tokenSymbol)
                 ).to.be.revertedWith("Invalid IPFS hash");
                 await expect(
                     app.connect(founder1).createProject(
                         projectName, fundingDeadline,
-                        descCID, photoCID, "a".repeat(x))
+                        descCID, photoCID, "a".repeat(x),
+                        tokenName, tokenSymbol)
                 ).to.be.revertedWith("Invalid IPFS hash");
             }
         });
@@ -149,14 +178,16 @@ describe("CrowdfundingManager", function () {
               await expect(tx1).to.emit(app, "ProjectCreated").withArgs(
                   project1Address,
                   founder1.address, fundingDeadline,
-                  descCID, photoCID, socialMediaLinkCID
+                  descCID, photoCID, socialMediaLinkCID,
+                  tokenName, tokenSymbol
               );
               
               const {projectAddress:project2Address, tx:tx2} = await createValidProject(founder1)
               await expect(tx2).to.emit(app, "ProjectCreated").withArgs(
                   project2Address,
                   founder1.address, fundingDeadline,
-                  descCID, photoCID, socialMediaLinkCID
+                  descCID, photoCID, socialMediaLinkCID,
+                  tokenName, tokenSymbol
               );
   
               // check projects mapping has two projects
@@ -302,12 +333,33 @@ describe("CrowdfundingManager", function () {
             let block = await ethers.provider.getBlock("latest");
             const shortDeadline = block.timestamp + 10; // 10 seconds from now
             tx = await app.connect(founder2).createProject(
-            projectName, shortDeadline,
-            descCID, photoCID, socialMediaLinkCID
+                projectName, shortDeadline,
+                descCID, photoCID, socialMediaLinkCID,
+                tokenName, tokenSymbol
             );
             const receipt = await tx.wait();
-            const args = app.interface.parseLog(receipt.logs[0]).args;
-            const projectAddress = args[0]; // Get the project address from the event
+
+            // Iterate over all logs to find the event you're interested in
+            let projectCreatedEvent;
+            for (const log of receipt.logs) {
+            try {
+                const parsedLog = app.interface.parseLog(log);
+                if (parsedLog.name === "ProjectCreated") {
+                projectCreatedEvent = parsedLog;
+                break;
+                }
+            } catch (e) {
+                // This log doesn't match any event in the ABI, ignore it.
+            }
+            }
+
+            if (!projectCreatedEvent) {
+            throw new Error("ProjectCreated event not found in logs");
+            }
+
+            const args = projectCreatedEvent.args;
+            const projectAddress = args[0]; 
+            
             let project2 = await ethers.getContractAt("CrowdfundingProject", projectAddress);
             await project2.connect(founder2).addMilestone("Milestone 1", descCID, oneEther, block.timestamp + 1000);
             await project2.connect(founder2).startFunding();

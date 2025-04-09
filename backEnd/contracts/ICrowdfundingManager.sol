@@ -6,7 +6,9 @@ interface ICrowdfundingManager{
         uint256 fundingDeadline,
         string memory descCID,
         string memory photoCID,
-        string memory socialMediaLinkCID
+        string memory socialMediaLinkCID,
+        string memory tokenName,
+        string memory tokenSymbolCID
     ) external;
 
     function getFounderProjects(address founder) external view returns (uint256[] memory);

@@ -13,7 +13,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 contract CrowdfundingProject is ICrowdfundingProject {
     
     // Token
-    // TokenManager public tokenManager;
+    TokenManager public tokenManager;
 
     uint256 public projectId;
     address public founder;
@@ -97,7 +97,8 @@ contract CrowdfundingProject is ICrowdfundingProject {
         uint256 _fundingDeadline,
         string memory _descCID,
         string memory _photoCID,
-        string memory _socialMediaLinkCID
+        string memory _socialMediaLinkCID,
+        TokenManager _tokenManager
     ) {
         founder = _founder;
         projectId = _projectId;
@@ -107,7 +108,7 @@ contract CrowdfundingProject is ICrowdfundingProject {
         photoCID = _photoCID;
         socialMediaLinkCID = _socialMediaLinkCID;
         ProjectManager = ICrowdfundingManager(msg.sender); // set the project manager to the contract deployer
-        // tokenManager = new TokenManager();
+        tokenManager = _tokenManager;
     }
 
     function addMilestone(
