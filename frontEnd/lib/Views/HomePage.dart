@@ -35,9 +35,16 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void showInvestModal(
     BuildContext context,
-    Function(double) onInvest,
+    Function(
+      String projectAddress,
+      String token,
+      String amount,
+      String projectName,
+    )
+    onInvest,
     String description,
     String projectImageUrl,
+    String projectAddress,
   ) {
     showModalBottomSheet(
       context: context,
@@ -63,6 +70,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     onInvest: onInvest,
                     description: description,
                     projectImageUrl: projectImageUrl,
+                    projectAddress: projectAddress,
                   ),
                 ],
               ),
@@ -107,12 +115,24 @@ class _MyHomePageState extends State<MyHomePage> {
             if (isLogin) {
               showInvestModal(
                 context,
-                (double amount) {
-                  // Handle the investment logic here
-                  print('Invested $amount in ${posts[index]['projectName']}');
+                (
+                  String projectAddress,
+                  String token,
+                  String amount,
+                  String projectName,
+                ) {
+                  context.read<WalletConnectControl>().investProject(
+                    projectAddress: projectAddress,
+                    token: token,
+                    amount: amount,
+                    projectName: projectName,
+                  );
                 },
                 posts[index]['projectName'] as String,
                 posts[index]['imageUrl'] as String,
+                "",
+
+                ///Fill in with the project address later
               );
             } else {
               Fluttertoast.showToast(msg: "Please login to invest");
@@ -128,25 +148,17 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: BlocListener<WalletConnectControl, Web3State>(
-        listener: (context, state) {
+      body: BlocBuilder<WalletConnectControl, Web3State>(
+        builder: (context, state) {
           if (state is FetchHomeScreenActionButtonSuccess) {
-            setState(() {
-              isInitializing = false;
-            });
             if (state.action == HomeScreenActionButton.interactWithContract) {
-              setState(() {
-                isLogin = true;
-              });
+              isLogin = true;
             }
+            return bodyState(projects, isLogin);
+          } else {
+            return const Center(child: CircularProgressIndicator());
           }
         },
-        child: Container(
-          child:
-              isInitializing
-                  ? const Center(child: CircularProgressIndicator())
-                  : bodyState(projects, isLogin),
-        ), // This trailing comma makes auto-formatting nicer for build methods.
       ),
     );
   }

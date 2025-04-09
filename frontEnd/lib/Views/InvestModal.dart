@@ -3,14 +3,22 @@ import 'package:fluttertoast/fluttertoast.dart';
 
 class InvestModal extends StatefulWidget {
   final String description;
-  final Function(double) onInvest; // Callback for the invest action
+  final Function(
+    String projectAddress,
+    String token,
+    String amount,
+    String projectName,
+  )
+  onInvest; // Callback for the invest action
   final String projectImageUrl;
+  final String projectAddress;
 
   const InvestModal({
     Key? key,
     required this.onInvest,
     required this.description,
     required this.projectImageUrl,
+    required this.projectAddress,
   }) : super(key: key);
 
   @override
@@ -40,7 +48,12 @@ class _InvestModalState extends State<InvestModal> {
     });
 
     // Trigger the invest action
-    await widget.onInvest(amount);
+    await widget.onInvest(
+      widget.projectAddress,
+      _tokenList[_selectedToken],
+      _controller.text,
+      widget.description,
+    );
 
     setState(() {
       _isLoading = false;
