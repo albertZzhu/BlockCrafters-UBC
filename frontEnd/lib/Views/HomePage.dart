@@ -4,6 +4,7 @@ import 'package:coach_link/Model/Post.dart';
 
 import 'package:coach_link/Model/SampleProjectData.dart';
 import 'package:coach_link/Views/SingleProjectCard.dart';
+import 'package:coach_link/Views/InvestModal.dart';
 
 class MyHomePage extends StatefulWidget {
   //String uid = "";
@@ -26,6 +27,46 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   _MyHomePageState();
+
+  void showInvestModal(
+    BuildContext context,
+    Function(double) onInvest,
+    String description,
+    String projectImageUrl,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.4,
+          maxChildSize: 0.8,
+          minChildSize: 0.4,
+          builder: (_, controller) {
+            return Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  topRight: Radius.circular(20),
+                ),
+              ),
+              child: Wrap(
+                children: [
+                  InvestModal(
+                    onInvest: onInvest,
+                    description: description,
+                    projectImageUrl: projectImageUrl,
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
 
   /*Future<List<Post>> _refreshPosts() async {
     // return Future.delayed(const Duration(seconds: 5), () {
@@ -57,8 +98,17 @@ class _MyHomePageState extends State<MyHomePage> {
           raised: posts[index]['raised'] as double,
           deadline: posts[index]['deadline'] as String,
           status: posts[index]['status'] as String,
-          onInvest:
-              () => print('Invest clicked for ${posts[index]['projectName']}'),
+          onInvest: () {
+            showInvestModal(
+              context,
+              (double amount) {
+                // Handle the investment logic here
+                print('Invested $amount in ${posts[index]['projectName']}');
+              },
+              posts[index]['projectName'] as String,
+              posts[index]['imageUrl'] as String,
+            );
+          },
           onVote:
               () => print('Vote clicked for ${posts[index]['projectName']}'),
         );

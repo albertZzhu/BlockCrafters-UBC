@@ -34,6 +34,23 @@ class WalletConnectionFailed extends Web3State {
   final String message;
 }
 
+class InvestmentFailed extends Web3State {
+  const InvestmentFailed({required this.errorCode, required this.message});
+
+  final String errorCode;
+  final String message;
+}
+
+class InvestmentSuccess extends Web3State {
+  const InvestmentSuccess({
+    required this.transactionHash,
+    required this.projectAddress,
+  });
+
+  final String transactionHash;
+  final String projectAddress;
+}
+
 class FetchHomeScreenActionButtonSuccess extends Web3State {
   const FetchHomeScreenActionButtonSuccess({required this.action, this.uid});
 

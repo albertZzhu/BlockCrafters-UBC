@@ -1,6 +1,6 @@
 import 'package:coach_link/Views/LoginSelectionPage.dart';
 import 'package:coach_link/Views/newPost.dart';
-
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'Views/LoginPage.dart';
 import 'package:flutter/material.dart';
 import 'Views/StartPage.dart';
@@ -10,6 +10,7 @@ import 'Control/WalletConnectControl.dart';
 import 'package:coach_link/Routers.dart';
 
 void main() async {
+  await dotenv.load();
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
