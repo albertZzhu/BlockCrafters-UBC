@@ -28,14 +28,16 @@ class ProjectSubmissionService {
 
   static Future<ProjectSubmissionResult> submit({
     required String name,
-    required String goal,
-    required String deadline,
-    required String descriptionText,
+    required String socialMedia,
+    required int deadline,
+    required String tokenName,
     required PlatformFile imageFile,
     required PlatformFile detailFile,
+    required PlatformFile symbolFile,
+
   }) async {
     final statusMessages = <String>[];
-    String? imageCid, detailCid, descriptionCid;
+    String? imageCid, detailCid, socialMediaCid,tokenSymbolCid;
 
     statusMessages.add('📤 Starting file uploads to IPFS...');
 
@@ -48,9 +50,23 @@ class ProjectSubmissionService {
       );
       statusMessages.add(imageCid != null
           ? '✅ Image uploaded. CID: $imageCid'
-          : '❌ Image upload failed (null CID).');
+          : 'Image upload failed (null CID).');
     } catch (e) {
-      statusMessages.add('❌ Image upload error: $e');
+      statusMessages.add('Image upload error: $e');
+    }
+
+    // Upload token symbol
+    try {
+      tokenSymbolCid = await IpfsService.uploadToPinata(
+        name: name,
+        description: 'Token Symbol',
+        file: symbolFile,
+      );
+      statusMessages.add(tokenSymbolCid != null
+          ? '✅ Token Symbol uploaded. CID: $tokenSymbolCid'
+          : 'Token Symbol upload failed (null CID).');
+    } catch (e) {
+      statusMessages.add('Token Symbol upload error: $e');
     }
 
     // Upload detail file
@@ -62,75 +78,81 @@ class ProjectSubmissionService {
       );
       statusMessages.add(detailCid != null
           ? '✅ Detail file uploaded. CID: $detailCid'
-          : '❌ Detail file upload failed (null CID).');
+          : 'Detail file upload failed (null CID).');
     } catch (e) {
-      statusMessages.add('❌ Detail file upload error: $e');
+      statusMessages.add('Detail file upload error: $e');
     }
 
-    // Upload description text
+
+    // Upload social media link as a text file
     try {
-      final descriptionFile = await createDescriptionTxtFile(name, descriptionText);
-      descriptionCid = await IpfsService.uploadToPinata(
+      final socialMediaFile = await createDescriptionTxtFile(name, socialMedia);
+      socialMediaCid = await IpfsService.uploadToPinata(
         name: name,
-        description: 'Project description text',
-        file: descriptionFile,
+        description: 'Project social media link text',
+        file: socialMediaFile,
       );
-      statusMessages.add(descriptionCid != null
-          ? '✅ Description uploaded. CID: $descriptionCid'
-          : '❌ Description upload failed (null CID).');
+      statusMessages.add(socialMediaCid != null
+          ? '✅ Social Media Link File uploaded. CID: $socialMediaCid'
+          : 'Social Media Link File failed (null CID).');
     } catch (e) {
-      statusMessages.add('❌ Description upload error: $e');
+      statusMessages.add('Social Media Link File upload error: $e');
     }
 
     // If any failed, stop here
-    if ([imageCid, detailCid, descriptionCid].any((cid) => cid == null)) {
-      statusMessages.add('⚠️ Stopped: Not all files uploaded successfully.');
+    if ([imageCid, detailCid, socialMediaCid,tokenSymbolCid].any((cid) => cid == null)) {
+      statusMessages.add('Stopped: Not all files uploaded successfully.');
       return ProjectSubmissionResult(statusMessage: statusMessages.join('\n'));
     }
 
     // Submit to contract
-    statusMessages.add('\n🚀 Submitting project to contract...');
-    try {
-      final client = Web3Client(dotenv.env['INFURA_URL']!, http.Client());
-      final credentials = EthPrivateKey.fromHex(dotenv.env['PRIVATE_KEY']!);
-      final abi = await rootBundle.loadString(dotenv.env['ABI_PATH']!);
-      final contract = DeployedContract(
-        ContractAbi.fromJson(abi, 'ProjectManager'),
-        EthereumAddress.fromHex(dotenv.env['CONTRACT_ADDRESS']!),
-      );
+    statusMessages.add('\n Submitting project to contract...');
+    // try {
+    //   final client = Web3Client(dotenv.env['INFURA_URL']!, http.Client());
+    //   final credentials = EthPrivateKey.fromHex(dotenv.env['PRIVATE_KEY']!);
+    //   final abi = await rootBundle.loadString(dotenv.env['ABI_PATH']!);
+    //   final contract = DeployedContract(
+    //     ContractAbi.fromJson(abi, 'ProjectManager'),
+    //     EthereumAddress.fromHex(dotenv.env['CONTRACT_ADDRESS']!),
+    //   );
 
-      final function = contract.function('createProject');
+    //   final function = contract.function('createProject');
 
-      final goalValue = BigInt.parse(goal);
-      final deadlineTimestamp = BigInt.from(
-        DateTime.parse(deadline).millisecondsSinceEpoch ~/ 1000,
-      );
+    //   // final goalValue = BigInt.parse(goal);
+    //   final deadlineTimestamp = BigInt.from(
+    //     DateTime.parse(deadline).millisecondsSinceEpoch ~/ 1000,
+    //   );
 
-      final txHash = await client.sendTransaction(
-        credentials,
-        Transaction.callContract(
-          contract: contract,
-          function: function,
-          parameters: [
-            name,
-            goalValue,
-            deadlineTimestamp,
-            descriptionCid!,
-            imageCid!,
-            detailCid!,
-          ],
-        ),
-        chainId: 31337, // or 11155111 for Sepolia
-      );
+    //   final txHash = await client.sendTransaction(
+    //     credentials,
+    //     Transaction.callContract(
+    //       contract: contract,
+    //       function: function,
+    //       parameters: [
+    //         name,
+    //         goalValue,
+    //         deadlineTimestamp,
+    //         descriptionCid!,
+    //         imageCid!,
+    //         detailCid!,
+    //       ],
+    //     ),
+    //     chainId: 31337, // or 11155111 for Sepolia
+    //   );
 
-      statusMessages.add('✅ Project submitted!\n🔗 Tx Hash: $txHash');
-      return ProjectSubmissionResult(
-        statusMessage: statusMessages.join('\n'),
-        txHash: txHash,
-      );
-    } catch (e) {
-      statusMessages.add('❌ Contract submission error: $e');
-      return ProjectSubmissionResult(statusMessage: statusMessages.join('\n'));
-    }
+    //   statusMessages.add('✅ Project submitted!\n Tx Hash: $txHash');
+    //   return ProjectSubmissionResult(
+    //     statusMessage: statusMessages.join('\n'),
+    //     txHash: txHash,
+    //   );
+    // } catch (e) {
+    //   statusMessages.add('Contract submission error: $e');
+    //   return ProjectSubmissionResult(statusMessage: statusMessages.join('\n'));
+    // }
+    // return ProjectSubmissionResult(statusMessage: "");
+    return ProjectSubmissionResult(
+      statusMessage: statusMessages.join('\n'),
+    );
+
   }
 }
