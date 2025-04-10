@@ -7,6 +7,8 @@ import 'package:reown_appkit/reown_appkit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:coach_link/Model/enum.dart';
 import 'package:coach_link/Configs/FunctionName.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 
 part 'Web3ModalStates.dart';
 
@@ -244,4 +246,72 @@ class WalletConnectControl extends Cubit<Web3State> {
       );
     }
   }
+
+/// * This method is used to create and submit a new crowdfunding project on-chain.
+/// * It takes the project name, deadline, token name, and the individual IPFS CIDs for description, image, social media link, and token symbol.
+/// * It emits different states based on the success or failure of the transaction.
+/// * @param name The name of the project.
+/// * @param deadline The funding deadline (Unix timestamp).
+/// * @param tokenName The name of the reward token.
+/// * @param detailCid The CID for the project description.
+/// * @param imageCid The CID for the project image.
+/// * @param socialMediaCid The CID for the social media link.
+/// * @param tokenSymbolCid The CID for the token symbol.
+/// * @return A Future that completes when the project is submitted.
+Future<void> submitProject({
+  required String name,
+  required int deadline,
+  required String tokenName,
+  required String detailCid,
+  required String imageCid,
+  required String socialMediaCid,
+  required String tokenSymbolCid,
+}) async {
+  emit(ProjectSubmissionInProgress());
+
+  try {
+    // Get connected wallet
+    final List<String> accounts = _appKitModal.session?.getAccounts() ?? <String>[];
+    if (accounts.isEmpty) {
+      emit(ProjectSubmissionFailed(message: 'No connected wallet found.'));
+      return;
+    }
+
+    final String sender = accounts.first.split(':').last;
+
+    // Load contract ABI and address
+    final String managerContractAddress = dotenv.env['MANAGER_CONTRACT_ADDRESS']!;
+    final DeployedContract contract = await deployedManagerContract();
+
+    _appKitModal.launchConnectedWallet();
+
+    // Send the transaction
+    await _appKitModal.requestWriteContract(
+      topic: _appKitModal.session?.topic ?? '',
+      chainId: _appKitModal.selectedChain!.chainId,
+      deployedContract: contract,
+      functionName: 'createProject',
+      transaction: Transaction(
+        to: EthereumAddress.fromHex(managerContractAddress),
+        from: EthereumAddress.fromHex(sender),
+        value: EtherAmount.zero(),
+      ),
+      parameters: [
+        name,
+        BigInt.from(deadline),
+        detailCid,
+        imageCid,
+        socialMediaCid,
+        tokenName,
+        tokenSymbolCid,
+      ],
+    );
+
+    emit(ProjectSubmissionSuccess());
+  } catch (e) {
+    emit(ProjectSubmissionFailed(message: 'Project submission failed: $e'));
+  }
+}
+
+
 }

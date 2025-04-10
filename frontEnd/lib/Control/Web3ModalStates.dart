@@ -57,3 +57,17 @@ class FetchHomeScreenActionButtonSuccess extends Web3State {
   final HomeScreenActionButton action;
   final String? uid;
 }
+
+class ProjectSubmissionInProgress extends Web3State {
+  const ProjectSubmissionInProgress();
+}
+
+class ProjectSubmissionSuccess extends Web3State {
+  const ProjectSubmissionSuccess();
+}
+
+class ProjectSubmissionFailed extends Web3State {
+  final String message;
+  const ProjectSubmissionFailed({required this.message});
+}
+

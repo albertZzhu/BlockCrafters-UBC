@@ -16,3 +16,12 @@ Future<DeployedContract> deployedProjectContract(
 
   return contract;
 }
+
+Future<DeployedContract> deployedManagerContract() async {
+  final abiCode = await rootBundle.loadString('lib/ContractInterface/CrowdfundingManager.abi.json');
+  final contract = DeployedContract(
+    ContractAbi.fromJson(abiCode, 'CrowdfundingManager'),
+    EthereumAddress.fromHex(dotenv.env['MANAGER_CONTRACT_ADDRESS']!),
+  );
+  return contract;
+}

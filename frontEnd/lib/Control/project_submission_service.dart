@@ -5,6 +5,7 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:web3dart/web3dart.dart';
+import 'package:coach_link/Control/WalletConnectControl.dart';
 
 import 'ipfs_service.dart';
 
@@ -107,52 +108,12 @@ class ProjectSubmissionService {
 
     // Submit to contract
     statusMessages.add('\n Submitting project to contract...');
-    // try {
-    //   final client = Web3Client(dotenv.env['INFURA_URL']!, http.Client());
-    //   final credentials = EthPrivateKey.fromHex(dotenv.env['PRIVATE_KEY']!);
-    //   final abi = await rootBundle.loadString(dotenv.env['ABI_PATH']!);
-    //   final contract = DeployedContract(
-    //     ContractAbi.fromJson(abi, 'ProjectManager'),
-    //     EthereumAddress.fromHex(dotenv.env['CONTRACT_ADDRESS']!),
-    //   );
 
-    //   final function = contract.function('createProject');
+    // originally, submit to contract here
+    // moved to propose_project_screen.dart
 
-    //   // final goalValue = BigInt.parse(goal);
-    //   final deadlineTimestamp = BigInt.from(
-    //     DateTime.parse(deadline).millisecondsSinceEpoch ~/ 1000,
-    //   );
-
-    //   final txHash = await client.sendTransaction(
-    //     credentials,
-    //     Transaction.callContract(
-    //       contract: contract,
-    //       function: function,
-    //       parameters: [
-    //         name,
-    //         goalValue,
-    //         deadlineTimestamp,
-    //         descriptionCid!,
-    //         imageCid!,
-    //         detailCid!,
-    //       ],
-    //     ),
-    //     chainId: 31337, // or 11155111 for Sepolia
-    //   );
-
-    //   statusMessages.add('✅ Project submitted!\n Tx Hash: $txHash');
-    //   return ProjectSubmissionResult(
-    //     statusMessage: statusMessages.join('\n'),
-    //     txHash: txHash,
-    //   );
-    // } catch (e) {
-    //   statusMessages.add('Contract submission error: $e');
-    //   return ProjectSubmissionResult(statusMessage: statusMessages.join('\n'));
-    // }
-    // return ProjectSubmissionResult(statusMessage: "");
     return ProjectSubmissionResult(
       statusMessage: statusMessages.join('\n'),
     );
-
   }
 }

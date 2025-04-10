@@ -5,6 +5,9 @@ import 'package:coach_link/Control/project_submission_service.dart';
 import 'package:coach_link/Views/custom_button.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:coach_link/Control/WalletConnectControl.dart';
+
 
 
 class ProposeProjectScreen extends StatefulWidget {
@@ -136,6 +139,56 @@ class _ProposeProjectScreenState extends State<ProposeProjectScreen> {
     });
 
     final cids = extractCIDs(result.statusMessage);
+
+    // Below, logic to submit project to contract
+    // If CIDs are valid, submit project to contract via WalletConnectControl
+    if (context.mounted && cids.length == 4) {
+      try {
+        setState(() {
+          uploadStatus = '\n🚀 Submitting project to smart contract...';
+        });
+
+        if (!mounted) return;
+        await context.read<WalletConnectControl>().submitProject(
+          name: nameController.text,
+          deadline: deadlineTimestamp!,
+          tokenName: tokenNameController.text,
+          detailCid: cids['Detail file']!,
+          imageCid: cids['Image']!,
+          socialMediaCid: cids['Social Media Link File']!,
+          tokenSymbolCid: cids['Token Symbol']!,
+        );
+
+        setState(() {
+          uploadStatus = '\nProject submitted successfully!';
+        });
+
+        if (!mounted) return;
+        showDialog(
+          context: context,
+          builder: (_) => AlertDialog(
+            title: const Text("Project Submitted"),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: cids.entries.map((e) => _cidRow(e.key, e.value)).toList(),
+              ),
+            ),
+            actions: [
+              TextButton(
+                child: const Text("Close"),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ],
+          ),
+        );
+      } catch (e) {
+        setState(() {
+          uploadStatus = '\n Contract submission failed: $e';
+        });
+      }
+    }
+    // Above, logic to submit project to contract
 
     if (context.mounted && cids.length == 4) {
       showDialog(
