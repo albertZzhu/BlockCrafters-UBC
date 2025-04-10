@@ -60,9 +60,9 @@ contract CrowdfundingManager is Initializable {
         ) external {
         // Create a new project, the Project starts without a milestone.
         require(bytes(projectName).length > 0 && bytes(projectName).length <= 100, "Project name length must be between 1 and 100 characters");
-        require(bytes(descCID).length == 32, "Invalid IPFS hash");      
-        require(bytes(photoCID).length == 32, "Invalid IPFS hash");      
-        require(bytes(socialMediaLinkCID).length == 32, "Invalid IPFS hash");      
+        require(bytes(descCID).length == 46, "Invalid IPFS hash");      
+        require(bytes(photoCID).length == 46, "Invalid IPFS hash");      
+        require(bytes(socialMediaLinkCID).length == 46, "Invalid IPFS hash");      
         require(fundingDeadline > block.timestamp, "Deadline must be in the future");
         projectCount++;
 
