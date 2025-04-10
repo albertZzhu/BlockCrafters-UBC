@@ -3,35 +3,45 @@ pragma solidity ^0.8.28;
 import "hardhat/console.sol";
 // import "./ProjectPlatform.sol";
 import "./ICrowdfundingProject.sol";
-contract ProjectVoting {
+
+struct Voting{
+    VoteResult result;
+    VoteType voteType;
+    uint256 threshold;
+    uint256 positives;
+    uint256 negatives;        
+    uint256 startTime;
+    uint256 endTime;
+    uint256 newDeadline;
+}    
+event VotingStarted(uint256 milestoneID, VoteType voteType, uint256 startTime, uint256 endTime);
+event VotingValidated(uint256 milestoneID, VoteResult result);
+enum VoteType{
+    Extension,
+    Advance
+}
+enum VoteResult{
+    Pending,
+    Approved,
+    Rejected 
+}
+interface IProjectVoting{
+    function startNewVoting(uint256 milestoneID, uint256 newDeadline) external;
+    function vote(uint256 milestoneID, bool decision) external;
+    function validateVotingResult(uint256 milestoneID, int votingID ) external;
+    function getVotingResult(uint256 milestoneID, int votingID) external view returns(VoteResult);
+    function getVoting(uint256 milestoneID, int votingID) external view returns(Voting memory);
+    function viewCurrentVoting() external view returns(uint256, uint256, VoteType, VoteResult);
+}
+contract ProjectVoting is IProjectVoting{
     uint VOTE_LENGTH = 604800; // 1 week in seconds (7*24*60*60)
     ICrowdfundingProject Project;
-    
-    enum VoteType{
-        Extension,
-        Advance
-    }
-    enum VoteResult{
-        Pending,
-        Approved,
-        Rejected 
-    }
-    event VotingStarted(uint256 milestoneID, VoteType voteType, uint256 startTime, uint256 endTime);
-    event VotingValidated(uint256 milestoneID, VoteResult result);
     struct Vote{
         VoteResult decision;
         uint256 votePower;
     }
-    struct Voting{
-        VoteResult result;
-        VoteType voteType;
-        uint256 threshold;
-        uint256 positives;
-        uint256 negatives;        
-        uint256 startTime;
-        uint256 endTime;
-        uint256 newDeadline;
-    }
+
+    
     constructor(address _ProjectAddress){
         Project = ICrowdfundingProject(_ProjectAddress);
     }

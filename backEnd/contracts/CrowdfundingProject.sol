@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "./ProjectVoting.sol";
+import {IProjectVoting, VotingStarted, Voting, VoteType, VoteResult} from "./ProjectVoting.sol";
 import "./ICrowdfundingProject.sol";
 import "./ICrowdfundingManager.sol";
 import "./PriceFeed.sol";
@@ -35,7 +35,7 @@ contract CrowdfundingProject is ICrowdfundingProject {
     string public photoCID; // IPFS cid for project photo
     string public socialMediaLinkCID;
     ICrowdfundingManager public ProjectManager; 
-    ProjectVoting public votingPlatform = new ProjectVoting(address(this));
+    IProjectVoting public votingPlatform;
 
     // all the investors' addresses in a project 
     // auto-generated getter: address[] public investors;
@@ -112,6 +112,12 @@ contract CrowdfundingProject is ICrowdfundingProject {
         ProjectManager = ICrowdfundingManager(msg.sender); // set the project manager to the contract deployer
         tokenManager = _tokenManager;
         priceFeed = new PriceFeed();
+    }
+    function setVotingPlatform(address platformAddress) external {
+        // set the voting platform address
+        require(msg.sender == address(ProjectManager), "Only the project manager can set the voting platform");
+        require(address(votingPlatform) == address(0), "Voting platform already set");
+        votingPlatform = IProjectVoting(platformAddress);
     }
 
     function addMilestone(
@@ -277,19 +283,19 @@ contract CrowdfundingProject is ICrowdfundingProject {
         Milestone memory milestone = getMilestone(currentMilestone);  
         require(milestone.status == MilestoneStatus.Pending, "This milestone is already failed or completed");
         votingPlatform.startNewVoting(currentMilestone, 0);     // 0 for VoteType.Advance  
-        // ProjectVoting.Voting memory voting = votingPlatform.getVoting(currentMilestone, -1);
+        // Voting memory voting = votingPlatform.getVoting(currentMilestone, -1);
         uint256 endTime = votingPlatform.getVoting(currentMilestone, -1).endTime; // start the voting for the current milestone
         uint256 startTime = votingPlatform.getVoting(currentMilestone, -1).startTime; // start the voting for the current milestone
-        emit ProjectVoting.VotingStarted(currentMilestone, ProjectVoting.VoteType.Advance, startTime, endTime);
+        emit VotingStarted(currentMilestone, VoteType.Advance, startTime, endTime);
     } 
 
     function extendDeadline(uint256 milestoneID) external isWorkingProject(){
         // Extend the deadline of the milestone if the voting is approved
         Milestone storage milestone = milestones[milestoneID];
         // check voting results
-        ProjectVoting.Voting memory voting = votingPlatform.getVoting(milestoneID, -1);
-        require(voting.voteType == ProjectVoting.VoteType.Extension, "Invalid voting type");
-        require(voting.result == ProjectVoting.VoteResult.Approved, "Voting not approved");
+        Voting memory voting = votingPlatform.getVoting(milestoneID, -1);
+        require(voting.voteType == VoteType.Extension, "Invalid voting type");
+        require(voting.result == VoteResult.Approved, "Voting not approved");
         // extend the deadline based on the voting objectives
         milestone.deadline = voting.newDeadline;
         
@@ -300,9 +306,9 @@ contract CrowdfundingProject is ICrowdfundingProject {
         Milestone storage milestone = milestones[currentMilestone];
         
         // check voting results
-        ProjectVoting.Voting memory voting = votingPlatform.getVoting(currentMilestone, -1);
-        require(voting.voteType == ProjectVoting.VoteType.Advance, "Invalid voting type");
-        require(voting.result == ProjectVoting.VoteResult.Approved, "Voting not approved");
+        Voting memory voting = votingPlatform.getVoting(currentMilestone, -1);
+        require(voting.voteType == VoteType.Advance, "Invalid voting type");
+        require(voting.result == VoteResult.Approved, "Voting not approved");
         
         // advance the milestone based on the voting objectives
         milestone.status = MilestoneStatus.Completed;
@@ -329,7 +335,7 @@ contract CrowdfundingProject is ICrowdfundingProject {
     function getBackerCredibility(address backer) external view returns(uint){
         // return the credibility score of the backer
         // TODO: Implement this function if possible
-        // NOTE: ProjectVoting.Voting.threshold should be weighted by the range of the credibility score
+        // NOTE: Voting.threshold should be weighted by the range of the credibility score
         return 1;
     }
 

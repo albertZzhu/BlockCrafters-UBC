@@ -3,12 +3,14 @@ pragma solidity ^0.8.19;
 
 import "./CrowdfundingProject.sol";
 import "./TokenManager.sol";
+import {IProjectVotingManager, ProjectVotingCreated} from "./ProjectVotingManager.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 contract CrowdfundingManager is Initializable {
     address public platformOwner;
     mapping(address => CrowdfundingProject) public projects;
     uint256 public projectCount;
+    IProjectVotingManager private ProjectVotingManager;
 
     mapping(address founderAddress => address[]) public founderProjectMap;
 
@@ -40,8 +42,10 @@ contract CrowdfundingManager is Initializable {
         address indexed newOwner
     );
 
-    function initialize() public initializer {
+    function initialize(address projectVotingManagerAddress) public initializer {
         platformOwner = msg.sender;
+        ProjectVotingManager = IProjectVotingManager(projectVotingManagerAddress);
+        ProjectVotingManager.setCrowdfundingManager(address(this));
     }
     
     // assumption (supportive) function
@@ -75,11 +79,14 @@ contract CrowdfundingManager is Initializable {
             socialMediaLinkCID,
             tokenManager
         );
-        tokenManager.setCrowdfundingProject(address(project));
 
         address projectAddress = address(project);
-        projects[projectAddress] = project;
+        address voting = ProjectVotingManager.createVotingPlatfrom(projectAddress);
+        
+        project.setVotingPlatform(voting);
+        tokenManager.setCrowdfundingProject(projectAddress);
 
+        projects[projectAddress] = project;
         founderProjectMap[msg.sender].push(projectAddress);
         emit ProjectCreated(projectAddress, msg.sender,fundingDeadline, descCID, photoCID, socialMediaLinkCID, tokenName, tokenSymbolCID);
     }
