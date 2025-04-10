@@ -15,17 +15,17 @@ describe("CrowdfundingManager", function () {
     const projectGoal = ethers.parseEther("10");
     const oneEther = ethers.parseEther("1");
     const halfEther = ethers.parseEther("0.5");
-    const descCID =    'Description. Should be 32b Hash.';
-    const photoCID =   'photoCID____ Should be 32b Hash.';
-    // const XdotComCID = 'XdotComCID__ Should be 32b Hash.';
-    const socialMediaLinkCID = 'SocialMedia. Should be 32b Hash.';
+    const descCID =    'Description. Should be 46b Hash.'+'-'.repeat(14);
+    const photoCID =   'photoCID Should be 46b Hash.'+'-'.repeat(18);
+    // const XdotComCID = 'XdotComCID__ Should be 46b Hash.';
+    const socialMediaLinkCID = 'SocialMedia. Should be 46b Hash.'+'-'.repeat(14);;
     let projectContract;
     let fundingDeadline;
     let milestoneDeadline;
     const oneDay = 86400;
 
     const tokenName = "BCR";
-    const tokenSymbol = 'XdotComCID__ Should be 32b Hash.';
+    const tokenSymbol = 'XdotComCID Should be 46b Hash.'+'-'.repeat(16);
 
     async function createValidProject(founder) {
         const tx = await app.connect(founder).createProject(
@@ -69,7 +69,7 @@ describe("CrowdfundingManager", function () {
         // cfdTokenAddress = "0x1234";
         // crowdfundingPlatform = await ethers.deployContract("CrowdfundingPlatform", [cfdTokenAddress]);
         let votingManagerFactory = await ethers.getContractFactory("ProjectVotingManager", appOwner);
-        let votingManager = await votingManagerFactory.deploy();
+        let votingManager = await upgrades.deployProxy(votingManagerFactory);
         let appFactory = await ethers.getContractFactory("CrowdfundingManager", appOwner);
         app = await upgrades.deployProxy(appFactory, [votingManager.target], { initializer: 'initialize' });
         

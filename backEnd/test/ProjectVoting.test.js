@@ -12,14 +12,14 @@ describe("ProjectVoting", function () {
     const oneEther = ethers.parseEther("1");
     const fiveEther = ethers.parseEther("5");
     const halfEther = ethers.parseEther("0.5");
-    const descCID =    'Description. Should be 32b Hash.';
-    const photoCID =   'photoCID____ Should be 32b Hash.';
-    // const XdotComCID = 'XdotComCID__ Should be 32b Hash.';
-    const socialMediaLinkCID = 'SocialMedia. Should be 32b Hash.';
+    const descCID =    'Description. Should be 46b Hash.'+'-'.repeat(14);
+    const photoCID =   'photoCID Should be 46b Hash.'+'-'.repeat(18);
+    // const XdotComCID = 'XdotComCID__ Should be 46b Hash.';
+    const socialMediaLinkCID = 'SocialMedia. Should be 46b Hash.'+'-'.repeat(14);
     const tokenSupply = ethers.parseEther("1000");
     const salt = ethers.id("salt123");
     const tokenName = "BCR";
-    const tokenSymbol = 'XdotComCID__ Should be 32b Hash.';
+    const tokenSymbol = 'XdotComCID Should be 46b Hash.'+'-'.repeat(16);
     let projectContract;
     let fundingDeadline;
     let milestoneDeadline;
@@ -27,12 +27,29 @@ describe("ProjectVoting", function () {
     async function createValidProject(founder) {
         const tx = await app.connect(founder).createProject(
             projectName, fundingDeadline,
-            tokenName, tokenSymbol, tokenSupply,
-            salt, descCID, photoCID, socialMediaLinkCID
+            descCID, photoCID, socialMediaLinkCID,
+            tokenName, tokenSymbol
         );
     
         const receipt = await tx.wait();
-        const args = app.interface.parseLog(receipt.logs[0]).args;
+        // Iterate over all logs to find the event you're interested in
+        let projectCreatedEvent;
+        for (const log of receipt.logs) {
+        try {
+            const parsedLog = app.interface.parseLog(log);
+            if (parsedLog.name === "ProjectCreated") {
+            projectCreatedEvent = parsedLog;
+            break;
+            }
+        } catch (e) {
+            // This log doesn't match any event in the ABI, ignore it.
+        }
+        }
+
+        if (!projectCreatedEvent) {
+        throw new Error("ProjectCreated event not found in logs");
+        }
+        const args = projectCreatedEvent.args;
         const projectAddress = args[0]; 
         return { tx,  projectAddress};
     }
@@ -46,39 +63,44 @@ describe("ProjectVoting", function () {
 
         // cfdTokenAddress = "0x1234";
         // crowdfundingPlatform = await ethers.deployContract("CrowdfundingPlatform", [cfdTokenAddress]);
+        let votingManagerFactory = await ethers.getContractFactory("ProjectVotingManager", appOwner);
+        let votingManager = await votingManagerFactory.deploy();
         let appFactory = await ethers.getContractFactory("CrowdfundingManager", appOwner);
-        app = await upgrades.deployProxy(appFactory);
+        app = await upgrades.deployProxy(appFactory, [votingManager.target], { initializer: 'initialize' });
+
         // app = await appFactory.deploy("Temp", "TMP", tokenSupply, salt);
 
-         // Deploy ProjectToken logic contract
-        ProjectTokenFactory = await ethers.getContractFactory("ProjectToken");
-        ProjectToken = await ProjectTokenFactory.deploy("Temp", "TMP", 1, appOwner.address); 
+        //  // Deploy ProjectToken logic contract
+        // ProjectTokenFactory = await ethers.getContractFactory("ProjectToken");
+        // ProjectToken = await ProjectTokenFactory.deploy("Temp", "TMP", 1, appOwner.address); 
 
         
         // console.log("CrowdfundingPlatform address:", app.address);
         // votingPlatform = await ethers.deployContract("ProjectVoting", [app.address]);
     });    
     describe("Milestone Extension", function () {
-        let  project1;
+        let  project1, project1Address;
         let votingPlatform;
         beforeEach(async function () {
-            const {tx: tx1, projectAddress:project1Address} = await createValidProject(founder1)
-            project1 = await ethers.getContractAt("CrowdfundingProject", project1Address);
+            const {tx: tx1, projectAddress:_project1Address} = await createValidProject(founder1)
+            project1 = await ethers.getContractAt("CrowdfundingProject", _project1Address);
             await project1.connect(founder1).addMilestone("Milestone 1", descCID, fiveEther, milestoneDeadline);
             await project1.connect(founder1).startFunding();
             votingPlatform = await ethers.getContractAt("ProjectVoting", await project1.votingPlatform());
+            project1Address = _project1Address;
         });
         it("Can Start an Extension request", async function () {
             // activate the project
-            await project1.connect(backer1).invest({value:  fiveEther});
+            await project1.connect(backer1).invest('ETH',{value:  fiveEther});
             // request extension
+            console.log("Project1 address:", project1Address);
             await project1.connect(founder1).requestExtension(0, milestoneDeadline + oneDay);
             const voting = await votingPlatform.getVoting(0,-1);
             expect(voting.voteType).to.equal(0); //Extension
         });
         it("can view the ongoing voting with viewCurrentVoting()", async function () {
             // activate the project
-            await project1.connect(backer1).invest({value:  fiveEther});
+            await project1.connect(backer1).invest('ETH',{value:  fiveEther});
             // request extension
             await project1.connect(founder1).requestExtension(0, milestoneDeadline + oneDay);
             const res = await votingPlatform.viewCurrentVoting();
@@ -87,8 +109,8 @@ describe("ProjectVoting", function () {
         it("Backers can vote for/against extension", async function () {
             // activate the project
             // console.log(project.fundingBalance);
-            await project1.connect(backer1).invest({value: ethers.parseEther('2')});
-            await project1.connect(backer2).invest({value: ethers.parseEther('3')});
+            await project1.connect(backer1).invest('ETH',{value: ethers.parseEther('2')});
+            await project1.connect(backer2).invest('ETH',{value: ethers.parseEther('3')});
             await project1.connect(founder1).requestExtension(0, milestoneDeadline + oneDay);
             // vote
             await votingPlatform.connect(backer1).vote(0, true);
@@ -101,7 +123,7 @@ describe("ProjectVoting", function () {
         });
         it("Can't vote if no voting requested", async function () {
             // activate the project
-            await project1.connect(backer1).invest({value: oneEther});
+            await project1.connect(backer1).invest('ETH',{value: oneEther});
             // vote
             await expect(
                 votingPlatform.connect(backer1).vote(0, true)
@@ -109,7 +131,7 @@ describe("ProjectVoting", function () {
         });
         it("Can't vote twice", async function () {
             // activate the project
-            await project1.connect(backer1).invest({value: fiveEther});
+            await project1.connect(backer1).invest('ETH',{value: fiveEther});
             // request extension
             await project1.connect(founder1).requestExtension(0, milestoneDeadline + oneDay);
             // vote
@@ -121,7 +143,7 @@ describe("ProjectVoting", function () {
 
         it("NonBackers can't vote", async function () {
             // activate the project
-            await project1.connect(backer1).invest({value: fiveEther});
+            await project1.connect(backer1).invest('ETH',{value: fiveEther});
             // request extension
             await project1.connect(founder1).requestExtension(0, milestoneDeadline + oneDay);
             // vote
@@ -131,7 +153,7 @@ describe("ProjectVoting", function () {
         });  
         it("Deadline should remain before approval", async function () {
             // activate the project
-            await project1.connect(backer1).invest({value: fiveEther});
+            await project1.connect(backer1).invest('ETH',{value: fiveEther});
             // request extension
             await project1.connect(founder1).requestExtension(0, milestoneDeadline + oneDay);
             // const project = await app.projects(1);
@@ -140,8 +162,8 @@ describe("ProjectVoting", function () {
         });
         it("Extention Appoved if votepower>50%, and deadline is extended", async function () {
             // activate the project
-            await project1.connect(backer1).invest({value: ethers.parseEther('2')});
-            await project1.connect(backer2).invest({value: ethers.parseEther('3')});
+            await project1.connect(backer1).invest('ETH',{value: ethers.parseEther('2')});
+            await project1.connect(backer2).invest('ETH',{value: ethers.parseEther('3')});
             // request extension
             await project1.connect(founder1).requestExtension(0, milestoneDeadline + oneDay);
             // vote
@@ -154,8 +176,8 @@ describe("ProjectVoting", function () {
         });
         it("Extention Rejected if votepower<=50%, and deadline is not extended", async function () {
             // activate the project
-            await project1.connect(backer1).invest({value: ethers.parseEther('2.5')});
-            await project1.connect(backer2).invest({value: ethers.parseEther('2.5')});
+            await project1.connect(backer1).invest('ETH',{value: ethers.parseEther('2.5')});
+            await project1.connect(backer2).invest('ETH',{value: ethers.parseEther('2.5')});
             // request extension
             await project1.connect(founder1).requestExtension(0, milestoneDeadline + oneDay);
             // vote
@@ -167,7 +189,7 @@ describe("ProjectVoting", function () {
             expect(milestone.deadline).to.equal(milestoneDeadline);
         });
         it("Can't Start an Extension request if not founder", async function () {
-            await project1.connect(backer1).invest({value: ethers.parseEther('5')});
+            await project1.connect(backer1).invest('ETH',{value: ethers.parseEther('5')});
             await expect(
                 project1.connect(founder2).requestExtension(0, milestoneDeadline + oneDay)
             ).to.be.revertedWith("Only the founder can perform this action");
@@ -194,7 +216,7 @@ describe("ProjectVoting", function () {
         
         it("Can Start an Advance request", async function () {
             // activate the project
-            await project1.connect(backer1).invest({value:  fiveEther});
+            await project1.connect(backer1).invest('ETH',{value:  fiveEther});
             // request advance
             await project1.connect(founder1).requestAdvance();
             const voting = await votingPlatform.getVoting(0,-1);
@@ -207,7 +229,7 @@ describe("ProjectVoting", function () {
         });
         it("Can view the ongoing voting with viewCurrentVoting()", async function () {
             // activate the project
-            await project1.connect(backer1).invest({value:  fiveEther});
+            await project1.connect(backer1).invest('ETH',{value:  fiveEther});
             // request extension
             await project1.connect(founder1).requestAdvance();
             const res = await votingPlatform.viewCurrentVoting();
@@ -216,8 +238,8 @@ describe("ProjectVoting", function () {
         it("Backers can vote for/against advance", async function () {
             // activate the project
             // console.log(project.fundingBalance);
-            await project1.connect(backer1).invest({value: ethers.parseEther('2')});
-            await project1.connect(backer2).invest({value: ethers.parseEther('3')});
+            await project1.connect(backer1).invest('ETH',{value: ethers.parseEther('2')});
+            await project1.connect(backer2).invest('ETH',{value: ethers.parseEther('3')});
             await project1.connect(founder1).requestAdvance();
             // vote
             await votingPlatform.connect(backer1).vote(0, true);
@@ -230,7 +252,7 @@ describe("ProjectVoting", function () {
         });
         it("Can't vote if no voting requested", async function () {
             // activate the project
-            await project1.connect(backer1).invest({value: oneEther});
+            await project1.connect(backer1).invest('ETH',{value: oneEther});
             // vote
             await expect(
                 votingPlatform.connect(backer1).vote(0, true)
@@ -238,7 +260,7 @@ describe("ProjectVoting", function () {
         });
         it("Can't vote twice", async function () {
             // activate the project
-            await project1.connect(backer1).invest({value: fiveEther});
+            await project1.connect(backer1).invest('ETH',{value: fiveEther});
             // request extension
             await project1.connect(founder1).requestAdvance();
             // vote
@@ -250,7 +272,7 @@ describe("ProjectVoting", function () {
 
         it("NonBackers can't vote", async function () {
             // activate the project
-            await project1.connect(backer1).invest({value: fiveEther});
+            await project1.connect(backer1).invest('ETH',{value: fiveEther});
             // request extension
             await project1.connect(founder1).requestAdvance();
             // vote
@@ -260,7 +282,7 @@ describe("ProjectVoting", function () {
         });  
         it("CurrentMilestone should remain before approval", async function () {
             // activate the project
-            await project1.connect(backer1).invest({value: fiveEther});
+            await project1.connect(backer1).invest('ETH',{value: fiveEther});
             // request extension
             await project1.connect(founder1).requestAdvance();
             // const project = await app.projects(1);
@@ -269,8 +291,8 @@ describe("ProjectVoting", function () {
         });
         it("Advance appoved if votepower>50%, and milestone advanced", async function () {
             // activate the project
-            await project1.connect(backer1).invest({value: ethers.parseEther('2')});
-            await project1.connect(backer2).invest({value: ethers.parseEther('3')});
+            await project1.connect(backer1).invest('ETH',{value: ethers.parseEther('2')});
+            await project1.connect(backer2).invest('ETH',{value: ethers.parseEther('3')});
             // request extension
             await project1.connect(founder1).requestAdvance();
             // vote
@@ -281,8 +303,8 @@ describe("ProjectVoting", function () {
         });
         it("Project flagged as completed if all milestones are completed", async function () {
             expect(await project1.status()).to.equal(1); //Funding
-            await project1.connect(backer1).invest({value: ethers.parseEther('2')});
-            await project1.connect(backer2).invest({value: ethers.parseEther('3')});
+            await project1.connect(backer1).invest('ETH',{value: ethers.parseEther('2')});
+            await project1.connect(backer2).invest('ETH',{value: ethers.parseEther('3')});
             // request extension
             expect(await project1.status()).to.equal(2); //Active
             await project1.connect(founder1).requestAdvance();
@@ -303,8 +325,8 @@ describe("ProjectVoting", function () {
         });
         it("Advance Rejected if votepower<=50%", async function () {
             // activate the project
-            await project1.connect(backer1).invest({value: ethers.parseEther('2.5')});
-            await project1.connect(backer2).invest({value: ethers.parseEther('2.5')});
+            await project1.connect(backer1).invest('ETH',{value: ethers.parseEther('2.5')});
+            await project1.connect(backer2).invest('ETH',{value: ethers.parseEther('2.5')});
             // request extension
             await project1.connect(founder1).requestAdvance();
             // vote
@@ -315,7 +337,7 @@ describe("ProjectVoting", function () {
             expect(await project1.getCurrentMilestone()).to.equal(0);
         });
         it("Can't Start an Advance request if not founder", async function () {
-            await project1.connect(backer1).invest({value: ethers.parseEther('5')});
+            await project1.connect(backer1).invest('ETH',{value: ethers.parseEther('5')});
             await expect(
                 project1.connect(founder2).requestAdvance()
             ).to.be.revertedWith("Only the founder can perform this action");
