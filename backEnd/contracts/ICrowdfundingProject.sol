@@ -40,7 +40,7 @@ interface ICrowdfundingProject{
 
     function endProject() external;
 
-    function invest() external payable;
+    function invest(string memory tokenType) external payable;
 
     // function activateProject() internal;
 

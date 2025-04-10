@@ -163,7 +163,7 @@ contract CrowdfundingProjectV2 is ICrowdfundingProject{
         this.setProjectFailed();
     }
 
-    function invest() external payable isFundingProject() {
+    function invest(string memory tokenType) external payable isFundingProject() {
         require(msg.value > 0, "investment must be > 0");     
         require(fundingBalance + msg.value <= this.getProjectFundingGoal(), "Investment exceeds funding goal"); // limit investment to not exceed the goal
         

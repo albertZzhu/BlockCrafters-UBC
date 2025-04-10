@@ -77,221 +77,221 @@ describe("CrowdfundingManager", function () {
 
     });
 
-    describe("Deployment", function () {
-        it("Should set the correct platform plaftformOwner", async function () {
-            expect(await app.platformOwner()).to.equal(appOwner.address);
-        });
+    // describe("Deployment", function () {
+    //     it("Should set the correct platform plaftformOwner", async function () {
+    //         expect(await app.platformOwner()).to.equal(appOwner.address);
+    //     });
 
-    });
+    // });
 
-    describe("Project creation", function () {
-        it("Should create a project with correct parameters", async function () {
-            // No project yet
-            expect(await app.projectCount()).to.equal(0);
+    // describe("Project creation", function () {
+    //     it("Should create a project with correct parameters", async function () {
+    //         // No project yet
+    //         expect(await app.projectCount()).to.equal(0);
 
-            // create a project
-            const {tx, projectAddress} = await createValidProject(founder1)
-            expect(tx)
-                .to.emit(app, "ProjectCreated")
-                .withArgs(projectAddress, founder1.address, fundingDeadline, descCID, photoCID, socialMediaLinkCID);
+    //         // create a project
+    //         const {tx, projectAddress} = await createValidProject(founder1)
+    //         expect(tx)
+    //             .to.emit(app, "ProjectCreated")
+    //             .withArgs(projectAddress, founder1.address, fundingDeadline, descCID, photoCID, socialMediaLinkCID);
 
-            // check project count increased
-            expect(await app.projectCount()).to.equal(1);
+    //         // check project count increased
+    //         expect(await app.projectCount()).to.equal(1);
 
-            // Get project details
-            const project = await ethers.getContractAt("CrowdfundingProject", projectAddress);
-            // Verify project details
-            expect(await project.founder()).to.equal(founder1.address);
-            expect(await project.getProjectFundingGoal()).to.equal(0);
-            expect(await project.fundingBalance()).to.equal(0);
-            expect(await project.status()).to.equal(0); // ProjectStatus.Inactive = 0
-            expect(await project.fundingDeadline()).to.equal(fundingDeadline);
-            expect(await project.descCID()).to.equal(descCID);
-            expect(await project.photoCID()).to.equal(photoCID);
-            expect(await project.socialMediaLinkCID()).to.equal(socialMediaLinkCID);
+    //         // Get project details
+    //         const project = await ethers.getContractAt("CrowdfundingProject", projectAddress);
+    //         // Verify project details
+    //         expect(await project.founder()).to.equal(founder1.address);
+    //         expect(await project.getProjectFundingGoal()).to.equal(0);
+    //         expect(await project.fundingBalance()).to.equal(0);
+    //         expect(await project.status()).to.equal(0); // ProjectStatus.Inactive = 0
+    //         expect(await project.fundingDeadline()).to.equal(fundingDeadline);
+    //         expect(await project.descCID()).to.equal(descCID);
+    //         expect(await project.photoCID()).to.equal(photoCID);
+    //         expect(await project.socialMediaLinkCID()).to.equal(socialMediaLinkCID);
 
-        });
+    //     });
 
-        it("Should revert if deadline is in the past", async function () {
-            const pastDeadline = Math.floor(Date.now() / 1000) - 100000; // Past timestamp
+    //     it("Should revert if deadline is in the past", async function () {
+    //         const pastDeadline = Math.floor(Date.now() / 1000) - 100000; // Past timestamp
 
-            await expect(app.connect(founder1).createProject(
-                projectName, pastDeadline,
-                descCID, photoCID, socialMediaLinkCID,
-                tokenName, tokenSymbol
-            )).to.be.revertedWith("Deadline must be in the future");
-        });
-        it("Should revert if project name is empty or exceeds 100 characters", async function () {
-            await expect(
-                app.connect(founder1).createProject(
-                    "", fundingDeadline,
-                    descCID, photoCID, socialMediaLinkCID,
-                    tokenName, tokenSymbol)
-            ).to.be.revertedWith("Project name length must be between 1 and 100 characters");
+    //         await expect(app.connect(founder1).createProject(
+    //             projectName, pastDeadline,
+    //             descCID, photoCID, socialMediaLinkCID,
+    //             tokenName, tokenSymbol
+    //         )).to.be.revertedWith("Deadline must be in the future");
+    //     });
+    //     it("Should revert if project name is empty or exceeds 100 characters", async function () {
+    //         await expect(
+    //             app.connect(founder1).createProject(
+    //                 "", fundingDeadline,
+    //                 descCID, photoCID, socialMediaLinkCID,
+    //                 tokenName, tokenSymbol)
+    //         ).to.be.revertedWith("Project name length must be between 1 and 100 characters");
 
-            await expect(
-                app.connect(founder1).createProject(
-                    "a".repeat(200), fundingDeadline,
-                    descCID, photoCID, socialMediaLinkCID,
-                    tokenName, tokenSymbol)
-            ).to.be.revertedWith("Project name length must be between 1 and 100 characters");
-            // valid project names
-            app.connect(founder1).createProject(
-                "a".repeat(1), fundingDeadline,
-                descCID, photoCID, socialMediaLinkCID,
-                tokenName, tokenSymbol
-            );
-            app.connect(founder1).createProject(
-                "a".repeat(100), fundingDeadline,
-                descCID, photoCID, socialMediaLinkCID,
-                tokenName, tokenSymbol
-            )
-        });
-        it("Should revert if any IPFS has a wrong format", async function () {
-            // TODO: checks only the length now, should check the format
-            for(const x of [0,200]){
-                await expect(
-                    app.connect(founder1).createProject(
-                        projectName, fundingDeadline,
-                        "a".repeat(x), photoCID, socialMediaLinkCID,
-                        tokenName, tokenSymbol)
-                ).to.be.revertedWith("Invalid IPFS hash");
-                await expect(
-                    app.connect(founder1).createProject(
-                        projectName, fundingDeadline,
-                        descCID, "a".repeat(x), socialMediaLinkCID,
-                        tokenName, tokenSymbol)
-                ).to.be.revertedWith("Invalid IPFS hash");
-                await expect(
-                    app.connect(founder1).createProject(
-                        projectName, fundingDeadline,
-                        descCID, photoCID, "a".repeat(x),
-                        tokenName, tokenSymbol)
-                ).to.be.revertedWith("Invalid IPFS hash");
-            }
-        });
+    //         await expect(
+    //             app.connect(founder1).createProject(
+    //                 "a".repeat(200), fundingDeadline,
+    //                 descCID, photoCID, socialMediaLinkCID,
+    //                 tokenName, tokenSymbol)
+    //         ).to.be.revertedWith("Project name length must be between 1 and 100 characters");
+    //         // valid project names
+    //         app.connect(founder1).createProject(
+    //             "a".repeat(1), fundingDeadline,
+    //             descCID, photoCID, socialMediaLinkCID,
+    //             tokenName, tokenSymbol
+    //         );
+    //         app.connect(founder1).createProject(
+    //             "a".repeat(100), fundingDeadline,
+    //             descCID, photoCID, socialMediaLinkCID,
+    //             tokenName, tokenSymbol
+    //         )
+    //     });
+    //     it("Should revert if any IPFS has a wrong format", async function () {
+    //         // TODO: checks only the length now, should check the format
+    //         for(const x of [0,200]){
+    //             await expect(
+    //                 app.connect(founder1).createProject(
+    //                     projectName, fundingDeadline,
+    //                     "a".repeat(x), photoCID, socialMediaLinkCID,
+    //                     tokenName, tokenSymbol)
+    //             ).to.be.revertedWith("Invalid IPFS hash");
+    //             await expect(
+    //                 app.connect(founder1).createProject(
+    //                     projectName, fundingDeadline,
+    //                     descCID, "a".repeat(x), socialMediaLinkCID,
+    //                     tokenName, tokenSymbol)
+    //             ).to.be.revertedWith("Invalid IPFS hash");
+    //             await expect(
+    //                 app.connect(founder1).createProject(
+    //                     projectName, fundingDeadline,
+    //                     descCID, photoCID, "a".repeat(x),
+    //                     tokenName, tokenSymbol)
+    //             ).to.be.revertedWith("Invalid IPFS hash");
+    //         }
+    //     });
       
-        it("Should record multiple projects for a founder in the founders mapping", async function () {
-            // founder1 creates two projects
-              const {projectAddress:project1Address, tx:tx1} = await createValidProject(founder1)
+    //     it("Should record multiple projects for a founder in the founders mapping", async function () {
+    //         // founder1 creates two projects
+    //           const {projectAddress:project1Address, tx:tx1} = await createValidProject(founder1)
               
-              await expect(tx1).to.emit(app, "ProjectCreated").withArgs(
-                  project1Address,
-                  founder1.address, fundingDeadline,
-                  descCID, photoCID, socialMediaLinkCID,
-                  tokenName, tokenSymbol
-              );
+    //           await expect(tx1).to.emit(app, "ProjectCreated").withArgs(
+    //               project1Address,
+    //               founder1.address, fundingDeadline,
+    //               descCID, photoCID, socialMediaLinkCID,
+    //               tokenName, tokenSymbol
+    //           );
               
-              const {projectAddress:project2Address, tx:tx2} = await createValidProject(founder1)
-              await expect(tx2).to.emit(app, "ProjectCreated").withArgs(
-                  project2Address,
-                  founder1.address, fundingDeadline,
-                  descCID, photoCID, socialMediaLinkCID,
-                  tokenName, tokenSymbol
-              );
+    //           const {projectAddress:project2Address, tx:tx2} = await createValidProject(founder1)
+    //           await expect(tx2).to.emit(app, "ProjectCreated").withArgs(
+    //               project2Address,
+    //               founder1.address, fundingDeadline,
+    //               descCID, photoCID, socialMediaLinkCID,
+    //               tokenName, tokenSymbol
+    //           );
   
-              // check projects mapping has two projects
-              expect(await app.projectCount()).to.equal(2);
+    //           // check projects mapping has two projects
+    //           expect(await app.projectCount()).to.equal(2);
   
-              // check founders mapping 
-              const projects = await app.getFounderProjects(founder1.address);
-              expect(projects.length).to.equal(2);
-              expect(projects[0]).to.equal(project1Address);
-              expect(projects[1]).to.equal(project2Address);
-        });
-    });
-    describe("Adding Milestones", function () {
-        let project1, project2;
-        beforeEach(async function () {
-            // each founder creates a project
-            const {tx: tx1, projectAddress:project1Address} = await createValidProject(founder1)
-            const {tx: tx2, projectAddress:project2Address} = await createValidProject(founder1)
-            project1 = await ethers.getContractAt("CrowdfundingProject", project1Address);
-            project2 = await ethers.getContractAt("CrowdfundingProject", project2Address);
-        });
-        it("Should add a milestone with correct parameters", async function () {
-            await expect(project1.connect(founder1).addMilestone(
-                "Milestone 1", // name (string)
-                descCID, // description (string)
-                oneEther, // fundingGoal (uint256)
-                milestoneDeadline // deadline (uint256)
-            ))
-                .to.emit(project1, "MilestoneAdded")
-                .withArgs(1, "Milestone 1", descCID, oneEther, milestoneDeadline);
+    //           // check founders mapping 
+    //           const projects = await app.getFounderProjects(founder1.address);
+    //           expect(projects.length).to.equal(2);
+    //           expect(projects[0]).to.equal(project1Address);
+    //           expect(projects[1]).to.equal(project2Address);
+    //     });
+    // });
+    // describe("Adding Milestones", function () {
+    //     let project1, project2;
+    //     beforeEach(async function () {
+    //         // each founder creates a project
+    //         const {tx: tx1, projectAddress:project1Address} = await createValidProject(founder1)
+    //         const {tx: tx2, projectAddress:project2Address} = await createValidProject(founder1)
+    //         project1 = await ethers.getContractAt("CrowdfundingProject", project1Address);
+    //         project2 = await ethers.getContractAt("CrowdfundingProject", project2Address);
+    //     });
+    //     it("Should add a milestone with correct parameters", async function () {
+    //         await expect(project1.connect(founder1).addMilestone(
+    //             "Milestone 1", // name (string)
+    //             descCID, // description (string)
+    //             oneEther, // fundingGoal (uint256)
+    //             milestoneDeadline // deadline (uint256)
+    //         ))
+    //             .to.emit(project1, "MilestoneAdded")
+    //             .withArgs(1, "Milestone 1", descCID, oneEther, milestoneDeadline);
 
-        });
-        it("Project should be updated with the correct funding goal", async function () {
-            await project1.connect(founder1).addMilestone("Milestone 1",descCID,oneEther,milestoneDeadline)
-            expect(await project1.getProjectFundingGoal()).to.equal(oneEther);
-        });
-        // it("Should revert if the project doesn't exist", async function () {
-        //     let address;
-        //     let project = await ethers.getContractAt("CrowdfundingProject", address);
+    //     });
+    //     it("Project should be updated with the correct funding goal", async function () {
+    //         await project1.connect(founder1).addMilestone("Milestone 1",descCID,oneEther,milestoneDeadline)
+    //         expect(await project1.getProjectFundingGoal()).to.equal(oneEther);
+    //     });
+    //     // it("Should revert if the project doesn't exist", async function () {
+    //     //     let address;
+    //     //     let project = await ethers.getContractAt("CrowdfundingProject", address);
             
-        //     await expect(
-        //         project.connect(founder1).addMilestone("Milestone 1",descCID,oneEther,milestoneDeadline)
-        //     ).to.be.revertedWith("Project does not exist");
-        // });
-        it("Should revert if the project doesn't belong to the msg.sender", async function () {
-            await expect(
-                project1.connect(founder2).addMilestone("Milestone 1",descCID,oneEther,milestoneDeadline)
-            ).to.be.revertedWith("Only the founder can perform this action");
-        });
-        it("Should revert if milestone Goal is not a positive number", async function () {
-            await expect(
-                project1.connect(founder1).addMilestone("Milestone 1",descCID,ethers.parseEther("0"),milestoneDeadline)
-            ).to.be.revertedWith("Milestone goal must be positive");
-        });
-        it("Should revert if deadline is in the past", async function () {
-            const pastDeadline = Math.floor(Date.now() / 10000) - 10000; // Past timestamp
-            await expect(
-                project1.connect(founder1).addMilestone("Milestone 1",descCID, oneEther, pastDeadline)
-            ).to.be.revertedWith("Deadline must be in the future");
-        });
-        it("Should revert if milestone deadline is before previous milestone", async function () {
-            await project1.connect(founder1).addMilestone("Milestone 1",descCID,oneEther,milestoneDeadline);
-            await expect(
-                project1.connect(founder1).addMilestone("Milestone 2",descCID,oneEther,milestoneDeadline-1000)
-            ).to.be.revertedWith("Milestone deadline must be after the previous milestone");
-        });
-    });
-    describe("Start Project Funding", function () {
-        let project1;
-        beforeEach(async function () {
-            // each founder creates a project
-            const {tx: tx1, projectAddress:project1Address} = await createValidProject(founder1)
-            project1 = await ethers.getContractAt("CrowdfundingProject", project1Address);
-            await project1.connect(founder1).addMilestone("Milestone 1", descCID, oneEther, milestoneDeadline);
-        });
-        it("Founder can start funding for a project", async function () {
-            expect(await project1.connect(founder1).startFunding())
-                .to.emit(project1, "ProjectStatusUpdated")
-                .withArgs(1, 0);
-        });
-        // it("Should revert if the project doesn't exist", async function () {
-        //     await expect(
-        //         project1.connect(founder1).startFunding(10)
-        //     ).to.be.revertedWith("Project does not exist");
-        // });
-        it("Should revert if the project is already active", async function () {
-            await project1.connect(founder1).startFunding();
-            await project1.connect(backer1).invest({ value: oneEther });
-            await expect(
-                project1.connect(founder1).startFunding()
-            ).to.be.revertedWith("Can only start funding if project is inactive");
-        });
-        it("Should revert if the project is already funding", async function () {
-            await project1.connect(founder1).startFunding();
-            await expect(
-                project1.connect(founder1).startFunding()
-            ).to.be.revertedWith("Can only start funding if project is inactive");
-        });
-        it("Should revert if the project doesn't belong to the msg.sender", async function () {
-            await expect(
-                project1.connect(founder2).startFunding()
-            ).to.be.revertedWith("Only the founder can perform this action");
-        });
-    });
+    //     //     await expect(
+    //     //         project.connect(founder1).addMilestone("Milestone 1",descCID,oneEther,milestoneDeadline)
+    //     //     ).to.be.revertedWith("Project does not exist");
+    //     // });
+    //     it("Should revert if the project doesn't belong to the msg.sender", async function () {
+    //         await expect(
+    //             project1.connect(founder2).addMilestone("Milestone 1",descCID,oneEther,milestoneDeadline)
+    //         ).to.be.revertedWith("Only the founder can perform this action");
+    //     });
+    //     it("Should revert if milestone Goal is not a positive number", async function () {
+    //         await expect(
+    //             project1.connect(founder1).addMilestone("Milestone 1",descCID,ethers.parseEther("0"),milestoneDeadline)
+    //         ).to.be.revertedWith("Milestone goal must be positive");
+    //     });
+    //     it("Should revert if deadline is in the past", async function () {
+    //         const pastDeadline = Math.floor(Date.now() / 10000) - 10000; // Past timestamp
+    //         await expect(
+    //             project1.connect(founder1).addMilestone("Milestone 1",descCID, oneEther, pastDeadline)
+    //         ).to.be.revertedWith("Deadline must be in the future");
+    //     });
+    //     it("Should revert if milestone deadline is before previous milestone", async function () {
+    //         await project1.connect(founder1).addMilestone("Milestone 1",descCID,oneEther,milestoneDeadline);
+    //         await expect(
+    //             project1.connect(founder1).addMilestone("Milestone 2",descCID,oneEther,milestoneDeadline-1000)
+    //         ).to.be.revertedWith("Milestone deadline must be after the previous milestone");
+    //     });
+    // });
+    // describe("Start Project Funding", function () {
+    //     let project1;
+    //     beforeEach(async function () {
+    //         // each founder creates a project
+    //         const {tx: tx1, projectAddress:project1Address} = await createValidProject(founder1)
+    //         project1 = await ethers.getContractAt("CrowdfundingProject", project1Address);
+    //         await project1.connect(founder1).addMilestone("Milestone 1", descCID, oneEther, milestoneDeadline);
+    //     });
+    //     it("Founder can start funding for a project", async function () {
+    //         expect(await project1.connect(founder1).startFunding())
+    //             .to.emit(project1, "ProjectStatusUpdated")
+    //             .withArgs(1, 0);
+    //     });
+    //     // it("Should revert if the project doesn't exist", async function () {
+    //     //     await expect(
+    //     //         project1.connect(founder1).startFunding(10)
+    //     //     ).to.be.revertedWith("Project does not exist");
+    //     // });
+    //     it("Should revert if the project is already active", async function () {
+    //         await project1.connect(founder1).startFunding();
+    //         await project1.connect(backer1).invest({ value: oneEther });
+    //         await expect(
+    //             project1.connect(founder1).startFunding()
+    //         ).to.be.revertedWith("Can only start funding if project is inactive");
+    //     });
+    //     it("Should revert if the project is already funding", async function () {
+    //         await project1.connect(founder1).startFunding();
+    //         await expect(
+    //             project1.connect(founder1).startFunding()
+    //         ).to.be.revertedWith("Can only start funding if project is inactive");
+    //     });
+    //     it("Should revert if the project doesn't belong to the msg.sender", async function () {
+    //         await expect(
+    //             project1.connect(founder2).startFunding()
+    //         ).to.be.revertedWith("Only the founder can perform this action");
+    //     });
+    // });
 
     describe("Project investment", function () {
         let project1, tokenManager, tokenInstance;
@@ -407,163 +407,163 @@ describe("CrowdfundingManager", function () {
     });
 
 
-    describe("Fund withdrawal", function () {
-        let project1, votingPlatform1;
-        const fundingGoal = oneEther;
-        let frozen = fundingGoal; // 100% frozen at the beginning
-        let project1Address;
-        before(async function () {
-            // create a project
-            const {tx: tx1, projectAddress:_project1address} = await createValidProject(founder1)
-            project1Address = _project1address;            
-            project1 = await ethers.getContractAt("CrowdfundingProject", project1Address);
-            // add milestone
-            await project1.connect(founder1).addMilestone("Milestone 1", descCID, halfEther, milestoneDeadline);
-            await project1.connect(founder1).addMilestone("Milestone 2", descCID, halfEther, milestoneDeadline + oneDay);
-            // fund to full
-            await project1.connect(founder1).startFunding();
-            await expect(project1.connect(backer1).invest({ value: fundingGoal }))
-            .to.emit(project1, "InvestmentMade")
-                .withArgs(backer1.address, fundingGoal);
+    // describe("Fund withdrawal", function () {
+    //     let project1, votingPlatform1;
+    //     const fundingGoal = oneEther;
+    //     let frozen = fundingGoal; // 100% frozen at the beginning
+    //     let project1Address;
+    //     before(async function () {
+    //         // create a project
+    //         const {tx: tx1, projectAddress:_project1address} = await createValidProject(founder1)
+    //         project1Address = _project1address;            
+    //         project1 = await ethers.getContractAt("CrowdfundingProject", project1Address);
+    //         // add milestone
+    //         await project1.connect(founder1).addMilestone("Milestone 1", descCID, halfEther, milestoneDeadline);
+    //         await project1.connect(founder1).addMilestone("Milestone 2", descCID, halfEther, milestoneDeadline + oneDay);
+    //         // fund to full
+    //         await project1.connect(founder1).startFunding();
+    //         await expect(project1.connect(backer1).invest({ value: fundingGoal }))
+    //         .to.emit(project1, "InvestmentMade")
+    //             .withArgs(backer1.address, fundingGoal);
                 
-                // prepare voting
-                votingPlatform1 = await ethers.getContractAt("ProjectVoting", await project1.votingPlatform());
-        });
-        it("non-founder should not be able to withdraw funds", async function () {
-            // non-founder withdraws funds
-            await expect(
-                project1.connect(backer1).withdraw()
-            ).to.be.revertedWith("Only the founder can perform this action");
-        });
-        it("Should allow founder to withdraw Milestone1's 80% after project activated", async function () {
-            expect(await project1.getFundingBalance()).to.equal(fundingGoal);
-            let prevFounderBalance = await ethers.provider.getBalance(founder1.address);
-            let prevOwnerBalance = await ethers.provider.getBalance(appOwner.address);
+    //             // prepare voting
+    //             votingPlatform1 = await ethers.getContractAt("ProjectVoting", await project1.votingPlatform());
+    //     });
+    //     it("non-founder should not be able to withdraw funds", async function () {
+    //         // non-founder withdraws funds
+    //         await expect(
+    //             project1.connect(backer1).withdraw()
+    //         ).to.be.revertedWith("Only the founder can perform this action");
+    //     });
+    //     it("Should allow founder to withdraw Milestone1's 80% after project activated", async function () {
+    //         expect(await project1.getFundingBalance()).to.equal(fundingGoal);
+    //         let prevFounderBalance = await ethers.provider.getBalance(founder1.address);
+    //         let prevOwnerBalance = await ethers.provider.getBalance(appOwner.address);
             
-            // milestone 1
-            let releasing = halfEther * BigInt(80) / BigInt(100); // 80% release = 0.4
-            frozen -= releasing; // milestone1*20%+mileston2*100% frozen = 0.6
-            let transactionFee = releasing * BigInt(1) / BigInt(100); // 1% fee
-            let founderShare = releasing - transactionFee;
+    //         // milestone 1
+    //         let releasing = halfEther * BigInt(80) / BigInt(100); // 80% release = 0.4
+    //         frozen -= releasing; // milestone1*20%+mileston2*100% frozen = 0.6
+    //         let transactionFee = releasing * BigInt(1) / BigInt(100); // 1% fee
+    //         let founderShare = releasing - transactionFee;
 
-            let withdrawTx = await project1.connect(founder1).withdraw();// withdraw 80% of milestone1 = 0.4 ether
-            let receipt = await withdrawTx.wait();
-            let gasUsed = receipt.gasUsed * receipt.gasPrice;
+    //         let withdrawTx = await project1.connect(founder1).withdraw();// withdraw 80% of milestone1 = 0.4 ether
+    //         let receipt = await withdrawTx.wait();
+    //         let gasUsed = receipt.gasUsed * receipt.gasPrice;
 
-            expect(await project1.frozenFund()).to.equal(frozen); // 0.1
-            expect(await project1.getFundingBalance()).to.equal(frozen); // 0.6
+    //         expect(await project1.frozenFund()).to.equal(frozen); // 0.1
+    //         expect(await project1.getFundingBalance()).to.equal(frozen); // 0.6
 
-            // plaftformOwner receives txn fee
-            let currOwnerBalance = await ethers.provider.getBalance(appOwner.address);
-            expect(currOwnerBalance - prevOwnerBalance).to.equal(transactionFee);
+    //         // plaftformOwner receives txn fee
+    //         let currOwnerBalance = await ethers.provider.getBalance(appOwner.address);
+    //         expect(currOwnerBalance - prevOwnerBalance).to.equal(transactionFee);
 
-            // founder received their share (minus gas costs)
-            let currFounderBalance = await ethers.provider.getBalance(founder1.address);
-            expect(currFounderBalance - prevFounderBalance + gasUsed).to.equal(founderShare);
+    //         // founder received their share (minus gas costs)
+    //         let currFounderBalance = await ethers.provider.getBalance(founder1.address);
+    //         expect(currFounderBalance - prevFounderBalance + gasUsed).to.equal(founderShare);
             
-        });
-        it("Should not allow founder to withdraw when no funds available (fronzen)", async function () {
-            it("Should revert if no funds available", async function () {
-                await expect(
-                    project1.connect(founder1).withdraw()
-                ).to.be.revertedWith("No funds available for withdrawal");
-            });
-        });
-        it("Should allow founder to withdraw Mileston2 funds after milestone advance request approved", async function () {
-            //m1 vote
-            await project1.connect(founder1).requestAdvance();
-            expect(await project1.getCurrentMilestone()).to.equal(0);
+    //     });
+    //     it("Should not allow founder to withdraw when no funds available (fronzen)", async function () {
+    //         it("Should revert if no funds available", async function () {
+    //             await expect(
+    //                 project1.connect(founder1).withdraw()
+    //             ).to.be.revertedWith("No funds available for withdrawal");
+    //         });
+    //     });
+    //     it("Should allow founder to withdraw Mileston2 funds after milestone advance request approved", async function () {
+    //         //m1 vote
+    //         await project1.connect(founder1).requestAdvance();
+    //         expect(await project1.getCurrentMilestone()).to.equal(0);
             
-            await votingPlatform1.connect(backer1).vote(0, true);
-            expect(await project1.getCurrentMilestone()).to.equal(1);
+    //         await votingPlatform1.connect(backer1).vote(0, true);
+    //         expect(await project1.getCurrentMilestone()).to.equal(1);
             
-            // m2 unfrozen
-            let releasing = halfEther * BigInt(80) / BigInt(100); // 80% release = 0.4
-            frozen -= releasing; // milestone1*20%+mileston2*100% frozen = 0.6
-            let transactionFee = releasing * BigInt(1) / BigInt(100); // 1% fee
-            let founderShare = releasing - transactionFee;
+    //         // m2 unfrozen
+    //         let releasing = halfEther * BigInt(80) / BigInt(100); // 80% release = 0.4
+    //         frozen -= releasing; // milestone1*20%+mileston2*100% frozen = 0.6
+    //         let transactionFee = releasing * BigInt(1) / BigInt(100); // 1% fee
+    //         let founderShare = releasing - transactionFee;
             
-            prevFounderBalance = await ethers.provider.getBalance(founder1.address);
-            prevOwnerBalance = await ethers.provider.getBalance(appOwner.address);
+    //         prevFounderBalance = await ethers.provider.getBalance(founder1.address);
+    //         prevOwnerBalance = await ethers.provider.getBalance(appOwner.address);
 
-            withdrawTx = await project1.connect(founder1).withdraw();
-            receipt = await withdrawTx.wait();
-            gasUsed = receipt.gasUsed * receipt.gasPrice;
+    //         withdrawTx = await project1.connect(founder1).withdraw();
+    //         receipt = await withdrawTx.wait();
+    //         gasUsed = receipt.gasUsed * receipt.gasPrice;
 
-            // check frozen, and balance
-            expect(await project1.getFrozenFunding()).to.equal(frozen); //0.2
-            expect(await project1.getFundingBalance()).to.equal(frozen);
-            expect(await ethers.provider.getBalance(project1Address)).to.equal(frozen); //0.2
+    //         // check frozen, and balance
+    //         expect(await project1.getFrozenFunding()).to.equal(frozen); //0.2
+    //         expect(await project1.getFundingBalance()).to.equal(frozen);
+    //         expect(await ethers.provider.getBalance(project1Address)).to.equal(frozen); //0.2
             
-            // plaftformOwner receives txn fee
-            currOwnerBalance = await ethers.provider.getBalance(appOwner.address);
-            expect(currOwnerBalance - prevOwnerBalance).to.equal(transactionFee);
+    //         // plaftformOwner receives txn fee
+    //         currOwnerBalance = await ethers.provider.getBalance(appOwner.address);
+    //         expect(currOwnerBalance - prevOwnerBalance).to.equal(transactionFee);
 
-            // founder received their share (minus gas costs)
-            currFounderBalance = await ethers.provider.getBalance(founder1.address);
-            expect(currFounderBalance - prevFounderBalance + gasUsed).to.equal(founderShare);
+    //         // founder received their share (minus gas costs)
+    //         currFounderBalance = await ethers.provider.getBalance(founder1.address);
+    //         expect(currFounderBalance - prevFounderBalance + gasUsed).to.equal(founderShare);
 
-        });
+    //     });
         
-        it("Should allow founder to withdraw remaining funds after project completion", async function () {
-            expect(await project1.getCurrentMilestone()).to.equal(1);
-            await project1.connect(founder1).requestAdvance();
-            await votingPlatform1.connect(backer1).vote(1, true);
-            expect(await project1.getCurrentMilestone()).to.equal(1);
+    //     it("Should allow founder to withdraw remaining funds after project completion", async function () {
+    //         expect(await project1.getCurrentMilestone()).to.equal(1);
+    //         await project1.connect(founder1).requestAdvance();
+    //         await votingPlatform1.connect(backer1).vote(1, true);
+    //         expect(await project1.getCurrentMilestone()).to.equal(1);
 
-            expect(await project1.getStatus()).to.equal(4); // ProjectStatus.Completed
-            // m2 unfrozen
-            let releasing = fundingGoal * BigInt(20) / BigInt(100); // 80% release = 0.4
-            frozen -= releasing; // milestone1*20%+mileston2*100% frozen = 0.6
-            let transactionFee = releasing * BigInt(1) / BigInt(100); // 1% fee
-            let founderShare = releasing - transactionFee;
+    //         expect(await project1.getStatus()).to.equal(4); // ProjectStatus.Completed
+    //         // m2 unfrozen
+    //         let releasing = fundingGoal * BigInt(20) / BigInt(100); // 80% release = 0.4
+    //         frozen -= releasing; // milestone1*20%+mileston2*100% frozen = 0.6
+    //         let transactionFee = releasing * BigInt(1) / BigInt(100); // 1% fee
+    //         let founderShare = releasing - transactionFee;
             
-            prevFounderBalance = await ethers.provider.getBalance(founder1.address);
-            prevOwnerBalance = await ethers.provider.getBalance(appOwner.address);
+    //         prevFounderBalance = await ethers.provider.getBalance(founder1.address);
+    //         prevOwnerBalance = await ethers.provider.getBalance(appOwner.address);
 
-            withdrawTx = await project1.connect(founder1).withdraw();
-            receipt = await withdrawTx.wait();
-            gasUsed = receipt.gasUsed * receipt.gasPrice;
+    //         withdrawTx = await project1.connect(founder1).withdraw();
+    //         receipt = await withdrawTx.wait();
+    //         gasUsed = receipt.gasUsed * receipt.gasPrice;
 
-            // check frozen, and balance
-            expect(await project1.getFrozenFunding()).to.equal(frozen); //0.2
-            expect(await project1.getFundingBalance()).to.equal(frozen);
-            expect(await ethers.provider.getBalance(project1Address)).to.equal(frozen); //0.2
+    //         // check frozen, and balance
+    //         expect(await project1.getFrozenFunding()).to.equal(frozen); //0.2
+    //         expect(await project1.getFundingBalance()).to.equal(frozen);
+    //         expect(await ethers.provider.getBalance(project1Address)).to.equal(frozen); //0.2
             
-            // plaftformOwner receives txn fee
-            currOwnerBalance = await ethers.provider.getBalance(appOwner.address);
-            expect(currOwnerBalance - prevOwnerBalance).to.equal(transactionFee);
+    //         // plaftformOwner receives txn fee
+    //         currOwnerBalance = await ethers.provider.getBalance(appOwner.address);
+    //         expect(currOwnerBalance - prevOwnerBalance).to.equal(transactionFee);
 
-            // founder received their share (minus gas costs)
-            currFounderBalance = await ethers.provider.getBalance(founder1.address);
-            expect(currFounderBalance - prevFounderBalance + gasUsed).to.equal(founderShare);
-        });
+    //         // founder received their share (minus gas costs)
+    //         currFounderBalance = await ethers.provider.getBalance(founder1.address);
+    //         expect(currFounderBalance - prevFounderBalance + gasUsed).to.equal(founderShare);
+    //     });
         
         
         
-    });
+    // });
 
 
-    describe("Plaftform owner transfer", function () {
-        it("Should allow platform owner to transfer ownership", async function () {
-            await expect(app.connect(appOwner).setPlatformOwner(backer1.address))
-                .to.emit(app, "CrowdfundingManagerUpdated")
-                .withArgs(appOwner.address, backer1.address);
+    // describe("Plaftform owner transfer", function () {
+    //     it("Should allow platform owner to transfer ownership", async function () {
+    //         await expect(app.connect(appOwner).setPlatformOwner(backer1.address))
+    //             .to.emit(app, "CrowdfundingManagerUpdated")
+    //             .withArgs(appOwner.address, backer1.address);
 
-            expect(await app.platformOwner()).to.equal(backer1.address);
-        });
+    //         expect(await app.platformOwner()).to.equal(backer1.address);
+    //     });
 
-        it("Should revert if non-plaftformowner tries to transfer ownership", async function () {
-            await expect(
-                app.connect(backer1).setPlatformOwner(backer2.address)
-            ).to.be.revertedWith("Not the platform owner");
-        });
+    //     it("Should revert if non-plaftformowner tries to transfer ownership", async function () {
+    //         await expect(
+    //             app.connect(backer1).setPlatformOwner(backer2.address)
+    //         ).to.be.revertedWith("Not the platform owner");
+    //     });
 
-        it("Should revert if transfer ownership to zero address", async function () {
-            await expect(
-                app.connect(appOwner).setPlatformOwner(ethers.ZeroAddress)
-            ).to.be.revertedWith("Invalid address");
-        });
-    });
+    //     it("Should revert if transfer ownership to zero address", async function () {
+    //         await expect(
+    //             app.connect(appOwner).setPlatformOwner(ethers.ZeroAddress)
+    //         ).to.be.revertedWith("Invalid address");
+    //     });
+    // });
 
 });

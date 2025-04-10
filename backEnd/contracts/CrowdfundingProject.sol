@@ -7,7 +7,7 @@ import "./ICrowdfundingManager.sol";
 import "./PriceFeed.sol";
 import "./TokenManager.sol";
 
-// import "hardhat/console.sol";
+import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract CrowdfundingProject is ICrowdfundingProject {
@@ -15,10 +15,12 @@ contract CrowdfundingProject is ICrowdfundingProject {
     // Token
     TokenManager public tokenManager;
 
+    // PriceFeed
+    PriceFeed public priceFeed;
+
     uint256 public projectId;
     address public founder;
     string public name;
-    // uint256 public fundingPool;         // current funding in this project, used for refund
     uint256 public fundingBalance;
     uint256 public frozenFund;
     mapping(address => uint256) public investment;
@@ -109,6 +111,7 @@ contract CrowdfundingProject is ICrowdfundingProject {
         socialMediaLinkCID = _socialMediaLinkCID;
         ProjectManager = ICrowdfundingManager(msg.sender); // set the project manager to the contract deployer
         tokenManager = _tokenManager;
+        priceFeed = new PriceFeed();
     }
 
     function addMilestone(
@@ -160,12 +163,16 @@ contract CrowdfundingProject is ICrowdfundingProject {
         this.setProjectFailed();
     }
 
-    function invest() external payable isFundingProject() {
+    function invest(string memory tokenType) external payable isFundingProject() {
         require(msg.value > 0, "investment must be > 0");     
         require(fundingBalance + msg.value <= this.getProjectFundingGoal(), "Investment exceeds funding goal"); // limit investment to not exceed the goal
         
         // TODO: integrate with PriceFeed
         uint256 usdAmount = msg.value;
+        if (keccak256(bytes(tokenType)) != keccak256("USD")) {
+            usdAmount = priceFeed.convertToUSD(tokenType, msg.value);
+        }
+        console.log("The usd amount is:", usdAmount);
 
         tokenManager.mintTo(msg.sender, usdAmount);
 
