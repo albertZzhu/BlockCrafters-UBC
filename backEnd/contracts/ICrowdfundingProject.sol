@@ -46,10 +46,6 @@ interface ICrowdfundingProject{
 
     function withdraw() external;
 
-    function setProjectFailed() external;
-
-    // function setProjectStatus(ProjectStatus _status) external;
-
     function getProjectFundingGoal() external view returns(uint256);
 
     function requestExtension(uint256 milestoneID, uint256 newDeadline) external;

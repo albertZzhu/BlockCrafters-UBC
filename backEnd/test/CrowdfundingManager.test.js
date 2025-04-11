@@ -409,6 +409,44 @@ describe("CrowdfundingManager", function () {
         });
     });
 
+    describe("Refund", function () {
+        let project1, votingPlatform1;
+        const fundingGoal = oneEther;
+        let frozen = fundingGoal; // 100% frozen at the beginning
+        let project1Address;
+        before(async function () {
+            // create a project
+            const {tx: tx1, projectAddress:_project1address} = await createValidProject(founder1)
+            project1Address = _project1address;            
+            project1 = await ethers.getContractAt("CrowdfundingProject", project1Address);
+            // add milestone
+            await project1.connect(founder1).addMilestone("Milestone 1", descCID, halfEther, milestoneDeadline);
+            await project1.connect(founder1).addMilestone("Milestone 2", descCID, halfEther, milestoneDeadline + oneDay);
+            // fund to full
+            await project1.connect(founder1).startFunding();
+            await expect(project1.connect(backer1).invest('ETH',{ value: fundingGoal }))
+            .to.emit(project1, "InvestmentMade")
+                .withArgs(backer1.address, fundingGoal);
+                
+                // prepare voting
+                votingPlatform1 = await ethers.getContractAt("ProjectVoting", await project1.votingPlatform());
+        });
+        it("Should allow backer to request refund if project failed (Ended)", async function () {
+            //end project
+            await project1.connect(founder1).endProject();
+            expect(await project1.getStatus()).to.equal(3); // ProjectStatus.Failed
+            const prevBackerBalance = await ethers.provider.getBalance(backer1.address);
+            await project1.connect(backer1).refund();
+
+            // check the balance of the project
+            expect(await ethers.provider.getBalance(project1Address)).to.equal(0); // 0
+            // check the balance of the backer
+            const currBackerBalance = await ethers.provider.getBalance(backer1.address);
+            console.log("prevBackerBalance", prevBackerBalance.toString())
+            console.log("currBackerBalance", currBackerBalance.toString())
+            expect(currBackerBalance).to.be.above(prevBackerBalance); // should be more than before
+        });
+    });
 
     describe("Fund withdrawal", function () {
         let project1, votingPlatform1;

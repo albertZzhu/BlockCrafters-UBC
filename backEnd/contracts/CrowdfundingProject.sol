@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 import {IProjectVoting, VotingStarted, Voting, VoteType, VoteResult} from "./ProjectVoting.sol";
 import "./ICrowdfundingProject.sol";
 import "./ICrowdfundingManager.sol";
-import "./PriceFeed.sol";
+// import "./PriceFeed.sol";
 import "./TokenManager.sol";
 
 import "hardhat/console.sol";
@@ -16,7 +16,7 @@ contract CrowdfundingProject is ICrowdfundingProject {
     TokenManager public tokenManager;
 
     // PriceFeed
-    PriceFeed public priceFeed;
+    // PriceFeed public priceFeed;
 
     uint256 public projectId;
     address public founder;
@@ -45,7 +45,8 @@ contract CrowdfundingProject is ICrowdfundingProject {
     uint8 public FROZEN_PERCENTAGE = 20; // percentage of fund frozen until investors acknowledge completion of milestone
 
     modifier onlyFunder() {
-        require(investment[msg.sender] > 0, "Only funders can perform this action");
+        require(tokenManager.balanceOf(msg.sender) > 0, "Only funders can perform this action");
+        // require(investment[msg.sender] > 0, "Only funders can perform this action");
         _;
     }
     modifier onlyFounder() {
@@ -111,7 +112,7 @@ contract CrowdfundingProject is ICrowdfundingProject {
         socialMediaLinkCID = _socialMediaLinkCID;
         ProjectManager = ICrowdfundingManager(msg.sender); // set the project manager to the contract deployer
         tokenManager = _tokenManager;
-        priceFeed = new PriceFeed();
+        // priceFeed = new PriceFeed();
     }
     function setVotingPlatform(address platformAddress) external {
         // set the voting platform address
@@ -166,7 +167,7 @@ contract CrowdfundingProject is ICrowdfundingProject {
     }
 
     function endProject() external onlyFounder() {
-        this.setProjectFailed();
+        setProjectFailed();
     }
 
     function invest(string memory tokenType) external payable isFundingProject() {
@@ -175,9 +176,9 @@ contract CrowdfundingProject is ICrowdfundingProject {
         
         // TODO: integrate with PriceFeed
         uint256 usdAmount = msg.value;
-        if (keccak256(bytes(tokenType)) != keccak256("USD")) {
-            usdAmount = priceFeed.convertToUSD(tokenType, msg.value);
-        }
+        // if (keccak256(bytes(tokenType)) != keccak256("USD")) {
+        //     usdAmount = priceFeed.convertToUSD(tokenType, msg.value);
+        // }
         console.log("The usd amount is:", usdAmount);
 
         tokenManager.mintTo(msg.sender, usdAmount);
@@ -213,7 +214,21 @@ contract CrowdfundingProject is ICrowdfundingProject {
     function refund() external {
         // TODO: Implement this function
         // 1.set project status to failed if the last milestone is not completed after the deadline.
-        // emit RefundIssued(msg.sender, amount);
+        if(block.timestamp > milestones[milestones.length-1].deadline){
+            setProjectFailed();
+        }        
+        require(status == ProjectStatus.Failed, "Project is not failed");
+        // 2. refund the investors based on their their number of ProjectTokens.
+        // 3. burn the ProjectTokens.
+        uint256 toRefund = tokenManager.balanceOf(msg.sender);
+        require(toRefund > 0, "No tokens to refund");
+        require(address(this).balance >= toRefund, "Insufficient balance for refund");
+        tokenManager.refund(msg.sender, toRefund); // burn the tokens and get the refund amount
+        // 4. transfer the refund to the investor.
+        fundingBalance -= toRefund; // remove the refund amount from the funding balance
+        payable(msg.sender).transfer(toRefund); // transfer the refund to the investor
+
+        emit RefundIssued(msg.sender, toRefund);
     }
     function withdraw() external onlyFounder() {
         // each withdrawal is 80% of the milestone funding goal, 
@@ -245,7 +260,7 @@ contract CrowdfundingProject is ICrowdfundingProject {
 
 
     // set the status to fail
-    function setProjectFailed() external {
+    function setProjectFailed() private {
         require(status == ProjectStatus.Active, "Project is not active");
         status = ProjectStatus.Failed;
         emit ProjectStatusUpdated(status, fundingDone);
