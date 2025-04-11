@@ -5,6 +5,21 @@
       "address": "0xe69aC77D153cCE81DFE97EA97A18Fa130369D790",
       "txHash": "0xef960186d7cb4ec8fea2fea6e4a6c7b82a9ec7cf3b6baf02ce1d9a924d866243",
       "kind": "transparent"
+    },
+    {
+      "address": "0x995740078afcc2D4F42008127751d0300d77Bf7b",
+      "txHash": "0xbe0a19fb093f77cb8003ef49f8eb41babd539908e64ce0473df5cb73f171b36a",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x304bD6069F1Da3CffE45253878A0E4d061775F18",
+      "txHash": "0x0968589ecd8c8b6727c3ea0619fe39a07e2a2943471a07efa4ef68ad73c86fd6",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x21819336a1C7E5B0F934B9a01D478e150136e473",
+      "txHash": "0xf569f28c9fd324822eed6d494a157a49f20ed5bc68ca646af4be2f880a4bfca5",
+      "kind": "transparent"
     }
   ],
   "impls": {
@@ -86,6 +101,277 @@
             "numberOfBytes": "32"
           },
           "t_mapping(t_address,t_contract(CrowdfundingProject)3065)": {
+            "label": "mapping(address => contract CrowdfundingProject)",
+            "numberOfBytes": "32"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        },
+        "namespaces": {}
+      }
+    },
+    "b733c6bf2ee901b740cf30467cd15ae2421e75d2660ffe8b8ce008bb78d2c1ad": {
+      "address": "0xc7f5Ca75c118f15267cbB44aDC6154B2C30AbBfF",
+      "txHash": "0x505264a59a7ae75906c0a9647422458673624523766dc94fab91a402aeab8a7b",
+      "layout": {
+        "solcVersion": "0.8.28",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:63",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:68"
+          },
+          {
+            "label": "platformOwner",
+            "offset": 2,
+            "slot": "0",
+            "type": "t_address",
+            "contract": "CrowdfundingManager",
+            "src": "contracts/CrowdfundingManager.sol:10"
+          },
+          {
+            "label": "projects",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_mapping(t_address,t_contract(CrowdfundingProject)3027)",
+            "contract": "CrowdfundingManager",
+            "src": "contracts/CrowdfundingManager.sol:11"
+          },
+          {
+            "label": "projectCount",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_uint256",
+            "contract": "CrowdfundingManager",
+            "src": "contracts/CrowdfundingManager.sol:12"
+          },
+          {
+            "label": "ProjectVotingManager",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_contract(IProjectVotingManager)4190",
+            "contract": "CrowdfundingManager",
+            "src": "contracts/CrowdfundingManager.sol:13"
+          },
+          {
+            "label": "founderProjectMap",
+            "offset": 0,
+            "slot": "4",
+            "type": "t_mapping(t_address,t_array(t_address)dyn_storage)",
+            "contract": "CrowdfundingManager",
+            "src": "contracts/CrowdfundingManager.sol:15"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_address)dyn_storage": {
+            "label": "address[]",
+            "numberOfBytes": "32"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_contract(CrowdfundingProject)3027": {
+            "label": "contract CrowdfundingProject",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IProjectVotingManager)4190": {
+            "label": "contract IProjectVotingManager",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_address,t_array(t_address)dyn_storage)": {
+            "label": "mapping(address => address[])",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_contract(CrowdfundingProject)3027)": {
+            "label": "mapping(address => contract CrowdfundingProject)",
+            "numberOfBytes": "32"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        },
+        "namespaces": {}
+      }
+    },
+    "29a5cb07051fead705013c6cbd62e59d404281d801b18c730f99f32fdbcf19d8": {
+      "address": "0xC88e4F9655135bF2Ee4650E0EE0D1A60AB0C1538",
+      "txHash": "0xb654d090c4b9cf504ee96583f416ff68f0265e2ab2c0a523884558b061d4019f",
+      "layout": {
+        "solcVersion": "0.8.28",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:63",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:68"
+          },
+          {
+            "label": "VotingPlatforms",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_mapping(t_address,t_address)",
+            "contract": "ProjectVotingManager",
+            "src": "contracts/ProjectVotingManager.sol:13"
+          },
+          {
+            "label": "CrowdFundingManagerAddress",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_address",
+            "contract": "ProjectVotingManager",
+            "src": "contracts/ProjectVotingManager.sol:14"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_mapping(t_address,t_address)": {
+            "label": "mapping(address => address)",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        },
+        "namespaces": {}
+      }
+    },
+    "6a0646f3e907a5c15dbd5a788c0d2573ab9afab18ac6926c4cae448052c68685": {
+      "address": "0x42F29a886100e1A06FCc4868faA14c9C06e9215c",
+      "txHash": "0xf6ce85d10858654a4adea33acf5ec840de6f32aca9f4763bbc7f6dfa5c7042ac",
+      "layout": {
+        "solcVersion": "0.8.28",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:63",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:68"
+          },
+          {
+            "label": "platformOwner",
+            "offset": 2,
+            "slot": "0",
+            "type": "t_address",
+            "contract": "CrowdfundingManager",
+            "src": "contracts/CrowdfundingManager.sol:10"
+          },
+          {
+            "label": "projects",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_mapping(t_address,t_contract(CrowdfundingProject)2940)",
+            "contract": "CrowdfundingManager",
+            "src": "contracts/CrowdfundingManager.sol:11"
+          },
+          {
+            "label": "projectCount",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_uint256",
+            "contract": "CrowdfundingManager",
+            "src": "contracts/CrowdfundingManager.sol:12"
+          },
+          {
+            "label": "ProjectVotingManager",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_contract(IProjectVotingManager)3938",
+            "contract": "CrowdfundingManager",
+            "src": "contracts/CrowdfundingManager.sol:13"
+          },
+          {
+            "label": "founderProjectMap",
+            "offset": 0,
+            "slot": "4",
+            "type": "t_mapping(t_address,t_array(t_address)dyn_storage)",
+            "contract": "CrowdfundingManager",
+            "src": "contracts/CrowdfundingManager.sol:15"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_address)dyn_storage": {
+            "label": "address[]",
+            "numberOfBytes": "32"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_contract(CrowdfundingProject)2940": {
+            "label": "contract CrowdfundingProject",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IProjectVotingManager)3938": {
+            "label": "contract IProjectVotingManager",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_address,t_array(t_address)dyn_storage)": {
+            "label": "mapping(address => address[])",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_contract(CrowdfundingProject)2940)": {
             "label": "mapping(address => contract CrowdfundingProject)",
             "numberOfBytes": "32"
           },
