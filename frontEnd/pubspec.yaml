@@ -79,6 +79,8 @@ flutter:
   assets:
     - .env
     - lib/ContractInterface/CrowdFundProject.abi.json
+    - lib/ContractInterface/CrowdfundingManager.json
+    - lib/ContractInterface/PriceFeed.abi.json
     - assets/banner.png
     - assets/19602.jpg
     - assets/football.jpg

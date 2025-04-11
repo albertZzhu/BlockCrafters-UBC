@@ -18,10 +18,24 @@ Future<DeployedContract> deployedProjectContract(
 }
 
 Future<DeployedContract> deployedManagerContract() async {
-  final abiCode = await rootBundle.loadString('lib/ContractInterface/CrowdfundingManager.abi.json');
+  final abiCode = await rootBundle.loadString(
+    'lib/ContractInterface/CrowdfundingManager.abi.json',
+  );
   final contract = DeployedContract(
     ContractAbi.fromJson(abiCode, 'CrowdfundingManager'),
     EthereumAddress.fromHex(dotenv.env['MANAGER_CONTRACT_ADDRESS']!),
   );
+  return contract;
+}
+
+Future<DeployedContract> deployedPriceFeedContract() async {
+  const String abiDirectory = 'lib/ContractInterface/PriceFeed.abi.json';
+  final String contractABI = await rootBundle.loadString(abiDirectory);
+
+  final DeployedContract contract = DeployedContract(
+    ContractAbi.fromJson(contractABI, "PriceFeed"),
+    EthereumAddress.fromHex(dotenv.env['PRICEFEED_CONTRACT_ADDRESS']!),
+  );
+
   return contract;
 }

@@ -71,3 +71,8 @@ class ProjectSubmissionFailed extends Web3State {
   const ProjectSubmissionFailed({required this.message});
 }
 
+class FetchTokenPriceInUSDSuccess extends Web3State {
+  const FetchTokenPriceInUSDSuccess({required this.priceList});
+
+  final List<String> priceList;
+}

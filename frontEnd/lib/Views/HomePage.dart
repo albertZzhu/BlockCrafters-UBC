@@ -51,31 +51,39 @@ class _MyHomePageState extends State<MyHomePage> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (BuildContext context) {
-        return DraggableScrollableSheet(
-          initialChildSize: 0.4,
-          maxChildSize: 0.8,
-          minChildSize: 0.4,
-          builder: (_, controller) {
-            return Container(
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(20),
-                  topRight: Radius.circular(20),
-                ),
-              ),
-              child: Wrap(
-                children: [
-                  InvestModal(
-                    onInvest: onInvest,
-                    description: description,
-                    projectImageUrl: projectImageUrl,
-                    projectAddress: projectAddress,
+        return AnimatedPadding(
+          duration: const Duration(milliseconds: 50),
+          curve: Curves.easeOut,
+          padding: EdgeInsets.only(
+            bottom:
+                MediaQuery.of(context).viewInsets.bottom, // Adjust for keyboard
+          ),
+          child: DraggableScrollableSheet(
+            initialChildSize: 0.6,
+            maxChildSize: 0.9,
+            minChildSize: 0.4,
+            builder: (_, controller) {
+              return Container(
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
                   ),
-                ],
-              ),
-            );
-          },
+                ),
+                child: Wrap(
+                  children: [
+                    InvestModal(
+                      onInvest: onInvest,
+                      description: description,
+                      projectImageUrl: projectImageUrl,
+                      projectAddress: projectAddress,
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
         );
       },
     );
@@ -147,6 +155,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    context.read<WalletConnectControl>().fetchHomeScreenActionButton();
     return Scaffold(
       body: BlocBuilder<WalletConnectControl, Web3State>(
         builder: (context, state) {

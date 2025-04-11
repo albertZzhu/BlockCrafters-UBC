@@ -160,24 +160,31 @@ class _StartPageState extends State<StartPage> {
                           ),
                         ),
                       ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Address",
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Address",
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ),
-                          Text(
-                            uid.substring(0, 4) +
-                                "..." +
-                                uid.substring(uid.length - 4),
-                            style: TextStyle(color: Colors.black, fontSize: 15),
-                          ),
-                        ],
+                            Text(
+                              uid.substring(0, 4) +
+                                  "..." +
+                                  uid.substring(uid.length - 4),
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 15,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
