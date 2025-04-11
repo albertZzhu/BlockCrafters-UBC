@@ -12,7 +12,7 @@ describe("ProjectToken", function () {
   beforeEach(async function () {
     [owner, project, investor, other] = await ethers.getSigners();
     const Token = await ethers.getContractFactory("ProjectToken");
-    token = await Token.deploy(name, symbol, project.address, owner.address);
+    token = await Token.deploy(name, symbol, owner.address);
     await token.waitForDeployment();
   });
 
@@ -20,7 +20,7 @@ describe("ProjectToken", function () {
     expect(await token.name()).to.equal(name);
     expect(await token.symbol()).to.equal(symbol);
     expect(await token.owner()).to.equal(owner.address);
-    expect(await token.project()).to.equal(project.address);
+    // expect(await token.project()).to.equal(project.address);
   });
 
   it("should allow owner to mint tokens", async function () {

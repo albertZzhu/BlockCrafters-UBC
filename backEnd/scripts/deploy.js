@@ -40,6 +40,7 @@ async function main() {
         { initializer: "initialize" }
     );
     await manager.waitForDeployment();
+    await addressProvider.connect(appOwner).setCrowdfundingManager(app.target);
     console.log("CrowdfundingManager proxy deployed at:", await manager.getAddress());
 }
 
