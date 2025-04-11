@@ -332,5 +332,111 @@ Future<void> submitProject({
   }
 }
 
+// Future<List<String>> getMyProjectAddresses() async {
+//   try {
+//     final List<String> accounts = _appKitModal.session?.getAccounts() ?? <String>[];
+//     if (accounts.isEmpty) throw Exception('No wallet connected');
+//     final String userAddress = accounts.first.split(':').last;
+
+//     final contract = await deployedManagerContract();
+
+//     final List<dynamic> result = await _appKitModal.requestReadContract(
+//       topic: _appKitModal.session?.topic ?? '',
+//       chainId: _appKitModal.selectedChain!.chainId,
+//       deployedContract: contract,
+//       functionName: 'getFounderProjects',
+//       parameters: [EthereumAddress.fromHex(userAddress)],
+//     );
+
+//     final List<String> addresses = result.map((e) => e.toString()).toList();
+//     return addresses;
+//   } catch (e) {
+//     print('Error fetching project addresses: $e');
+//     return [];
+//   }
+// }
+
+Future<List<String>> getMyProjectAddresses() async {
+  try {
+    final List<String> accounts = _appKitModal.session?.getAccounts() ?? <String>[];
+    if (accounts.isEmpty) throw Exception('No wallet connected');
+    final String userAddress = accounts.first.split(':').last;
+
+    final contract = await deployedManagerContract();
+
+    final List<dynamic> result = await _appKitModal.requestReadContract(
+      topic: _appKitModal.session?.topic ?? '',
+      chainId: _appKitModal.selectedChain!.chainId,
+      deployedContract: contract,
+      functionName: 'getFounderProjects',
+      parameters: [EthereumAddress.fromHex(userAddress)],
+    );
+
+    // 🔥 Fix: handle nested list correctly
+    final List<dynamic> addressList = result.first as List;
+    final List<String> addresses = addressList.map((e) => e.toString()).toList();
+
+    print("✅ Project addresses: $addresses");
+    return addresses;
+  } catch (e) {
+    print('Error fetching project addresses: $e');
+    return [];
+  }
+}
+
+Future<Map<String, dynamic>> getProjectInfo(String projectAddress) async {
+  try {
+    final contract = await deployedProjectContract(projectAddress, ""); 
+
+    final name = await _appKitModal.requestReadContract(
+      topic: _appKitModal.session?.topic ?? '',
+      chainId: _appKitModal.selectedChain!.chainId,
+      deployedContract: contract,
+      functionName: 'name',
+    );
+
+    final deadline = await _appKitModal.requestReadContract(
+      topic: _appKitModal.session?.topic ?? '',
+      chainId: _appKitModal.selectedChain!.chainId,
+      deployedContract: contract,
+      functionName: 'fundingDeadline',
+    );
+
+    final descCID = await _appKitModal.requestReadContract(
+      topic: _appKitModal.session?.topic ?? '',
+      chainId: _appKitModal.selectedChain!.chainId,
+      deployedContract: contract,
+      functionName: 'descCID',
+    );
+
+    final photoCID = await _appKitModal.requestReadContract(
+      topic: _appKitModal.session?.topic ?? '',
+      chainId: _appKitModal.selectedChain!.chainId,
+      deployedContract: contract,
+      functionName: 'photoCID',
+    );
+
+    final socialCID = await _appKitModal.requestReadContract(
+      topic: _appKitModal.session?.topic ?? '',
+      chainId: _appKitModal.selectedChain!.chainId,
+      deployedContract: contract,
+      functionName: 'socialMediaLinkCID',
+    );
+
+    return {
+      'name': name.first.toString(),
+      'deadline': DateTime.fromMillisecondsSinceEpoch(
+        BigInt.parse(deadline.first.toString()).toInt() * 1000,
+      ).toString(),
+      'descCID': descCID.first.toString(),
+      'photoCID': photoCID.first.toString(),
+      'socialMediaCID': socialCID.first.toString(),
+    };
+  } catch (e) {
+    print('❌ Error loading project info: $e');
+    return {'error': e.toString()};
+  }
+}
+
 
 }

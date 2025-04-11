@@ -176,22 +176,6 @@ class _ProposeProjectScreenState extends State<ProposeProjectScreen> {
           print('Error during project submission: $e');  // Log error for debugging
         }
 
-
-        // if (!mounted) return;
-        // await context.read<WalletConnectControl>().submitProject(
-        //   name: nameController.text,
-        //   deadline: deadlineTimestamp!,
-        //   tokenName: tokenNameController.text,
-        //   detailCid: cids['Detail file']!,
-        //   imageCid: cids['Image']!,
-        //   socialMediaCid: cids['Social Media Link File']!,
-        //   tokenSymbolCid: cids['Token Symbol']!,
-        // );
-
-        // setState(() {
-        //   uploadStatus = '\nProject submitted successfully!';
-        // });
-
         if (!mounted) return;
         showDialog(
           context: context,
@@ -218,6 +202,18 @@ class _ProposeProjectScreenState extends State<ProposeProjectScreen> {
       }
     }
     // Above, logic to submit project to contract
+
+    // setState(() {
+    //   uploadStatus = '\nProject submitted successfully!';
+    //   nameController.clear();
+    //   socialMediaController.clear();
+    //   deadlineController.clear();
+    //   tokenNameController.clear();
+    //   imageFile = null;
+    //   detailFile = null;
+    //   symbolFile = null;
+    // });
+
 
     if (context.mounted && cids.length == 4) {
       showDialog(
