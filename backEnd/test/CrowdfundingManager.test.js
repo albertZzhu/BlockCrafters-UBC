@@ -65,18 +65,31 @@ describe("CrowdfundingManager", function () {
         
         fundingDeadline = Math.floor(Date.now() / 1000) + oneDay;
         milestoneDeadline = fundingDeadline + oneDay;
-
-        // cfdTokenAddress = "0x1234";
-        // crowdfundingPlatform = await ethers.deployContract("CrowdfundingPlatform", [cfdTokenAddress]);
+        
+        let addressProviderFactory = await ethers.getContractFactory("AddressProvider", appOwner);
+        let addressProvider = await addressProviderFactory.deploy();
+        
         let votingManagerFactory = await ethers.getContractFactory("ProjectVotingManager", appOwner);
-        let votingManager = await upgrades.deployProxy(votingManagerFactory);
-
+        let votingManager = await upgrades.deployProxy(
+            votingManagerFactory, [addressProvider.target], { initializer: 'initialize' }
+        );
+        await addressProvider.connect(appOwner).setProjectVotingManager(votingManager.target);
+        
         let tokenManagerFactory = await ethers.getContractFactory("TokenManager", appOwner);
-        let tokenManager = await upgrades.deployProxy(tokenManagerFactory);
+        let tokenManager = await upgrades.deployProxy(
+            tokenManagerFactory, [addressProvider.target], { initializer: 'initialize' }
+        );
+        await addressProvider.connect(appOwner).setTokenManager(tokenManager.target);
+
 
         let appFactory = await ethers.getContractFactory("CrowdfundingManager", appOwner);
-        app = await upgrades.deployProxy(appFactory, [votingManager.target, tokenManager.target], { initializer: 'initialize' });
-        
+        app = await upgrades.deployProxy(
+            appFactory, [addressProvider.target], { initializer: 'initialize' }
+        );
+        await addressProvider.connect(appOwner).setCrowdfundingManager(app.target);
+        // console.log("app address", await addressProvider.getCrowdfundingManager());
+        // console.log("votingManager address", await addressProvider.getProjectVotingManager());
+        // console.log("tokenManager address", await addressProvider.getTokenManager());
 
         //  // Deploy ProjectToken logic contract
         // ProjectTokenFactory = await ethers.getContractFactory("ProjectToken");
@@ -466,7 +479,10 @@ describe("CrowdfundingManager", function () {
             await project1.connect(founder1).addMilestone("Milestone 2", descCID, halfEther, milestoneDeadline + oneDay);
             // fund to full
             await project1.connect(founder1).startFunding();
-            await expect(project1.connect(backer1).invest({ value: fundingGoal }))
+            const tx = await project1.connect(backer1).invest({ value: fundingGoal })
+            await tx.wait();
+            // ethers.provider.send("evm_mine", []); // Mine a new block
+            await expect(tx)
             .to.emit(project1, "InvestmentMade")
                 .withArgs(backer1.address, fundingGoal);
                 
@@ -513,7 +529,7 @@ describe("CrowdfundingManager", function () {
                 ).to.be.revertedWith("No funds available for withdrawal");
             });
         });
-        it("Should allow founder to withdraw Mileston2 funds after milestone advance request approved", async function () {
+        it("Should allow founder to withdraw Milestone2 funds after milestone advance request approved", async function () {
             //m1 vote
             await project1.connect(founder1).requestAdvance();
             expect(await project1.getCurrentMilestone()).to.equal(0);

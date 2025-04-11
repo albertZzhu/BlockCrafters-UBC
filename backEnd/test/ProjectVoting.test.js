@@ -63,24 +63,27 @@ describe("ProjectVoting", function () {
 
         // cfdTokenAddress = "0x1234";
         // crowdfundingPlatform = await ethers.deployContract("CrowdfundingPlatform", [cfdTokenAddress]);
+        let addressProviderFactory = await ethers.getContractFactory("AddressProvider", appOwner);
+        let addressProvider = await addressProviderFactory.deploy();
+        
         let votingManagerFactory = await ethers.getContractFactory("ProjectVotingManager", appOwner);
-        let votingManager = await votingManagerFactory.deploy();
-
+        let votingManager = await upgrades.deployProxy(
+            votingManagerFactory, [addressProvider.target], { initializer: 'initialize' }
+        );
+        await addressProvider.connect(appOwner).setProjectVotingManager(votingManager.target);
+        
         let tokenManagerFactory = await ethers.getContractFactory("TokenManager", appOwner);
-        let tokenManager = await upgrades.deployProxy(tokenManagerFactory);
+        let tokenManager = await upgrades.deployProxy(
+            tokenManagerFactory, [addressProvider.target], { initializer: 'initialize' }
+        );
+        await addressProvider.connect(appOwner).setTokenManager(tokenManager.target);
+
 
         let appFactory = await ethers.getContractFactory("CrowdfundingManager", appOwner);
-        app = await upgrades.deployProxy(appFactory, [votingManager.target, tokenManager.target], { initializer: 'initialize' });
-        
-        // app = await appFactory.deploy("Temp", "TMP", tokenSupply, salt);
-
-        //  // Deploy ProjectToken logic contract
-        // ProjectTokenFactory = await ethers.getContractFactory("ProjectToken");
-        // ProjectToken = await ProjectTokenFactory.deploy("Temp", "TMP", 1, appOwner.address); 
-
-        
-        // console.log("CrowdfundingPlatform address:", app.address);
-        // votingPlatform = await ethers.deployContract("ProjectVoting", [app.address]);
+        app = await upgrades.deployProxy(
+            appFactory, [addressProvider.target], { initializer: 'initialize' }
+        );
+        await addressProvider.connect(appOwner).setCrowdfundingManager(app.target);
     });    
     describe("Milestone Extension", function () {
         let  project1, project1Address;
@@ -97,7 +100,6 @@ describe("ProjectVoting", function () {
             // activate the project
             await project1.connect(backer1).invest({value:  fiveEther});
             // request extension
-            console.log("Project1 address:", project1Address);
             await project1.connect(founder1).requestExtension(0, milestoneDeadline + oneDay);
             const voting = await votingPlatform.getVoting(0,-1);
             expect(voting.voteType).to.equal(0); //Extension

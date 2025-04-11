@@ -2,9 +2,11 @@
 pragma solidity ^0.8.19;
 
 import "./ProjectToken.sol";
+import {IAddressProvider} from "./AddressStorage.sol";
 import "hardhat/console.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 interface ITokenManager {
-    function setCrowdfundingManager(address _crowdFundingManager) external;
+    // function setCrowdfundingManager(address _crowdFundingManager) external;
     function deployToken(address projectAddress, string memory name, string memory symbol) external returns (address deployedTokenAddress);
     function mintTo(address investor, uint256 amount) external;
     function balanceOf(address project, address investor) external view returns (uint256);
@@ -13,18 +15,22 @@ interface ITokenManager {
     function getPastVotes(address project, address account, uint256 blockNumber) external view returns (uint256);
     function getTokenAddress(address project) external view returns (address);
 }
-contract TokenManager is ITokenManager{
+contract TokenManager is ITokenManager, Initializable{
     mapping(address=>address) public tokenAddresses;
-    address CrowdFundingManagerAddress;
+    // address CrowdFundingManagerAddress;
+    IAddressProvider private addressProvider;
     // address public crowdfundingProject;
     // address public tokenAddresses[msg.sender];
     address public owner;
 
     event TokenDeployed(address indexed token);
     event TokensMinted(address indexed to, uint256 amount);
-
+    function initialize(address _addressProvider) external initializer {
+        addressProvider = IAddressProvider(_addressProvider);
+    }
     modifier onlyCrowdFundingManager() {
-        require(msg.sender == CrowdFundingManagerAddress, "Only CrowdFundingManager can call this function");
+        address crowdFundingManagerAddress = addressProvider.getCrowdfundingManager();
+        require(msg.sender == crowdFundingManagerAddress, "Only CrowdFundingManager can call this function");
         _;
     }
     modifier onlyAuthorized() {
@@ -36,10 +42,10 @@ contract TokenManager is ITokenManager{
         require(tokenAddresses[projectAddress] != address(0), "Token not deployed");
         _;
     }
-    function setCrowdfundingManager(address _crowdFundingManager) external {
-        require(CrowdFundingManagerAddress == address(0), "CrowdFundingManager already set");
-        CrowdFundingManagerAddress = _crowdFundingManager;
-    }  
+    // function setCrowdfundingManager(address _crowdFundingManager) external {
+    //     require(CrowdFundingManagerAddress == address(0), "CrowdFundingManager already set");
+    //     CrowdFundingManagerAddress = _crowdFundingManager;
+    // }  
 
     /// Deploy the token for this project using CREATE2
     function deployToken(address projectAddress, string memory name, string memory symbol) external onlyCrowdFundingManager returns (address) {

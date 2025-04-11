@@ -22,7 +22,7 @@ contract CrowdfundingProject is ICrowdfundingProject {
     string public name;
     uint256 public fundingBalance;
     uint256 public frozenFund;
-    mapping(address => uint256) public investment;
+    // mapping(address => uint256) public investment;
     ProjectStatus public status;
     bool public fundingDone;
     uint256 public fundingDeadline;
@@ -177,12 +177,12 @@ contract CrowdfundingProject is ICrowdfundingProject {
         tokenManager.mintTo(msg.sender, usdAmount);
 
         fundingBalance += usdAmount;
-        investment[msg.sender] += usdAmount; // record total investment
+        // investment[msg.sender] += usdAmount; // record total investment
 
         // check if this is a new investor
-        if (investment[msg.sender] == 0) {
-            investors.push(msg.sender);
-        }
+        // if (investment[msg.sender] == 0) {
+        //     investors.push(msg.sender);
+        // }
         
         // activate the project if the funding goal is reached
         if (fundingBalance >= this.getProjectFundingGoal()) {
@@ -351,7 +351,8 @@ contract CrowdfundingProject is ICrowdfundingProject {
     }
 
     function getInvestment(address investor) external view returns(uint256){
-        return investment[investor];
+        // return investment[investor];
+        return tokenManager.balanceOf(address(this), investor);
     }
 
     function getFounder() external view returns(address) {

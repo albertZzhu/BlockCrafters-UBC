@@ -32,13 +32,13 @@ contract ProjectToken is ERC20, ERC20Permit, ERC20Votes {
     }
     function mint(address to, uint256 amount) external onlyOwner {
         _mint(to, amount);
+        _delegate(to, to);
     }
 
     function transferOwnership(address newOwner) external onlyOwner {
         require(newOwner != address(0), "Invalid new owner");
         owner = newOwner;
     }
-
     function _refund(address to, uint256 amount) external onlyOwner returns (uint256) {
         uint256 UserBalance = balanceOf(to);
         require(amount > 0, "Amount must be > 0");
