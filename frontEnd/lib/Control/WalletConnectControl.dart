@@ -247,17 +247,19 @@ class WalletConnectControl extends Cubit<Web3State> {
     }
   }
 
-/// * This method is used to create and submit a new crowdfunding project on-chain.
-/// * It takes the project name, deadline, token name, and the individual IPFS CIDs for description, image, social media link, and token symbol.
-/// * It emits different states based on the success or failure of the transaction.
+/// * This method is used to submit a new project to the crowdfunding platform.
+/// * It connects to the user's wallet, prepares the contract interaction, and sends
+///   a transaction to call the `createProject` function on the manager contract.
+/// * It emits different states based on the success or failure of the submission.
 /// * @param name The name of the project.
-/// * @param deadline The funding deadline (Unix timestamp).
-/// * @param tokenName The name of the reward token.
-/// * @param detailCid The CID for the project description.
-/// * @param imageCid The CID for the project image.
-/// * @param socialMediaCid The CID for the social media link.
-/// * @param tokenSymbolCid The CID for the token symbol.
-/// * @return A Future that completes when the project is submitted.
+/// * @param deadline The funding deadline of the project (as a Unix timestamp).
+/// * @param tokenName The name of the token associated with the project.
+/// * @param detailCid The IPFS CID for the project's detailed description.
+/// * @param imageCid The IPFS CID for the project's image.
+/// * @param socialMediaCid The IPFS CID for the project's social media links.
+/// * @param tokenSymbolCid The IPFS CID for the token symbol.
+/// * @return A Future that completes when the submission process is finished.
+
 Future<void> submitProject({
   required String name,
   required int deadline,
@@ -274,18 +276,33 @@ Future<void> submitProject({
     final List<String> accounts = _appKitModal.session?.getAccounts() ?? <String>[];
     if (accounts.isEmpty) {
       emit(ProjectSubmissionFailed(message: 'No connected wallet found.'));
+      print('No connected wallet found.');
       return;
     }
 
     final String sender = accounts.first.split(':').last;
+    print('Wallet connected: $sender');
 
     // Load contract ABI and address
     final String managerContractAddress = dotenv.env['MANAGER_CONTRACT_ADDRESS']!;
+    print('Using contract address: $managerContractAddress');
+
     final DeployedContract contract = await deployedManagerContract();
+    print('Contract loaded successfully.');
 
     _appKitModal.launchConnectedWallet();
+    print('Wallet launched.');
 
     // Send the transaction
+    print('Sending transaction with parameters:');
+    print('Name: $name');
+    print('Deadline: $deadline');
+    print('Token Name: $tokenName');
+    print('Detail CID: $detailCid');
+    print('Image CID: $imageCid');
+    print('Social Media CID: $socialMediaCid');
+    print('Token Symbol CID: $tokenSymbolCid');
+
     await _appKitModal.requestWriteContract(
       topic: _appKitModal.session?.topic ?? '',
       chainId: _appKitModal.selectedChain!.chainId,
@@ -306,10 +323,12 @@ Future<void> submitProject({
         tokenSymbolCid,
       ],
     );
+    print('Transaction sent successfully.');
 
     emit(ProjectSubmissionSuccess());
   } catch (e) {
     emit(ProjectSubmissionFailed(message: 'Project submission failed: $e'));
+    print('Error during project submission: $e');  // Log the error to help with debugging
   }
 }
 

@@ -148,20 +148,49 @@ class _ProposeProjectScreenState extends State<ProposeProjectScreen> {
           uploadStatus = '\n🚀 Submitting project to smart contract...';
         });
 
+
         if (!mounted) return;
-        await context.read<WalletConnectControl>().submitProject(
-          name: nameController.text,
-          deadline: deadlineTimestamp!,
-          tokenName: tokenNameController.text,
-          detailCid: cids['Detail file']!,
-          imageCid: cids['Image']!,
-          socialMediaCid: cids['Social Media Link File']!,
-          tokenSymbolCid: cids['Token Symbol']!,
-        );
 
         setState(() {
-          uploadStatus = '\nProject submitted successfully!';
+          uploadStatus = 'Submitting project...';
         });
+
+        try {
+          await context.read<WalletConnectControl>().submitProject(
+            name: nameController.text,
+            deadline: deadlineTimestamp!,
+            tokenName: tokenNameController.text,
+            detailCid: cids['Detail file']!,
+            imageCid: cids['Image']!,
+            socialMediaCid: cids['Social Media Link File']!,
+            tokenSymbolCid: cids['Token Symbol']!,
+          );
+
+          setState(() {
+            uploadStatus = '\nProject submitted successfully!';
+          });
+        } catch (e) {
+          setState(() {
+            uploadStatus = 'Submission failed: $e';
+          });
+          print('Error during project submission: $e');  // Log error for debugging
+        }
+
+
+        // if (!mounted) return;
+        // await context.read<WalletConnectControl>().submitProject(
+        //   name: nameController.text,
+        //   deadline: deadlineTimestamp!,
+        //   tokenName: tokenNameController.text,
+        //   detailCid: cids['Detail file']!,
+        //   imageCid: cids['Image']!,
+        //   socialMediaCid: cids['Social Media Link File']!,
+        //   tokenSymbolCid: cids['Token Symbol']!,
+        // );
+
+        // setState(() {
+        //   uploadStatus = '\nProject submitted successfully!';
+        // });
 
         if (!mounted) return;
         showDialog(
