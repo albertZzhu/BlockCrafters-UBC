@@ -4,22 +4,25 @@ pragma solidity ^0.8.19;
 import {IProjectVoting, VotingStarted, Voting, VoteType, VoteResult} from "./ProjectVoting.sol";
 import "./ICrowdfundingProject.sol";
 import "./ICrowdfundingManager.sol";
-import "./TokenManager.sol";
+// import "./PriceFeed.sol";
+import {ITokenManager} from "./TokenManager.sol";
 
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract CrowdfundingProject is ICrowdfundingProject {
-    
-    // Token
-    TokenManager public tokenManager;
+    ICrowdfundingManager public ProjectManager; 
+    IProjectVoting public votingPlatform;
+    ITokenManager public tokenManager;
+    // PriceFeed
+    // PriceFeed public priceFeed;
 
     uint256 public projectId;
     address public founder;
     string public name;
     uint256 public fundingBalance;
     uint256 public frozenFund;
-    mapping(address => uint256) public investment;
+    // mapping(address => uint256) public investment;
     ProjectStatus public status;
     bool public fundingDone;
     uint256 public fundingDeadline;
@@ -30,8 +33,7 @@ contract CrowdfundingProject is ICrowdfundingProject {
     string public descCID; // IPFS cid for project description
     string public photoCID; // IPFS cid for project photo
     string public socialMediaLinkCID;
-    ICrowdfundingManager public ProjectManager; 
-    IProjectVoting public votingPlatform;
+    
 
     // all the investors' addresses in a project 
     // auto-generated getter: address[] public investors;
@@ -41,7 +43,7 @@ contract CrowdfundingProject is ICrowdfundingProject {
     uint8 public FROZEN_PERCENTAGE = 20; // percentage of fund frozen until investors acknowledge completion of milestone
 
     modifier onlyFunder() {
-        require(tokenManager.balanceOf(msg.sender) > 0, "Only funders can perform this action");
+        require(tokenManager.balanceOf(address(this),msg.sender) > 0, "Only funders can perform this action");
         // require(investment[msg.sender] > 0, "Only funders can perform this action");
         _;
     }
@@ -96,8 +98,7 @@ contract CrowdfundingProject is ICrowdfundingProject {
         uint256 _fundingDeadline,
         string memory _descCID,
         string memory _photoCID,
-        string memory _socialMediaLinkCID,
-        TokenManager _tokenManager
+        string memory _socialMediaLinkCID
     ) {
         founder = _founder;
         projectId = _projectId;
@@ -107,7 +108,9 @@ contract CrowdfundingProject is ICrowdfundingProject {
         photoCID = _photoCID;
         socialMediaLinkCID = _socialMediaLinkCID;
         ProjectManager = ICrowdfundingManager(msg.sender); // set the project manager to the contract deployer
-        tokenManager = _tokenManager;
+        tokenManager = ITokenManager(ProjectManager.getTokenManagerAddress()); // set the token manager address
+        // votingPlatform = IProjectVoting(ProjectManager.getVotingPlatformAddress()); // set the voting platform address
+        // priceFeed = new PriceFeed();
     }
     function setVotingPlatform(address platformAddress) external {
         // set the voting platform address
@@ -174,12 +177,12 @@ contract CrowdfundingProject is ICrowdfundingProject {
         tokenManager.mintTo(msg.sender, usdAmount);
 
         fundingBalance += usdAmount;
-        investment[msg.sender] += usdAmount; // record total investment
+        // investment[msg.sender] += usdAmount; // record total investment
 
         // check if this is a new investor
-        if (investment[msg.sender] == 0) {
-            investors.push(msg.sender);
-        }
+        // if (investment[msg.sender] == 0) {
+        //     investors.push(msg.sender);
+        // }
         
         // activate the project if the funding goal is reached
         if (fundingBalance >= this.getProjectFundingGoal()) {
@@ -210,7 +213,7 @@ contract CrowdfundingProject is ICrowdfundingProject {
         require(status == ProjectStatus.Failed, "Project is not failed");
         // 2. refund the investors based on their their number of ProjectTokens.
         // 3. burn the ProjectTokens.
-        uint256 toRefund = tokenManager.balanceOf(msg.sender);
+        uint256 toRefund = tokenManager.balanceOf(address(this), msg.sender);
         require(toRefund > 0, "No tokens to refund");
         require(address(this).balance >= toRefund, "Insufficient balance for refund");
         tokenManager.refund(msg.sender, toRefund); // burn the tokens and get the refund amount
@@ -343,9 +346,13 @@ contract CrowdfundingProject is ICrowdfundingProject {
         // NOTE: Voting.threshold should be weighted by the range of the credibility score
         return 1;
     }
+    function getTokenAddress() external view returns(address) {
+        return tokenManager.getTokenAddress(address(this));
+    }
 
     function getInvestment(address investor) external view returns(uint256){
-        return investment[investor];
+        // return investment[investor];
+        return tokenManager.balanceOf(address(this), investor);
     }
 
     function getFounder() external view returns(address) {

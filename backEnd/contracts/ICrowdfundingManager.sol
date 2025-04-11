@@ -12,6 +12,7 @@ interface ICrowdfundingManager{
     ) external;
 
     function getFounderProjects(address founder) external view returns (uint256[] memory);
+    function getTokenManagerAddress() external view returns (address);
 
     function getPlatformOwner() external view returns (address);
 

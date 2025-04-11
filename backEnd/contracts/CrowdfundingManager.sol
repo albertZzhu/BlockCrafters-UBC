@@ -2,15 +2,20 @@
 pragma solidity ^0.8.19;
 
 import "./CrowdfundingProject.sol";
-import "./TokenManager.sol";
+import "./ICrowdfundingProject.sol";
+import {IAddressProvider} from "./AddressStorage.sol";
+import {ITokenManager} from "./TokenManager.sol";
 import {IProjectVotingManager, ProjectVotingCreated} from "./ProjectVotingManager.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 contract CrowdfundingManager is Initializable {
     address public platformOwner;
     mapping(address => CrowdfundingProject) public projects;
+    address[] public projectAddresses;
     uint256 public projectCount;
     IProjectVotingManager private ProjectVotingManager;
+    ITokenManager private tokenManager;
+    IAddressProvider private addressProvider;
 
     mapping(address founderAddress => address[]) public founderProjectMap;
 
@@ -42,10 +47,13 @@ contract CrowdfundingManager is Initializable {
         address indexed newOwner
     );
 
-    function initialize(address projectVotingManagerAddress) public initializer {
+    function initialize(address _addressProvider) public initializer {
         platformOwner = msg.sender;
-        ProjectVotingManager = IProjectVotingManager(projectVotingManagerAddress);
-        ProjectVotingManager.setCrowdfundingManager(address(this));
+        addressProvider = IAddressProvider(_addressProvider);
+        ProjectVotingManager = IProjectVotingManager(addressProvider.getProjectVotingManager());
+        tokenManager = ITokenManager(addressProvider.getTokenManager());
+        // ProjectVotingManager.setCrowdfundingManager(address(this));
+        // tokenManager.setCrowdfundingManager(address(this));
     }
     
     // assumption (supportive) function
@@ -66,9 +74,6 @@ contract CrowdfundingManager is Initializable {
         require(fundingDeadline > block.timestamp, "Deadline must be in the future");
         projectCount++;
 
-        TokenManager tokenManager = new TokenManager(address(this));
-        tokenManager.deployToken(tokenName, tokenSymbolCID);
-
         CrowdfundingProject project = new CrowdfundingProject(
             msg.sender,
             projectCount,
@@ -76,23 +81,63 @@ contract CrowdfundingManager is Initializable {
             fundingDeadline,
             descCID,
             photoCID,
-            socialMediaLinkCID,
-            tokenManager
+            socialMediaLinkCID
         );
 
         address projectAddress = address(project);
+        tokenManager.deployToken(projectAddress, tokenName, tokenSymbolCID);
         address voting = ProjectVotingManager.createVotingPlatfrom(projectAddress);
         
         project.setVotingPlatform(voting);
-        tokenManager.setCrowdfundingProject(projectAddress);
+        // project.setTokenManager(address(tokenManager));
+        // tokenManager.setCrowdfundingProject(projectAddress);
 
         projects[projectAddress] = project;
+        projectAddresses.push(projectAddress);
         founderProjectMap[msg.sender].push(projectAddress);
         emit ProjectCreated(projectAddress, msg.sender,fundingDeadline, descCID, photoCID, socialMediaLinkCID, tokenName, tokenSymbolCID);
+    }
+    function getVotingManagerAddress() external view returns (address) {
+        return address(ProjectVotingManager);
+    }
+    function getTokenManagerAddress() external view returns (address) {
+        return address(tokenManager);
     }
 
     function getFounderProjects(address founder) external view returns (address[] memory) {
         return founderProjectMap[founder];
+    }
+    
+    function getAllFundingProjects() external view returns (address[] memory) {
+        // TODO: Implement a more efficient way to get all funding projects
+        // Bad Implementation: requires looping through all projects to check their status
+        address[] memory fundingAddresses = new address[](projectAddresses.length);
+        uint256 countEligible = 0;
+        for (uint256 i = 0; i < projectAddresses.length; i++) {
+            address projectAddress = projectAddresses[i];
+            if (projects[projectAddress].getStatus() == ICrowdfundingProject.ProjectStatus.Funding) {
+                fundingAddresses[countEligible] = projectAddress;
+                countEligible++;
+            }
+        }
+        assembly { mstore(fundingAddresses, countEligible) } // Resize the array to the actual count
+        return fundingAddresses;
+    }
+    function getAllActiveProjects() external view returns (address[] memory) {
+        // TODO: Implement a more efficient way to get all active projects
+        // Bad Implementation: requires looping through all projects to check their status
+        address[] memory activeAddresses = new address[](projectAddresses.length);
+        uint256 countEligible = 0;
+        for (uint256 i = 0; i < projectAddresses.length; i++) {
+            address projectAddress = projectAddresses[i];
+            if (projects[projectAddress].getStatus() == ICrowdfundingProject.ProjectStatus.Active) {
+                activeAddresses[countEligible] = projectAddress;
+                countEligible++;
+            }
+        }
+        assembly { mstore(activeAddresses, countEligible) } // Resize the array to the actual count
+        return activeAddresses;
+    
     }
 
     function getPlatformOwner() external view returns (address) {

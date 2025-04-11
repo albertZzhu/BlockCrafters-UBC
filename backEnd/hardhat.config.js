@@ -9,14 +9,14 @@ module.exports = {
     settings: {
       optimizer: {
         enabled: true,
-        runs: 50,
+        runs: 1000,
       },
     },
   },
-  // contractSizer: {
-  //   runOnCompile: true, // Automatically run after compilation
-  //   only: [], // Optionally specify contracts to include
-  // },  
+  contractSizer: {
+    runOnCompile: true, // Automatically run after compilation
+    only: [], // Optionally specify contracts to include
+  },  
   networks: {
     hardhat: {
       allowUnlimitedContractSize: true

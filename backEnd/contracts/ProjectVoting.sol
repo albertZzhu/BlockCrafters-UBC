@@ -3,7 +3,8 @@ pragma solidity ^0.8.28;
 import "hardhat/console.sol";
 // import "./ProjectPlatform.sol";
 import "./ICrowdfundingProject.sol";
-
+import {ITokenManager} from "./TokenManager.sol";
+import {IAddressProvider} from "./AddressStorage.sol";
 struct Voting{
     VoteResult result;
     VoteType voteType;
@@ -13,6 +14,7 @@ struct Voting{
     uint256 startTime;
     uint256 endTime;
     uint256 newDeadline;
+    uint256 blockNumber;
 }    
 event VotingStarted(uint256 milestoneID, VoteType voteType, uint256 startTime, uint256 endTime);
 event VotingValidated(uint256 milestoneID, VoteResult result);
@@ -36,14 +38,18 @@ interface IProjectVoting{
 contract ProjectVoting is IProjectVoting{
     uint VOTE_LENGTH = 604800; // 1 week in seconds (7*24*60*60)
     ICrowdfundingProject Project;
+    IAddressProvider addressProvider;
+    ITokenManager tokenManager;
     struct Vote{
         VoteResult decision;
         uint256 votePower;
     }
 
     
-    constructor(address _ProjectAddress){
+    constructor(address _ProjectAddress, address _addressProviderAddress){
         Project = ICrowdfundingProject(_ProjectAddress);
+        addressProvider = IAddressProvider(_addressProviderAddress);
+        tokenManager = ITokenManager(addressProvider.getTokenManager());
     }
 
     mapping(uint256 milestoneID => Voting[]) public votings;
@@ -68,6 +74,7 @@ contract ProjectVoting is IProjectVoting{
         voting.startTime = block.timestamp;
         voting.endTime = block.timestamp+VOTE_LENGTH;
         voting.threshold = Project.getProjectFundingGoal()/2;
+        voting.blockNumber = block.number;
         emit VotingStarted(milestoneID, voting.voteType, voting.startTime, voting.endTime);
     }
     function getVoting(uint256 milestoneID, int votingID) external view returns(Voting memory){
@@ -120,6 +127,11 @@ contract ProjectVoting is IProjectVoting{
         }
         return VoteResult.Pending;
     }
+    function getVotePower(address investor, uint256 blockNumber) external view returns(uint256){
+        // uint256 votePower = Project.getInvestment(investor)*Project.getBackerCredibility(msg.sender);
+        uint256 votePower = tokenManager.getPastVotes(address(Project), investor, blockNumber)*Project.getBackerCredibility(msg.sender);
+        return votePower;
+    }
     function vote(uint256 milestoneID, bool decision) external {
         Voting[] storage _votings = votings[milestoneID];
         require(_votings.length > 0, "No voting has started yet");
@@ -128,7 +140,7 @@ contract ProjectVoting is IProjectVoting{
         
         require(block.timestamp < voting.endTime, "Voting has ended");
         require(votes[voteKey].decision == VoteResult.Pending, "Already voted");
-        uint256 votePower = Project.getInvestment(msg.sender)*Project.getBackerCredibility(msg.sender);
+        uint256 votePower = this.getVotePower(msg.sender, voting.blockNumber);
         require(votePower > 0, "You have no voting power");
         votes[voteKey].votePower = votePower;
         votes[voteKey].decision = decision ? VoteResult.Approved : VoteResult.Rejected;
