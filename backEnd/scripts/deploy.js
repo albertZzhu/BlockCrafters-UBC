@@ -16,13 +16,17 @@ async function main() {
     await priceFeed.waitForDeployment();
     console.log("PriceFeed deployed at:", await priceFeed.getAddress());
 
-    // Deploy CrowdfundingManager
+    // Deploy votingManager+tokenManager+CrowdfundingManager
     let votingManagerFactory = await ethers.getContractFactory("ProjectVotingManager");
     let votingManager = await upgrades.deployProxy(votingManagerFactory);
+
+    let tokenManagerFactory = await ethers.getContractFactory("TokenManager");
+    let tokenManager = await upgrades.deployProxy(tokenManagerFactory);
+
     const CrowdfundingManager = await ethers.getContractFactory("CrowdfundingManager");
     const manager = await upgrades.deployProxy(
         CrowdfundingManager,
-        [votingManager.target],
+        [votingManager.target, tokenManager.target],
         { initializer: "initialize" }
     );
     await manager.waitForDeployment();
