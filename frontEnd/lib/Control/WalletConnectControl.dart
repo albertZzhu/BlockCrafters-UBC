@@ -8,6 +8,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:coach_link/Model/enum.dart';
 import 'package:coach_link/Configs/FunctionName.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'dart:math';
 
 part 'Web3ModalStates.dart';
 
@@ -234,7 +235,10 @@ class WalletConnectControl extends Cubit<Web3State> {
           transaction: Transaction(
             to: EthereumAddress.fromHex(projectAddress),
             from: EthereumAddress.fromHex(sender),
-            value: EtherAmount.fromBase10String(EtherUnit.ether, amount),
+            value: EtherAmount.fromBigInt(
+              EtherUnit.wei,
+              BigInt.from(pow(10, 18) * double.parse(amount)),
+            ),
           ),
         );
         emit(
@@ -320,7 +324,6 @@ class WalletConnectControl extends Cubit<Web3State> {
         transaction: Transaction(
           to: EthereumAddress.fromHex(managerContractAddress),
           from: EthereumAddress.fromHex(sender),
-          value: EtherAmount.zero(),
         ),
         parameters: [
           name,
@@ -437,6 +440,7 @@ class WalletConnectControl extends Cubit<Web3State> {
       );
 
       return {
+        'projectAddress': projectAddress,
         'name': name.first.toString(),
         'deadline':
             DateTime.fromMillisecondsSinceEpoch(
@@ -450,6 +454,24 @@ class WalletConnectControl extends Cubit<Web3State> {
       print('❌ Error loading project info: $e');
       return {'error': e.toString()};
     }
+  }
+
+  Future<List<Map<String, dynamic>>> getSelfProposedProject() async {
+    List<Map<String, dynamic>> result = [];
+    try {
+      List<String> projectAddressList = await getMyProjectAddresses();
+      if (projectAddressList.isNotEmpty) {
+        for (String projectAddress in projectAddressList) {
+          Map<String, dynamic> projectInfo = await getProjectInfo(
+            projectAddress,
+          );
+          result.add(projectInfo);
+        }
+      }
+    } catch (e) {
+      /// Handle error
+    }
+    return (result);
   }
 
   Future<List<String>> getTokenPriceInUSD(double amount) async {

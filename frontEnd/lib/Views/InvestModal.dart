@@ -133,7 +133,9 @@ class _InvestModalState extends State<InvestModal> {
                   child: TextField(
                     maxLines: 1,
                     controller: _controller,
-                    keyboardType: TextInputType.number,
+                    keyboardType: TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     onChanged: (value) {
                       if (double.tryParse(value) == null) {
                         Fluttertoast.showToast(

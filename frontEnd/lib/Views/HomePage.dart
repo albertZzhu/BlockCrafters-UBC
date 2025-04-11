@@ -12,7 +12,6 @@ import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:http/http.dart' as http;
 
-
 Widget ipfsCidPreview(BuildContext context, String label, String cid) {
   final ipfsUrl = 'https://ipfs.io/ipfs/$cid';
   return Card(
@@ -22,16 +21,19 @@ Widget ipfsCidPreview(BuildContext context, String label, String cid) {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('$label CID:', style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text(
+            '$label CID:',
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
           SelectableText(cid),
           Row(
             children: [
               ElevatedButton(
                 onPressed: () async {
                   await Clipboard.setData(ClipboardData(text: cid));
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('$label CID copied')),
-                  );
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text('$label CID copied')));
                 },
                 child: const Text("Copy"),
               ),
@@ -78,7 +80,6 @@ class _MyHomePageState extends State<MyHomePage> {
   _MyHomePageState();
 
   List<Map<String, dynamic>> myProjects = [];
-
 
   late Future<List<String>> _myProjectsFuture;
 
@@ -138,191 +139,160 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-
   @override
   void initState() {
     super.initState();
     // loadMyProjects();
-    _myProjectsFuture = context.read<WalletConnectControl>().getMyProjectAddresses();
+    _myProjectsFuture =
+        context.read<WalletConnectControl>().getMyProjectAddresses();
   }
 
-
-
-Future<String> fetchTextFromIpfs(String cid) async {
-  try {
-    final uri = Uri.parse("https://ipfs.io/ipfs/$cid");
-    final response = await http.get(uri);
-    if (response.statusCode == 200) {
-      return response.body;
-    } else {
-      throw Exception("Failed to load from IPFS");
+  Future<String> fetchTextFromIpfs(String cid) async {
+    try {
+      final uri = Uri.parse("https://ipfs.io/ipfs/$cid");
+      final response = await http.get(uri);
+      if (response.statusCode == 200) {
+        return response.body;
+      } else {
+        throw Exception("Failed to load from IPFS");
+      }
+    } catch (e) {
+      return "Error: $e";
     }
-  } catch (e) {
-    return "Error: $e";
   }
-}
 
+  Widget buildCidRow(String label, String cid, {bool isImage = false}) {
+    final url = "https://ipfs.io/ipfs/$cid";
 
-Widget buildCidRow(String label, String cid, {bool isImage = false}) {
-  final url = "https://ipfs.io/ipfs/$cid";
-
-  return Padding(
-    padding: const EdgeInsets.symmetric(vertical: 4),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text("$label CID: $cid"),
-        Row(
-          children: [
-            ElevatedButton(
-              onPressed: () {
-                Clipboard.setData(ClipboardData(text: cid));
-                Fluttertoast.showToast(msg: "$label CID copied!");
-              },
-              child: const Text("Copy CID"),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text("$label CID: $cid"),
+          Row(
+            children: [
+              ElevatedButton(
+                onPressed: () {
+                  Clipboard.setData(ClipboardData(text: cid));
+                  Fluttertoast.showToast(msg: "$label CID copied!");
+                },
+                child: const Text("Copy CID"),
+              ),
+              const SizedBox(width: 8),
+              TextButton(
+                onPressed: () async {
+                  if (await canLaunchUrl(Uri.parse(url))) {
+                    await launchUrl(
+                      Uri.parse(url),
+                      mode: LaunchMode.externalApplication,
+                    );
+                  }
+                },
+                child: const Text("Open on IPFS"),
+              ),
+            ],
+          ),
+          if (isImage)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Image.network(url, height: 150, fit: BoxFit.cover),
             ),
-            const SizedBox(width: 8),
-            TextButton(
-              onPressed: () async {
-                if (await canLaunchUrl(Uri.parse(url))) {
-                  await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+          if (!isImage)
+            FutureBuilder<String>(
+              future: fetchTextFromIpfs(cid),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Text("Loading preview...");
+                } else if (snapshot.hasError) {
+                  return Text("Failed to load: ${snapshot.error}");
+                } else {
+                  return Text(
+                    "Preview: ${snapshot.data}",
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  );
                 }
               },
-              child: const Text("Open on IPFS"),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget bodyState(List<Map<String, Object>> posts, bool isLogin) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          children: [
+            const SizedBox(height: 12),
+            Expanded(
+              child: ListView.builder(
+                itemCount: posts.length,
+                itemBuilder: (BuildContext context, int index) {
+                  return SingleProjectCard(
+                    projectName: posts[index]['projectName'] as String,
+                    imageUrl: posts[index]['imageUrl'] as String,
+                    detailCid: posts[index]['detailCid'] as String,
+                    goal: posts[index]['goal'] as double,
+                    raised: posts[index]['raised'] as double,
+                    deadline: posts[index]['deadline'] as String,
+                    status: posts[index]['status'] as String,
+                    onInvest: () {
+                      if (isLogin) {
+                        showInvestModal(
+                          context,
+                          (
+                            String projectAddress,
+                            String token,
+                            String amount,
+                            String projectName,
+                          ) {
+                            context.read<WalletConnectControl>().investProject(
+                              projectAddress: projectAddress,
+                              token: token,
+                              amount: amount,
+                              projectName: projectName,
+                            );
+                          },
+                          posts[index]['projectName'] as String,
+                          posts[index]['imageUrl'] as String,
+                          posts[index]['address'] as String,
+                        );
+                      } else {
+                        Fluttertoast.showToast(msg: "Please login to invest");
+                      }
+                    },
+                    onVote:
+                        () => print(
+                          'Vote clicked for ${posts[index]['projectName']}',
+                        ),
+                  );
+                },
+              ),
             ),
           ],
         ),
-        if (isImage)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Image.network(url, height: 150, fit: BoxFit.cover),
-          ),
-        if (!isImage)
-          FutureBuilder<String>(
-            future: fetchTextFromIpfs(cid),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Text("Loading preview...");
-              } else if (snapshot.hasError) {
-                return Text("Failed to load: ${snapshot.error}");
-              } else {
-                return Text("Preview: ${snapshot.data}", maxLines: 3, overflow: TextOverflow.ellipsis);
-              }
-            },
-          ),
-      ],
-    ),
-  );
-}
-
-
-
-Widget bodyState(List<Map<String, Object>> posts, bool isLogin) {
-  return SafeArea(
-    child: Padding(
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        children: [
-          FutureBuilder<List<String>>(
-            future: context.read<WalletConnectControl>().getMyProjectAddresses(),
-            builder: (context, snapshot) {
-              if (!snapshot.hasData) {
-                return const Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Text("Loading your projects..."),
-                );
-              }
-
-              final addresses = snapshot.data!;
-              if (addresses.isEmpty) {
-                return const Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Text("You haven't created any projects."),
-                );
-              }
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: addresses.map((addr) {
-                  return FutureBuilder<Map<String, dynamic>>(
-                    future: context.read<WalletConnectControl>().getProjectInfo(addr),
-                    builder: (context, infoSnap) {
-                      if (!infoSnap.hasData) {
-                        return Text("📦 $addr\nLoading...");
-                      }
-
-                      final info = infoSnap.data!;
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            SelectableText("📦 Project Address: $addr"),
-                            SelectableText("📛 Name: ${info['name']}"),
-                            SelectableText("📅 Deadline: ${info['deadline']}"),
-                            SelectableText("📝 Desc CID: ${info['descCID']}"),
-                            SelectableText("🖼️ Photo CID: ${info['photoCID']}"),
-                            SelectableText("🔗 Social CID: ${info['socialMediaCID']}"),
-                            const Divider(),
-                          ],
-
-
-                        ),
-                      );
-                    },
-                  );
-                }).toList(),
-              );
-            },
-          ),
-
-          const SizedBox(height: 12),
-          Expanded(
-            child: ListView.builder(
-              itemCount: posts.length,
-              itemBuilder: (BuildContext context, int index) {
-                return SingleProjectCard(
-                  projectName: posts[index]['projectName'] as String,
-                  imageUrl: posts[index]['imageUrl'] as String,
-                  detailCid: posts[index]['detailCid'] as String,
-                  goal: posts[index]['goal'] as double,
-                  raised: posts[index]['raised'] as double,
-                  deadline: posts[index]['deadline'] as String,
-                  status: posts[index]['status'] as String,
-                  onInvest: () {
-                    if (isLogin) {
-                      showInvestModal(
-                        context,
-                        (
-                          String projectAddress,
-                          String token,
-                          String amount,
-                          String projectName,
-                        ) {
-                          context.read<WalletConnectControl>().investProject(
-                                projectAddress: projectAddress,
-                                token: token,
-                                amount: amount,
-                                projectName: projectName,
-                              );
-                        },
-                        posts[index]['projectName'] as String,
-                        posts[index]['imageUrl'] as String,
-                        "",
-                      );
-                    } else {
-                      Fluttertoast.showToast(msg: "Please login to invest");
-                    }
-                  },
-                  onVote: () => print('Vote clicked for ${posts[index]['projectName']}'),
-                );
-              },
-            ),
-          ),
-        ],
       ),
-    ),
-  );
-}
+    );
+  }
+
+  List<Map<String, Object>> transferToPosts(List<Map<String, dynamic>> posts) {
+    return posts.map((post) {
+      return {
+        'projectName': post['name'].toString() ?? "",
+        'imageUrl': post['photoCID'].toString() ?? "",
+        'detailCid': post['descCID'].toString() ?? "",
+        'goal': /*post['goal'].toString() ??*/ 50.0,
+        'raised': /*post['raised'].toString() ??*/ 30.0,
+        'deadline': post['deadline'].toString() ?? "",
+        'status': post['status'].toString() ?? "",
+        'link': post['socialMediaCID'].toString() ?? "",
+        'address': post['projectAddress'].toString() ?? "",
+      };
+    }).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -330,11 +300,28 @@ Widget bodyState(List<Map<String, Object>> posts, bool isLogin) {
     return Scaffold(
       body: BlocBuilder<WalletConnectControl, Web3State>(
         builder: (context, state) {
-          if (state is FetchHomeScreenActionButtonSuccess) {
-            if (state.action == HomeScreenActionButton.interactWithContract) {
-              isLogin = true;
-            }
-            return bodyState(projects, isLogin);
+          if (state is FetchHomeScreenActionButtonSuccess &&
+              state.action == HomeScreenActionButton.interactWithContract) {
+            isLogin = true;
+            return FutureBuilder<List<Map<String, dynamic>>>(
+              future:
+                  context.read<WalletConnectControl>().getSelfProposedProject(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasData) {
+                  final List<Map<String, dynamic>> projectList = snapshot.data!;
+                  return bodyState(transferToPosts(projectList), isLogin);
+                } else {
+                  return const Center(child: Text("No projects found."));
+                }
+              },
+            );
+          } else if (state is FetchHomeScreenActionButtonSuccess &&
+              state.action == HomeScreenActionButton.connectWallet) {
+            return const Center(
+              child: Text("Please connect your wallet to view projects."),
+            );
           } else {
             return const Center(child: CircularProgressIndicator());
           }
@@ -343,4 +330,3 @@ Widget bodyState(List<Map<String, Object>> posts, bool isLogin) {
     );
   }
 }
-
