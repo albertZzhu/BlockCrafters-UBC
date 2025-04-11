@@ -52,6 +52,18 @@ contract TokenManager {
         emit TokensMinted(investor, amount);
     }
 
+    function balanceOf(address investor) external view returns (uint256) {
+        require(projectToken != address(0), "Token not deployed");
+        return ProjectToken(projectToken).balanceOf(investor);
+    }
+
+    function refund(address investor, uint256 amount) external onlyAuthorized {
+        // require(projectToken != address(0), "Token not deployed");
+        uint256 UserBalance = this.balanceOf(owner);
+        ProjectToken(projectToken)._refund(investor, amount);
+        // call CrowdfundingProject to refund the investor
+    }
+
     /// View future token address before it's deployed
     function computeTokenAddress(string memory name, string memory symbol) public view returns (address) {
         bytes32 salt = keccak256(abi.encodePacked(address(this)));

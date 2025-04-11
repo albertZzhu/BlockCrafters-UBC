@@ -19,7 +19,7 @@ Future<DeployedContract> deployedProjectContract(
 
 Future<DeployedContract> deployedManagerContract() async {
   final abiCode = await rootBundle.loadString(
-    'lib/ContractInterface/CrowdfundingManager.abi.json',
+    'lib/ContractInterface/CrowdfundingManager.json',
   );
   final contract = DeployedContract(
     ContractAbi.fromJson(abiCode, 'CrowdfundingManager'),

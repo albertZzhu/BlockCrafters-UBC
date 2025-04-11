@@ -254,72 +254,194 @@ class WalletConnectControl extends Cubit<Web3State> {
     }
   }
 
-  /// * This method is used to create and submit a new crowdfunding project on-chain.
-  /// * It takes the project name, deadline, token name, and the individual IPFS CIDs for description, image, social media link, and token symbol.
-  /// * It emits different states based on the success or failure of the transaction.
-  /// * @param name The name of the project.
-  /// * @param deadline The funding deadline (Unix timestamp).
-  /// * @param tokenName The name of the reward token.
-  /// * @param detailCid The CID for the project description.
-  /// * @param imageCid The CID for the project image.
-  /// * @param socialMediaCid The CID for the social media link.
-  /// * @param tokenSymbolCid The CID for the token symbol.
-  /// * @return A Future that completes when the project is submitted.
-  Future<void> submitProject({
-    required String name,
-    required int deadline,
-    required String tokenName,
-    required String detailCid,
-    required String imageCid,
-    required String socialMediaCid,
-    required String tokenSymbolCid,
-  }) async {
-    emit(ProjectSubmissionInProgress());
+/// * This method is used to submit a new project to the crowdfunding platform.
+/// * It connects to the user's wallet, prepares the contract interaction, and sends
+///   a transaction to call the `createProject` function on the manager contract.
+/// * It emits different states based on the success or failure of the submission.
+/// * @param name The name of the project.
+/// * @param deadline The funding deadline of the project (as a Unix timestamp).
+/// * @param tokenName The name of the token associated with the project.
+/// * @param detailCid The IPFS CID for the project's detailed description.
+/// * @param imageCid The IPFS CID for the project's image.
+/// * @param socialMediaCid The IPFS CID for the project's social media links.
+/// * @param tokenSymbolCid The IPFS CID for the token symbol.
+/// * @return A Future that completes when the submission process is finished.
 
-    try {
-      // Get connected wallet
-      final List<String> accounts =
-          _appKitModal.session?.getAccounts() ?? <String>[];
-      if (accounts.isEmpty) {
-        emit(ProjectSubmissionFailed(message: 'No connected wallet found.'));
-        return;
-      }
+Future<void> submitProject({
+  required String name,
+  required int deadline,
+  required String tokenName,
+  required String detailCid,
+  required String imageCid,
+  required String socialMediaCid,
+  required String tokenSymbolCid,
+}) async {
+  emit(ProjectSubmissionInProgress());
 
-      final String sender = accounts.first.split(':').last;
-
-      // Load contract ABI and address
-      final String managerContractAddress =
-          dotenv.env['MANAGER_CONTRACT_ADDRESS']!;
-      final DeployedContract contract = await deployedManagerContract();
-
-      _appKitModal.launchConnectedWallet();
-
-      // Send the transaction
-      await _appKitModal.requestWriteContract(
-        topic: _appKitModal.session?.topic ?? '',
-        chainId: _appKitModal.selectedChain!.chainId,
-        deployedContract: contract,
-        functionName: 'createProject',
-        transaction: Transaction(
-          to: EthereumAddress.fromHex(managerContractAddress),
-          from: EthereumAddress.fromHex(sender),
-          value: EtherAmount.zero(),
-        ),
-        parameters: [
-          name,
-          BigInt.from(deadline),
-          detailCid,
-          imageCid,
-          socialMediaCid,
-          tokenName,
-          tokenSymbolCid,
-        ],
-      );
-
-      emit(ProjectSubmissionSuccess());
-    } catch (e) {
-      emit(ProjectSubmissionFailed(message: 'Project submission failed: $e'));
+  try {
+    // Get connected wallet
+    final List<String> accounts = _appKitModal.session?.getAccounts() ?? <String>[];
+    if (accounts.isEmpty) {
+      emit(ProjectSubmissionFailed(message: 'No connected wallet found.'));
+      print('No connected wallet found.');
+      return;
     }
+
+    final String sender = accounts.first.split(':').last;
+    print('Wallet connected: $sender');
+
+    // Load contract ABI and address
+    final String managerContractAddress = dotenv.env['MANAGER_CONTRACT_ADDRESS']!;
+    print('Using contract address: $managerContractAddress');
+
+    final DeployedContract contract = await deployedManagerContract();
+    print('Contract loaded successfully.');
+
+    _appKitModal.launchConnectedWallet();
+    print('Wallet launched.');
+
+    // Send the transaction
+    print('Sending transaction with parameters:');
+    print('Name: $name');
+    print('Deadline: $deadline');
+    print('Token Name: $tokenName');
+    print('Detail CID: $detailCid');
+    print('Image CID: $imageCid');
+    print('Social Media CID: $socialMediaCid');
+    print('Token Symbol CID: $tokenSymbolCid');
+
+    await _appKitModal.requestWriteContract(
+      topic: _appKitModal.session?.topic ?? '',
+      chainId: _appKitModal.selectedChain!.chainId,
+      deployedContract: contract,
+      functionName: 'createProject',
+      transaction: Transaction(
+        to: EthereumAddress.fromHex(managerContractAddress),
+        from: EthereumAddress.fromHex(sender),
+        value: EtherAmount.zero(),
+      ),
+      parameters: [
+        name,
+        BigInt.from(deadline),
+        detailCid,
+        imageCid,
+        socialMediaCid,
+        tokenName,
+        tokenSymbolCid,
+      ],
+    );
+    print('Transaction sent successfully.');
+
+    emit(ProjectSubmissionSuccess());
+  } catch (e) {
+    emit(ProjectSubmissionFailed(message: 'Project submission failed: $e'));
+    print('Error during project submission: $e');  // Log the error to help with debugging
+  }
+}
+
+// Future<List<String>> getMyProjectAddresses() async {
+//   try {
+//     final List<String> accounts = _appKitModal.session?.getAccounts() ?? <String>[];
+//     if (accounts.isEmpty) throw Exception('No wallet connected');
+//     final String userAddress = accounts.first.split(':').last;
+
+//     final contract = await deployedManagerContract();
+
+//     final List<dynamic> result = await _appKitModal.requestReadContract(
+//       topic: _appKitModal.session?.topic ?? '',
+//       chainId: _appKitModal.selectedChain!.chainId,
+//       deployedContract: contract,
+//       functionName: 'getFounderProjects',
+//       parameters: [EthereumAddress.fromHex(userAddress)],
+//     );
+
+//     final List<String> addresses = result.map((e) => e.toString()).toList();
+//     return addresses;
+//   } catch (e) {
+//     print('Error fetching project addresses: $e');
+//     return [];
+//   }
+// }
+
+Future<List<String>> getMyProjectAddresses() async {
+  try {
+    final List<String> accounts = _appKitModal.session?.getAccounts() ?? <String>[];
+    if (accounts.isEmpty) throw Exception('No wallet connected');
+    final String userAddress = accounts.first.split(':').last;
+
+    final contract = await deployedManagerContract();
+
+    final List<dynamic> result = await _appKitModal.requestReadContract(
+      topic: _appKitModal.session?.topic ?? '',
+      chainId: _appKitModal.selectedChain!.chainId,
+      deployedContract: contract,
+      functionName: 'getFounderProjects',
+      parameters: [EthereumAddress.fromHex(userAddress)],
+    );
+
+    // 🔥 Fix: handle nested list correctly
+    final List<dynamic> addressList = result.first as List;
+    final List<String> addresses = addressList.map((e) => e.toString()).toList();
+
+    print("✅ Project addresses: $addresses");
+    return addresses;
+  } catch (e) {
+    print('Error fetching project addresses: $e');
+    return [];
+  }
+}
+
+Future<Map<String, dynamic>> getProjectInfo(String projectAddress) async {
+  try {
+    final contract = await deployedProjectContract(projectAddress, ""); 
+
+    final name = await _appKitModal.requestReadContract(
+      topic: _appKitModal.session?.topic ?? '',
+      chainId: _appKitModal.selectedChain!.chainId,
+      deployedContract: contract,
+      functionName: 'name',
+    );
+
+    final deadline = await _appKitModal.requestReadContract(
+      topic: _appKitModal.session?.topic ?? '',
+      chainId: _appKitModal.selectedChain!.chainId,
+      deployedContract: contract,
+      functionName: 'fundingDeadline',
+    );
+
+    final descCID = await _appKitModal.requestReadContract(
+      topic: _appKitModal.session?.topic ?? '',
+      chainId: _appKitModal.selectedChain!.chainId,
+      deployedContract: contract,
+      functionName: 'descCID',
+    );
+
+    final photoCID = await _appKitModal.requestReadContract(
+      topic: _appKitModal.session?.topic ?? '',
+      chainId: _appKitModal.selectedChain!.chainId,
+      deployedContract: contract,
+      functionName: 'photoCID',
+    );
+
+    final socialCID = await _appKitModal.requestReadContract(
+      topic: _appKitModal.session?.topic ?? '',
+      chainId: _appKitModal.selectedChain!.chainId,
+      deployedContract: contract,
+      functionName: 'socialMediaLinkCID',
+    );
+
+    return {
+      'name': name.first.toString(),
+      'deadline': DateTime.fromMillisecondsSinceEpoch(
+        BigInt.parse(deadline.first.toString()).toInt() * 1000,
+      ).toString(),
+      'descCID': descCID.first.toString(),
+      'photoCID': photoCID.first.toString(),
+      'socialMediaCID': socialCID.first.toString(),
+    };
+  } catch (e) {
+    print('❌ Error loading project info: $e');
+    return {'error': e.toString()};
   }
 
   Future<List<String>> getTokenPriceInUSD(double amount) async {
