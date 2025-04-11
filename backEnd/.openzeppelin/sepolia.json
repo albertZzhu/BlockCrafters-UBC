@@ -5,6 +5,11 @@
       "address": "0xe69aC77D153cCE81DFE97EA97A18Fa130369D790",
       "txHash": "0xef960186d7cb4ec8fea2fea6e4a6c7b82a9ec7cf3b6baf02ce1d9a924d866243",
       "kind": "transparent"
+    },
+    {
+      "address": "0x995740078afcc2D4F42008127751d0300d77Bf7b",
+      "txHash": "0xbe0a19fb093f77cb8003ef49f8eb41babd539908e64ce0473df5cb73f171b36a",
+      "kind": "transparent"
     }
   ],
   "impls": {
@@ -86,6 +91,111 @@
             "numberOfBytes": "32"
           },
           "t_mapping(t_address,t_contract(CrowdfundingProject)3065)": {
+            "label": "mapping(address => contract CrowdfundingProject)",
+            "numberOfBytes": "32"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        },
+        "namespaces": {}
+      }
+    },
+    "b733c6bf2ee901b740cf30467cd15ae2421e75d2660ffe8b8ce008bb78d2c1ad": {
+      "address": "0xc7f5Ca75c118f15267cbB44aDC6154B2C30AbBfF",
+      "txHash": "0x505264a59a7ae75906c0a9647422458673624523766dc94fab91a402aeab8a7b",
+      "layout": {
+        "solcVersion": "0.8.28",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:63",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:68"
+          },
+          {
+            "label": "platformOwner",
+            "offset": 2,
+            "slot": "0",
+            "type": "t_address",
+            "contract": "CrowdfundingManager",
+            "src": "contracts/CrowdfundingManager.sol:10"
+          },
+          {
+            "label": "projects",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_mapping(t_address,t_contract(CrowdfundingProject)3027)",
+            "contract": "CrowdfundingManager",
+            "src": "contracts/CrowdfundingManager.sol:11"
+          },
+          {
+            "label": "projectCount",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_uint256",
+            "contract": "CrowdfundingManager",
+            "src": "contracts/CrowdfundingManager.sol:12"
+          },
+          {
+            "label": "ProjectVotingManager",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_contract(IProjectVotingManager)4190",
+            "contract": "CrowdfundingManager",
+            "src": "contracts/CrowdfundingManager.sol:13"
+          },
+          {
+            "label": "founderProjectMap",
+            "offset": 0,
+            "slot": "4",
+            "type": "t_mapping(t_address,t_array(t_address)dyn_storage)",
+            "contract": "CrowdfundingManager",
+            "src": "contracts/CrowdfundingManager.sol:15"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_address)dyn_storage": {
+            "label": "address[]",
+            "numberOfBytes": "32"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_contract(CrowdfundingProject)3027": {
+            "label": "contract CrowdfundingProject",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IProjectVotingManager)4190": {
+            "label": "contract IProjectVotingManager",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_address,t_array(t_address)dyn_storage)": {
+            "label": "mapping(address => address[])",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_contract(CrowdfundingProject)3027)": {
             "label": "mapping(address => contract CrowdfundingProject)",
             "numberOfBytes": "32"
           },

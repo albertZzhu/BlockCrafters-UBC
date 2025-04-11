@@ -4,7 +4,6 @@ pragma solidity ^0.8.19;
 import {IProjectVoting, VotingStarted, Voting, VoteType, VoteResult} from "./ProjectVoting.sol";
 import "./ICrowdfundingProject.sol";
 import "./ICrowdfundingManager.sol";
-// import "./PriceFeed.sol";
 import "./TokenManager.sol";
 
 import "hardhat/console.sol";
@@ -14,9 +13,6 @@ contract CrowdfundingProject is ICrowdfundingProject {
     
     // Token
     TokenManager public tokenManager;
-
-    // PriceFeed
-    // PriceFeed public priceFeed;
 
     uint256 public projectId;
     address public founder;
@@ -112,7 +108,6 @@ contract CrowdfundingProject is ICrowdfundingProject {
         socialMediaLinkCID = _socialMediaLinkCID;
         ProjectManager = ICrowdfundingManager(msg.sender); // set the project manager to the contract deployer
         tokenManager = _tokenManager;
-        // priceFeed = new PriceFeed();
     }
     function setVotingPlatform(address platformAddress) external {
         // set the voting platform address
@@ -170,16 +165,11 @@ contract CrowdfundingProject is ICrowdfundingProject {
         setProjectFailed();
     }
 
-    function invest(string memory tokenType) external payable isFundingProject() {
+    function invest() external payable isFundingProject() {
         require(msg.value > 0, "investment must be > 0");     
         require(fundingBalance + msg.value <= this.getProjectFundingGoal(), "Investment exceeds funding goal"); // limit investment to not exceed the goal
         
-        // TODO: integrate with PriceFeed
-        uint256 usdAmount = msg.value;
-        // if (keccak256(bytes(tokenType)) != keccak256("USD")) {
-        //     usdAmount = priceFeed.convertToUSD(tokenType, msg.value);
-        // }
-        console.log("The usd amount is:", usdAmount);
+        uint256 usdAmount = msg.value;     
 
         tokenManager.mintTo(msg.sender, usdAmount);
 
