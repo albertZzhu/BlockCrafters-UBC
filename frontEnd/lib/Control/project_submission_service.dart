@@ -54,7 +54,6 @@ class ProjectSubmissionService {
       statusMessages.add(imageCid != null
           ? 'Image uploaded. CID: $imageCid'
           : 'Image upload failed (null CID).');
->>>>>>> Stashed changes
     } catch (e) {
       statusMessages.add('Image upload error: $e');
     }
