@@ -25,21 +25,25 @@ async function main() {
     let votingManager = await upgrades.deployProxy(
         votingManagerFactory, [addressProvider.target], { initializer: 'initialize' }
     );
-    await addressProvider.connect(deployer).setProjectVotingManager(votingManager.target);
-    
+    await votingManager.waitForDeployment();
+    await addressProvider.connect(deployer).setProjectVotingManager(await votingManager.getAddress());
+
     let tokenManagerFactory = await ethers.getContractFactory("TokenManager");
     let tokenManager = await upgrades.deployProxy(
         tokenManagerFactory, [addressProvider.target], { initializer: 'initialize' }
     );
-    await addressProvider.connect(deployer).setTokenManager(tokenManager.target);
+    await tokenManager.waitForDeployment();
+    await addressProvider.connect(deployer).setTokenManager(await tokenManager.getAddress());
 
-    const CrowdfundingManager = await ethers.getContractFactory("CrowdfundingManager");
-    const manager = await upgrades.deployProxy(
+    let CrowdfundingManager = await ethers.getContractFactory("CrowdfundingManager");
+    let manager = await upgrades.deployProxy(
         CrowdfundingManager,
         [addressProvider.target],
         { initializer: "initialize" }
     );
     await manager.waitForDeployment();
+    await addressProvider.connect(deployer).setCrowdfundingManager(await manager.getAddress());
+    
     console.log("CrowdfundingManager proxy deployed at:", await manager.getAddress());
 }
 

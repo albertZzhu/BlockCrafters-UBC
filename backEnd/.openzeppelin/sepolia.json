@@ -20,6 +20,126 @@
       "address": "0x21819336a1C7E5B0F934B9a01D478e150136e473",
       "txHash": "0xf569f28c9fd324822eed6d494a157a49f20ed5bc68ca646af4be2f880a4bfca5",
       "kind": "transparent"
+    },
+    {
+      "address": "0xb83614328f201Ea97284B6Cd02B329A944ED1181",
+      "txHash": "0x865571ec9206def4d4d1913d6023d70f8c0a48a73e13a709f74bb2d99a37c96b",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x88842F2d1265367cbEA881eA2310BA19DA3A0979",
+      "txHash": "0x6c9abe603e21653b6ad9af1aaef067a52957074f62b5e46e495106b1c186858a",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x76d739Ac67A105DFa118d7027F782Bb0ae0Dfc76",
+      "txHash": "0x5b97e01f91d4f04ef0bb5b5911bf9d668a0aa6ec7c8a6ace2bee448acf66053a",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x10F5Fbf7f2764279903Ff2C6B8fA856c20aB0869",
+      "txHash": "0xdb3fbb9d7a24087fef85d95ad9fe3a6c15df225094af11f4d3944eaf9cada058",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x601dAEa55aE51FE3635cD19bf89DE58FDEDa6162",
+      "txHash": "0xb8a61a2bddad8451656a8d26d7ca4ea730147b3dad5cf017c7712dad4f60cd3c",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x8534972BBB9A455811335CE40642520410bcEC89",
+      "txHash": "0x28323428e5cec8cd2c9bc4f535c155b8b3613fcf24d7c6686bb050c160bcdcf0",
+      "kind": "transparent"
+    },
+    {
+      "address": "0xA9b40c9D2CA2B3D4C978d159b8074391032388Ca",
+      "txHash": "0xc2713cdf1c4b497d8b94361bd0eafec64b8f7ae6b7289000f6eda7023a9ba1e9",
+      "kind": "transparent"
+    },
+    {
+      "address": "0xdaa6aae5B5e0451C8b57C27379b44c3Fb4d2d575",
+      "txHash": "0x1e98a289befb2ad6a825128060f2d7c5cde6f83482eae70175cad34a9995ce89",
+      "kind": "transparent"
+    },
+    {
+      "address": "0xFFa011E257c36E6fb4788B29C8412989b84ad514",
+      "txHash": "0x3e2d61abe8f6114a5fdbc1368b0bb5694ae37b39f3f0af2b95d11609ad386be0",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x02b8b1fD2DD7F93d8dfe42fFa3D69EAF88052fcB",
+      "txHash": "0xc71e09672be3c049339b6bda60a548907746c285fba685255d8e5fe4272af424",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x8442E753E8cA6409857f3f4eB048fED202f7a02A",
+      "txHash": "0x0ddbc1332f7c5b605201a41a204d5de30b73ebb31bd1436b4961ae3d3b88d972",
+      "kind": "transparent"
+    },
+    {
+      "address": "0xAF893999cd094c4EB840A8f91CA6D244DdC667bc",
+      "txHash": "0xcc651ab31f0f0608c3a327f5fdf8741f01d27c348c832683470ebc06062e3d40",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x04D28b41ddBD7FcC5c7A07Cf0B352e8483C9d4eA",
+      "txHash": "0xf4a005e9938f047472f7fc4ae0a485c477795f3832d23a6138a05d62ebaf586e",
+      "kind": "transparent"
+    },
+    {
+      "address": "0xE3e40A903da82cF28C16243845A2c6DbC27808FC",
+      "txHash": "0x119c0d32df94cfb5f1f249ffde02bca0ff55630c3d81a3e4c4fe0bc57bdc603b",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x976a9c0698D355d9A3861EAcb9ba16198Dff816D",
+      "txHash": "0x1855e0f5be363dc308cbf15da967111d7d2bcbafb9df5e5f4fc6467efbc22125",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x424BfcB96bC80a730B3CDb4E158b628F36a29203",
+      "txHash": "0x16db8362f1807cbbe229dbd944e086a9943df2463738cee2f1a79d1c6e5bd0cb",
+      "kind": "transparent"
+    },
+    {
+      "address": "0xa09E086570c6186fC3429C0F40Dc09D8F771815c",
+      "txHash": "0x4a95cd9ce289edbdf8f5b70d0fef00c8eda90a72c847c7fc914b32c0ac5a1de2",
+      "kind": "transparent"
+    },
+    {
+      "address": "0xb928dc7ACA1F409221CE4c85522267962Bb4977c",
+      "txHash": "0xfb48657c885e9565582cdbf61554be773bea0c4cfbcbb4db0460594b2eef28b5",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x51d41bb6cF2d20D4a7B6Ec9ED0e0b6a34Ef89297",
+      "txHash": "0x3eb701f3c93078e3fab888be47579ead64b71b643879d0dd9d8abe0e2273f991",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x42B6f1e81797F98fC5eB94F3488849a104fB467c",
+      "txHash": "0x2ed3286c8e9e90175ffb169409dd5d7641fecd85815201415e1b08eda27597dd",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x17C50D8426CA4977690ea7b27b3Debe2bc6b630e",
+      "txHash": "0xdc5e90b73f85e62c289e0caec4de8f9e25b7541ca2bf0659b787f874bb652725",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x0c44C48c4b61FdCb5464e1aB8f01B49f11811138",
+      "txHash": "0xd173b9a3d8b3ef4392c814dd5124341a6c2f586bdb7594667b9712e2b87f13c4",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x325d8C8118F758c186feedB43ABacE868DF950D7",
+      "txHash": "0xf37ec6851abd8828facb31106259575aa8172481c679e1e625616ca4e1b12206",
+      "kind": "transparent"
+    },
+    {
+      "address": "0xd33839b72615c44034705A87713A29E9964e7E2A",
+      "txHash": "0xca6503bb72663d4604290ee0d925b84eab330b6172343646d16b1da0dbe87dca",
+      "kind": "transparent"
     }
   ],
   "impls": {
@@ -372,6 +492,483 @@
             "numberOfBytes": "32"
           },
           "t_mapping(t_address,t_contract(CrowdfundingProject)2940)": {
+            "label": "mapping(address => contract CrowdfundingProject)",
+            "numberOfBytes": "32"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        },
+        "namespaces": {}
+      }
+    },
+    "1becefe9bdaed5b1c05a4c1c6e98ea0171a6d5580dd5e2e2ee893ff695f8ae26": {
+      "address": "0x2D6FA287Cc6B3E366F089650B2DCC87Dd93E4Ec3",
+      "txHash": "0xa3717eb28bce0e13223f7c332b06e234dd9d93ed17f17e16417d5d4ad7f5771e",
+      "layout": {
+        "solcVersion": "0.8.28",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:63",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:68"
+          },
+          {
+            "label": "VotingPlatforms",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_mapping(t_address,t_address)",
+            "contract": "ProjectVotingManager",
+            "src": "contracts/ProjectVotingManager.sol:14"
+          },
+          {
+            "label": "addressProvider",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_contract(IAddressProvider)10085",
+            "contract": "ProjectVotingManager",
+            "src": "contracts/ProjectVotingManager.sol:15"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_contract(IAddressProvider)10085": {
+            "label": "contract IAddressProvider",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_address,t_address)": {
+            "label": "mapping(address => address)",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        },
+        "namespaces": {}
+      }
+    },
+    "2bc0e251fae6c27b8381682481dd8699fcf30d8a80b73992bb0590a3314e4c99": {
+      "address": "0xc3232c633BdF8Cf175BCd7c9327Ae1C725Ff1959",
+      "txHash": "0x0765065f9ef5239ab06bccceb6a17ca4240e9c68d1ae9d63ed650ebc4a594b9c",
+      "layout": {
+        "solcVersion": "0.8.28",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:63",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:68"
+          },
+          {
+            "label": "tokenAddresses",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_mapping(t_address,t_address)",
+            "contract": "TokenManager",
+            "src": "contracts/TokenManager.sol:19"
+          },
+          {
+            "label": "addressProvider",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_contract(IAddressProvider)10085",
+            "contract": "TokenManager",
+            "src": "contracts/TokenManager.sol:21"
+          },
+          {
+            "label": "owner",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_address",
+            "contract": "TokenManager",
+            "src": "contracts/TokenManager.sol:24"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_contract(IAddressProvider)10085": {
+            "label": "contract IAddressProvider",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_address,t_address)": {
+            "label": "mapping(address => address)",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        },
+        "namespaces": {}
+      }
+    },
+    "6814f00b23d07c18b1a1251ab5fdd499d5ba768ca3201ea309ead8091626fc96": {
+      "address": "0x7a760Ec35ac0f9Ce79d28561e3f3767Bee340746",
+      "txHash": "0x1c08a2bbe1e67995117ace39498f5e5678079a192abca4c86e6de272a92f375b",
+      "layout": {
+        "solcVersion": "0.8.28",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:63",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:68"
+          },
+          {
+            "label": "platformOwner",
+            "offset": 2,
+            "slot": "0",
+            "type": "t_address",
+            "contract": "CrowdfundingManager",
+            "src": "contracts/CrowdfundingManager.sol:12"
+          },
+          {
+            "label": "projects",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_mapping(t_address,t_contract(CrowdfundingProject)11775)",
+            "contract": "CrowdfundingManager",
+            "src": "contracts/CrowdfundingManager.sol:13"
+          },
+          {
+            "label": "projectAddresses",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_array(t_address)dyn_storage",
+            "contract": "CrowdfundingManager",
+            "src": "contracts/CrowdfundingManager.sol:14"
+          },
+          {
+            "label": "projectCount",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_uint256",
+            "contract": "CrowdfundingManager",
+            "src": "contracts/CrowdfundingManager.sol:15"
+          },
+          {
+            "label": "ProjectVotingManager",
+            "offset": 0,
+            "slot": "4",
+            "type": "t_contract(IProjectVotingManager)13085",
+            "contract": "CrowdfundingManager",
+            "src": "contracts/CrowdfundingManager.sol:16"
+          },
+          {
+            "label": "tokenManager",
+            "offset": 0,
+            "slot": "5",
+            "type": "t_contract(ITokenManager)13243",
+            "contract": "CrowdfundingManager",
+            "src": "contracts/CrowdfundingManager.sol:17"
+          },
+          {
+            "label": "addressProvider",
+            "offset": 0,
+            "slot": "6",
+            "type": "t_contract(IAddressProvider)10085",
+            "contract": "CrowdfundingManager",
+            "src": "contracts/CrowdfundingManager.sol:18"
+          },
+          {
+            "label": "founderProjectMap",
+            "offset": 0,
+            "slot": "7",
+            "type": "t_mapping(t_address,t_array(t_address)dyn_storage)",
+            "contract": "CrowdfundingManager",
+            "src": "contracts/CrowdfundingManager.sol:20"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_address)dyn_storage": {
+            "label": "address[]",
+            "numberOfBytes": "32"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_contract(CrowdfundingProject)11775": {
+            "label": "contract CrowdfundingProject",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IAddressProvider)10085": {
+            "label": "contract IAddressProvider",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IProjectVotingManager)13085": {
+            "label": "contract IProjectVotingManager",
+            "numberOfBytes": "20"
+          },
+          "t_contract(ITokenManager)13243": {
+            "label": "contract ITokenManager",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_address,t_array(t_address)dyn_storage)": {
+            "label": "mapping(address => address[])",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_contract(CrowdfundingProject)11775)": {
+            "label": "mapping(address => contract CrowdfundingProject)",
+            "numberOfBytes": "32"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        },
+        "namespaces": {}
+      }
+    },
+    "ac2630afee4284431610fed5dbc9a59db2fc9c40479d85937811c95a17e21a4a": {
+      "address": "0xbcdFF9Bf236da17Ed63CDFA98584B244c46F5F05",
+      "txHash": "0x215c64400802cf51b80ed2072a92ed1a10341f0f68d28c95ab7c6836160f2de9",
+      "layout": {
+        "solcVersion": "0.8.28",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:63",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:68"
+          },
+          {
+            "label": "VotingPlatforms",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_mapping(t_address,t_address)",
+            "contract": "ProjectVotingManager",
+            "src": "contracts/ProjectVotingManager.sol:14"
+          },
+          {
+            "label": "addressProvider",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_contract(IAddressProvider)10047",
+            "contract": "ProjectVotingManager",
+            "src": "contracts/ProjectVotingManager.sol:15"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_contract(IAddressProvider)10047": {
+            "label": "contract IAddressProvider",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_address,t_address)": {
+            "label": "mapping(address => address)",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        },
+        "namespaces": {}
+      }
+    },
+    "7edb184ba3612d60b666a8a3376e11f2dbbe5666dd965f58a126f0d2ec902879": {
+      "address": "0x7A6D69CCadA1e7E2c44F936D8CedE8B807c7C9B0",
+      "txHash": "0x787569b48fc8e4b6b497aafef6c018f0890e82e5de79f9ff8304be29f209ff6d",
+      "layout": {
+        "solcVersion": "0.8.28",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:63",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:68"
+          },
+          {
+            "label": "platformOwner",
+            "offset": 2,
+            "slot": "0",
+            "type": "t_address",
+            "contract": "CrowdfundingManager",
+            "src": "contracts/CrowdfundingManager.sol:12"
+          },
+          {
+            "label": "projects",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_mapping(t_address,t_contract(CrowdfundingProject)11736)",
+            "contract": "CrowdfundingManager",
+            "src": "contracts/CrowdfundingManager.sol:13"
+          },
+          {
+            "label": "projectAddresses",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_array(t_address)dyn_storage",
+            "contract": "CrowdfundingManager",
+            "src": "contracts/CrowdfundingManager.sol:14"
+          },
+          {
+            "label": "projectCount",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_uint256",
+            "contract": "CrowdfundingManager",
+            "src": "contracts/CrowdfundingManager.sol:15"
+          },
+          {
+            "label": "ProjectVotingManager",
+            "offset": 0,
+            "slot": "4",
+            "type": "t_contract(IProjectVotingManager)12884",
+            "contract": "CrowdfundingManager",
+            "src": "contracts/CrowdfundingManager.sol:16"
+          },
+          {
+            "label": "tokenManager",
+            "offset": 0,
+            "slot": "5",
+            "type": "t_contract(ITokenManager)13042",
+            "contract": "CrowdfundingManager",
+            "src": "contracts/CrowdfundingManager.sol:17"
+          },
+          {
+            "label": "addressProvider",
+            "offset": 0,
+            "slot": "6",
+            "type": "t_contract(IAddressProvider)10047",
+            "contract": "CrowdfundingManager",
+            "src": "contracts/CrowdfundingManager.sol:18"
+          },
+          {
+            "label": "founderProjectMap",
+            "offset": 0,
+            "slot": "7",
+            "type": "t_mapping(t_address,t_array(t_address)dyn_storage)",
+            "contract": "CrowdfundingManager",
+            "src": "contracts/CrowdfundingManager.sol:20"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_address)dyn_storage": {
+            "label": "address[]",
+            "numberOfBytes": "32"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_contract(CrowdfundingProject)11736": {
+            "label": "contract CrowdfundingProject",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IAddressProvider)10047": {
+            "label": "contract IAddressProvider",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IProjectVotingManager)12884": {
+            "label": "contract IProjectVotingManager",
+            "numberOfBytes": "20"
+          },
+          "t_contract(ITokenManager)13042": {
+            "label": "contract ITokenManager",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_address,t_array(t_address)dyn_storage)": {
+            "label": "mapping(address => address[])",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_contract(CrowdfundingProject)11736)": {
             "label": "mapping(address => contract CrowdfundingProject)",
             "numberOfBytes": "32"
           },
