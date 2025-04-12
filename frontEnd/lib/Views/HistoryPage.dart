@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:coach_link/Model/User.dart';
+import 'package:coach_link/Control/WalletConnectControl.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:coach_link/Model/enum.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:coach_link/Views/SingleHistoryCard.dart';
 
 class HistoryPage extends StatefulWidget {
   //String uid = "";
@@ -12,96 +16,98 @@ class HistoryPage extends StatefulWidget {
 
 class _HistoryPageState extends State<HistoryPage> {
   //String uid = "";
-  List<String> coachUids = [];
-  List<CoachUser> coachList = [];
+  bool isLogin = false;
 
   _HistoryPageState();
 
-  Future<void> _getCoachList() async {
-    //coachUids = await UpdateUser(uid: uid).getFriends();
-    for (String uid in coachUids) {
-      //CoachUser? user = await CoachesDBHelperFunctions.instance.getUser(uid);
-      //coachList.add(user!);
-    }
-    if (mounted) setState(() {});
-  }
-
   @override
   void initState() {
-    _getCoachList();
     super.initState();
   }
 
-  Widget _singlePostBody(CoachUser user) {
-    return Card(
-      child: Column(
-        children: <Widget>[
-          AspectRatio(
-            aspectRatio: 16 / 9,
-            child: ClipRRect(
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(4.0),
-                topRight: Radius.circular(4.0),
+  Widget bodyState(List<Map<String, Object>> posts, bool isLogin) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          children: [
+            const SizedBox(height: 12),
+            Expanded(
+              child: ListView.builder(
+                itemCount: posts.length,
+                itemBuilder: (BuildContext context, int index) {
+                  return SingleHistoryCard(
+                    milestones: [],
+                    projectName: posts[index]['projectName'] as String,
+                    imageUrl: posts[index]['imageUrl'] as String,
+                    projectAddress: posts[index]['address'] as String,
+                    projectStatus: posts[index]['status'] as int,
+                    goal: posts[index]['goal'] as double,
+                    raised: posts[index]['raised'] as double,
+                    withdraw: context.read<WalletConnectControl>().withdraw,
+                    addMilestone:
+                        context.read<WalletConnectControl>().addMileStone,
+                  );
+                },
               ),
-              child: Image.asset('assets/banner.jpeg', fit: BoxFit.cover),
             ),
-          ),
-          ListTile(
-            leading: CircleAvatar(child: Text(user.firstName)),
-            title: Text(user.firstName + " " + user.lastName),
-            subtitle: Text(
-              "email: " +
-                  user.email +
-                  "\n" +
-                  "Specialization: " +
-                  user.specialization,
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.all(16.0),
-            child: const Text(
-              "Personal info",
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          ButtonTheme(
-            child: ButtonBar(
-              children: <Widget>[
-                TextButton(
-                  child: Text('DisConnect'.toUpperCase()),
-                  onPressed: () {
-                    //UpdateUser(uid: uid).removeFriend(user.uid);
-                  },
-                ),
-                TextButton(
-                  child: Text('Message'.toUpperCase()),
-                  onPressed: () {},
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
+  List<Map<String, Object>> transferToPosts(List<Map<String, dynamic>> posts) {
+    return posts.map((post) {
+      return {
+        'projectName': post['name'].toString() ?? "",
+        'imageUrl': post['photoCID'].toString() ?? "",
+        'detailCid': post['descCID'].toString() ?? "",
+        'goal': double.tryParse(post['goal'].toString()) ?? 0,
+        'raised': double.tryParse(post['raised'].toString()) ?? 0,
+        'deadline': post['deadline'].toString() ?? "",
+        'status': int.tryParse(post['status'].toString()) ?? -1,
+        'link': post['socialMediaCID'].toString() ?? "",
+        'address': post['projectAddress'].toString() ?? "",
+      };
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
-    Widget body;
-    if (coachList.length == 0) {
-      body = const Center(child: Text("No Transaction Found"));
-    } else {
-      body = Container(
-        padding: const EdgeInsets.all(16.0),
-        child: ListView(
-          children: [for (CoachUser user in coachList) _singlePostBody(user)],
-        ),
-      );
-    }
+    context.read<WalletConnectControl>().fetchHomeScreenActionButton();
     return Scaffold(
-      body: body,
-      // This trailing comma makes auto-formatting nicer for build methods.
+      body: BlocBuilder<WalletConnectControl, Web3State>(
+        builder: (context, state) {
+          if (state is FetchHomeScreenActionButtonSuccess &&
+              state.action == HomeScreenActionButton.interactWithContract) {
+            isLogin = true;
+            return FutureBuilder<List<Map<String, dynamic>>>(
+              future:
+                  context.read<WalletConnectControl>().getSelfProposedProject(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasData) {
+                  final List<Map<String, dynamic>> projectList = snapshot.data!;
+                  return bodyState(transferToPosts(projectList), isLogin);
+                } else {
+                  return const Center(child: Text("No projects found."));
+                }
+              },
+            );
+          } else if (state is FetchHomeScreenActionButtonSuccess &&
+              state.action == HomeScreenActionButton.connectWallet) {
+            return const Center(
+              child: Text(
+                "Please connect your wallet to view history projects.",
+              ),
+            );
+          } else {
+            return const Center(child: CircularProgressIndicator());
+          }
+        },
+      ),
     );
   }
 }

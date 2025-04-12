@@ -439,6 +439,27 @@ class WalletConnectControl extends Cubit<Web3State> {
         functionName: 'socialMediaLinkCID',
       );
 
+      final status = await _appKitModal.requestReadContract(
+        topic: _appKitModal.session?.topic ?? '',
+        chainId: _appKitModal.selectedChain!.chainId,
+        deployedContract: contract,
+        functionName: 'getStatus',
+      );
+
+      final goal = await _appKitModal.requestReadContract(
+        topic: _appKitModal.session?.topic ?? '',
+        chainId: _appKitModal.selectedChain!.chainId,
+        deployedContract: contract,
+        functionName: getProjectFundingGoalFunctionName,
+      );
+
+      final raised = await _appKitModal.requestReadContract(
+        topic: _appKitModal.session?.topic ?? '',
+        chainId: _appKitModal.selectedChain!.chainId,
+        deployedContract: contract,
+        functionName: getProjectFundingBalanceFunctionName,
+      );
+
       return {
         'projectAddress': projectAddress,
         'name': name.first.toString(),
@@ -449,6 +470,9 @@ class WalletConnectControl extends Cubit<Web3State> {
         'descCID': descCID.first.toString(),
         'photoCID': photoCID.first.toString(),
         'socialMediaCID': socialCID.first.toString(),
+        'status': status.first.toString(),
+        'goal': BigInt.parse(goal.first.toString()).toDouble(),
+        'raised': BigInt.parse(raised.first.toString()).toDouble(),
       };
     } catch (e) {
       print('❌ Error loading project info: $e');
@@ -483,7 +507,7 @@ class WalletConnectControl extends Cubit<Web3State> {
       if (accounts.isNotEmpty) {
         final String sender = accounts.first.split(':').last;
 
-        _appKitModal.launchConnectedWallet();
+        //_appKitModal.launchConnectedWallet();
 
         final List<dynamic> tempQueryETH = await _appKitModal
             .requestReadContract(
@@ -511,6 +535,112 @@ class WalletConnectControl extends Cubit<Web3State> {
           message: 'Investment Failed',
         ),
       );
+    }
+    return (result);
+  }
+
+  Future<void> addMileStone(
+    String projectAddress,
+    String name,
+    String descCID,
+    double goal,
+    int deadline,
+    int projectStatus,
+  ) async {
+    try {
+      final List<String> accounts =
+          _appKitModal.session?.getAccounts() ?? <String>[];
+
+      if (accounts.isNotEmpty) {
+        final String sender = accounts.first.split(':').last;
+
+        _appKitModal.launchConnectedWallet();
+
+        DeployedContract contract = await deployedProjectContract(
+          projectAddress,
+          name,
+        );
+
+        await _appKitModal.requestWriteContract(
+          topic: _appKitModal.session?.topic ?? '',
+          chainId: _appKitModal.selectedChain!.chainId,
+          deployedContract: contract,
+          functionName: addMilestoneFunctionName,
+          transaction: Transaction(
+            to: EthereumAddress.fromHex(projectAddress),
+            from: EthereumAddress.fromHex(sender),
+          ),
+          parameters: [
+            name,
+            descCID,
+            BigInt.from(pow(10, 18) * goal),
+            BigInt.from(deadline),
+          ],
+        );
+
+        if (projectStatus == 0) {
+          await _appKitModal.requestWriteContract(
+            topic: _appKitModal.session?.topic ?? '',
+            chainId: _appKitModal.selectedChain!.chainId,
+            deployedContract: contract,
+            functionName: getStartProjectFunctionName,
+            transaction: Transaction(
+              to: EthereumAddress.fromHex(projectAddress),
+              from: EthereumAddress.fromHex(sender),
+            ),
+          );
+        }
+      }
+    } catch (e) {}
+  }
+
+  Future<void> withdraw(String projectAddress, String projectName) async {
+    try {
+      final List<String> accounts =
+          _appKitModal.session?.getAccounts() ?? <String>[];
+
+      if (accounts.isNotEmpty) {
+        final String sender = accounts.first.split(':').last;
+
+        _appKitModal.launchConnectedWallet();
+
+        await _appKitModal.requestWriteContract(
+          topic: _appKitModal.session?.topic ?? '',
+          chainId: _appKitModal.selectedChain!.chainId,
+          deployedContract: await deployedProjectContract(
+            projectAddress,
+            projectName,
+          ),
+          functionName: withdrawFunctionName,
+          transaction: Transaction(
+            to: EthereumAddress.fromHex(projectAddress),
+            from: EthereumAddress.fromHex(sender),
+          ),
+        );
+      }
+    } catch (e) {}
+  }
+
+  Future<List<dynamic>> getMilestoneList(String projectAddress) async {
+    List<dynamic> result = [];
+    try {
+      final List<String> accounts =
+          _appKitModal.session?.getAccounts() ?? <String>[];
+      if (accounts.isNotEmpty) {
+        final contract = await deployedProjectContract(projectAddress, "");
+
+        _appKitModal.launchConnectedWallet();
+
+        result = await _appKitModal.requestReadContract(
+          topic: _appKitModal.session?.topic ?? '',
+          chainId: _appKitModal.selectedChain!.chainId,
+          deployedContract: contract,
+          functionName: getMilestoneListFunctionName,
+        );
+      }
+    } catch (e) {
+      print('Error fetching milestone list: $e');
+      return [];
     }
     return (result);
   }
