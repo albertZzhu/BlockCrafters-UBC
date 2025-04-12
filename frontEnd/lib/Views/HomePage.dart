@@ -6,11 +6,15 @@ import 'package:coach_link/Control/WalletConnectControl.dart';
 import 'package:coach_link/Model/SampleProjectData.dart';
 import 'package:coach_link/Views/SingleProjectCard.dart';
 import 'package:coach_link/Views/InvestModal.dart';
+import 'package:coach_link/Views/propose_project_screen.dart';
 import 'package:coach_link/Model/enum.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert'; // for jsonEncode
+
 
 Widget ipfsCidPreview(BuildContext context, String label, String cid) {
   final ipfsUrl = 'https://ipfs.io/ipfs/$cid';
@@ -138,14 +142,41 @@ class _MyHomePageState extends State<MyHomePage> {
       },
     );
   }
-
+  
   @override
   void initState() {
     super.initState();
-    // loadMyProjects();
-    _myProjectsFuture =
-        context.read<WalletConnectControl>().getMyProjectAddresses();
+    _myProjectsFuture = context.read<WalletConnectControl>().getMyProjectAddresses();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      checkIfRedirectNeeded();
+    });
   }
+
+  Future<void> checkIfRedirectNeeded() async {
+    final prefs = await SharedPreferences.getInstance();
+    final shouldRedirect = prefs.getBool('justSubmittedProject') ?? false;
+
+    if (shouldRedirect) {
+      await prefs.remove('justSubmittedProject');
+
+      final status = prefs.getString('uploadStatus') ?? '';
+      final uploadedCidsJson = prefs.getString('uploadedCIDs') ?? '{}';
+      final cids = Map<String, String>.from(jsonDecode(uploadedCidsJson));
+
+      // Push to ProposeProjectScreen and pass data
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => ProposeProjectScreen(
+            restoredUploadStatus: status,
+            restoredCIDs: cids,
+          ),
+        ),
+      );
+    }
+  }
+
+
 
   Future<String> fetchTextFromIpfs(String cid) async {
     try {
@@ -219,57 +250,103 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
     );
   }
-
-  Widget bodyState(List<Map<String, Object>> posts, bool isLogin) {
+  Widget bodyState(
+    List<Map<String, Object>> fundingPosts,
+    List<Map<String, Object>> activePosts,
+    bool isLogin,
+  ) {
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 12),
             Expanded(
-              child: ListView.builder(
-                itemCount: posts.length,
-                itemBuilder: (BuildContext context, int index) {
-                  return SingleProjectCard(
-                    projectName: posts[index]['projectName'] as String,
-                    imageUrl: posts[index]['imageUrl'] as String,
-                    detailCid: posts[index]['detailCid'] as String,
-                    goal: posts[index]['goal'] as double,
-                    raised: posts[index]['raised'] as double,
-                    deadline: posts[index]['deadline'] as String,
-                    status: posts[index]['status'] as String,
-                    onInvest: () {
-                      if (isLogin) {
-                        showInvestModal(
-                          context,
-                          (
-                            String projectAddress,
-                            String token,
-                            String amount,
-                            String projectName,
-                          ) {
-                            context.read<WalletConnectControl>().investProject(
-                              projectAddress: projectAddress,
-                              token: token,
-                              amount: amount,
-                              projectName: projectName,
+              child: ListView(
+                children: [
+                  const Text(
+                    "🔹 Funding Projects",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  if (fundingPosts.isEmpty)
+                    const Text("No funding projects found."),
+                  ...fundingPosts.map((post) => SingleProjectCard(
+                      projectName: post['projectName']?.toString() ?? "Untitled",
+                      imageUrl: post['imageUrl']?.toString() ?? "",
+                      detailCid: post['detailCid']?.toString() ?? "",
+                      goal: post['goal'] is num ? (post['goal'] as num).toDouble() : 0.0,
+                      raised: post['raised'] is num ? (post['raised'] as num).toDouble() : 0.0,
+                      deadline: post['deadline']?.toString() ?? "",
+                      status: post['status']?.toString() ?? "",
+                      founder: post['founder']?.toString() ?? "Unknown",
+
+                        // projectName: post['projectName'] as String,
+                        // imageUrl: post['imageUrl'] as String,
+                        // detailCid: post['detailCid'] as String,
+                        // goal: post['goal'] as double,
+                        // raised: post['raised'] as double,
+                        // deadline: post['deadline'] as String,
+                        // status: post['status'] as String,
+                        // founder: post['founder'] as String,
+                        onInvest: () {
+                          if (isLogin) {
+                            showInvestModal(
+                              context,
+                              (
+                                String projectAddress,
+                                String token,
+                                String amount,
+                                String projectName,
+                              ) {
+                                context.read<WalletConnectControl>().investProject(
+                                      projectAddress: post['address'] as String,
+                                      token: token,
+                                      amount: amount,
+                                      projectName: projectName,
+                                    );
+                              },
+                              post['projectName'] as String,
+                              post['imageUrl'] as String,
+                              post['address'] as String,
                             );
-                          },
-                          posts[index]['projectName'] as String,
-                          posts[index]['imageUrl'] as String,
-                          posts[index]['address'] as String,
-                        );
-                      } else {
-                        Fluttertoast.showToast(msg: "Please login to invest");
-                      }
-                    },
-                    onVote:
-                        () => print(
-                          'Vote clicked for ${posts[index]['projectName']}',
-                        ),
-                  );
-                },
+                          } else {
+                            Fluttertoast.showToast(msg: "Please login to invest");
+                          }
+                        },
+                        onVote: () => print('Vote clicked for ${post['projectName']}'),
+                      )),
+                  const SizedBox(height: 24),
+                  const Text(
+                    "🔸 Active Projects",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  if (activePosts.isEmpty)
+                    const Text("No active projects found."),
+                  ...activePosts.map((post) => SingleProjectCard(
+                      projectName: post['projectName']?.toString() ?? "Untitled",
+                      imageUrl: post['imageUrl']?.toString() ?? "",
+                      detailCid: post['detailCid']?.toString() ?? "",
+                      goal: post['goal'] is num ? (post['goal'] as num).toDouble() : 0.0,
+                      raised: post['raised'] is num ? (post['raised'] as num).toDouble() : 0.0,
+                      deadline: post['deadline']?.toString() ?? "",
+                      status: post['status']?.toString() ?? "",
+                      founder: post['founder']?.toString() ?? "Unknown",
+
+                        // projectName: post['projectName'] as String,
+                        // imageUrl: post['imageUrl'] as String,
+                        // detailCid: post['detailCid'] as String,
+                        // goal: post['goal'] as double,
+                        // raised: post['raised'] as double,
+                        // deadline: post['deadline'] as String,
+                        // status: post['status'] as String,
+                        // founder: post['founder'] as String,
+                        onInvest: () {}, // Disabled for active projects
+                        onVote: () => print('Vote clicked for ${post['projectName']}'),
+                      )),
+                ],
               ),
             ),
           ],
@@ -278,18 +355,59 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+  // List<Map<String, Object>> transferToPosts(List<Map<String, dynamic>> posts) {
+    
+
+  //   return posts.map((post) {
+  //     final fundingBalance = post['fundingBalance'];
+  //     final getGoal = post['goal'];
+
+  //     final double raised = (fundingBalance is String)
+  //         ? double.tryParse(fundingBalance) ?? 0.0
+  //         : (fundingBalance as num?)?.toDouble() ?? 0.0;
+
+  //     final double goal = (getGoal is String)
+  //         ? double.tryParse(fundingBalance) ?? 0.0
+  //         : (fundingBalance as num?)?.toDouble() ?? 0.0;
+
+  //     return {
+  //       'projectName': post['name'].toString() ?? "",
+  //       'imageUrl': 'https://ipfs.io/ipfs/${post['photoCID'] ?? ''}',
+  //       'detailCid': post['descCID'].toString() ?? "",
+  //       'status': post['status'].toString() ?? "",
+  //       'link': post['socialMediaCID'].toString() ?? "",
+  //       'address': post['projectAddress'].toString() ?? "",
+  //       'goal': goal,
+  //       'raised': raised,
+  //       'founder': post['founder'].toString() ?? "",
+  //     };
+  //   }).toList();
+  // }
   List<Map<String, Object>> transferToPosts(List<Map<String, dynamic>> posts) {
+    print("🔍 Raw post data:");
+    posts.forEach((p) => print(p));
     return posts.map((post) {
+      final fundingBalance = post['fundingBalance'];
+      final getGoal = post['goal'];
+
+      final double raised = (fundingBalance is String)
+          ? double.tryParse(fundingBalance) ?? 0.0
+          : (fundingBalance as num?)?.toDouble() ?? 0.0;
+
+      final double goal = (getGoal is String)
+          ? double.tryParse(getGoal) ?? 0.0
+          : (getGoal as num?)?.toDouble() ?? 0.0;
+
       return {
-        'projectName': post['name'].toString() ?? "",
-        'imageUrl': post['photoCID'].toString() ?? "",
-        'detailCid': post['descCID'].toString() ?? "",
-        'goal': /*post['goal'].toString() ??*/ 50.0,
-        'raised': /*post['raised'].toString() ??*/ 30.0,
-        'deadline': post['deadline'].toString() ?? "",
-        'status': post['status'].toString() ?? "",
-        'link': post['socialMediaCID'].toString() ?? "",
-        'address': post['projectAddress'].toString() ?? "",
+        'projectName': post['name']?.toString() ?? "Untitled",
+        'imageUrl': 'https://ipfs.io/ipfs/${post['photoCID'] ?? ''}',
+        'detailCid': post['descCID']?.toString() ?? "",
+        'status': post['status']?.toString() ?? "",
+        'link': post['socialMediaCID']?.toString() ?? "",
+        'address': post['projectAddress']?.toString() ?? "",
+        'goal': goal,
+        'raised': raised,
+        'founder': post['founder']?.toString() ?? "Unknown",
       };
     }).toList();
   }
@@ -303,15 +421,23 @@ class _MyHomePageState extends State<MyHomePage> {
           if (state is FetchHomeScreenActionButtonSuccess &&
               state.action == HomeScreenActionButton.interactWithContract) {
             isLogin = true;
-            return FutureBuilder<List<Map<String, dynamic>>>(
-              future:
-                  context.read<WalletConnectControl>().getSelfProposedProject(),
+            // return FutureBuilder<List<Map<String, dynamic>>>(
+            return FutureBuilder<List<List<Map<String, dynamic>>>>(
+              future: Future.wait([
+                context.read<WalletConnectControl>().getAllFundingProject(),
+                context.read<WalletConnectControl>().getAllActiveProject(),
+              ]),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 } else if (snapshot.hasData) {
-                  final List<Map<String, dynamic>> projectList = snapshot.data!;
-                  return bodyState(transferToPosts(projectList), isLogin);
+                  final List<Map<String, dynamic>> fundingProjects = snapshot.data![0];
+                  final List<Map<String, dynamic>> activeProjects = snapshot.data![1];
+
+                  final fundingPosts = transferToPosts(fundingProjects);
+                  final activePosts = transferToPosts(activeProjects);
+
+                  return bodyState(fundingPosts, activePosts, isLogin);
                 } else {
                   return const Center(child: Text("No projects found."));
                 }

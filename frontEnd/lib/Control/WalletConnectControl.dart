@@ -346,30 +346,6 @@ class WalletConnectControl extends Cubit<Web3State> {
     }
   }
 
-  // Future<List<String>> getMyProjectAddresses() async {
-  //   try {
-  //     final List<String> accounts = _appKitModal.session?.getAccounts() ?? <String>[];
-  //     if (accounts.isEmpty) throw Exception('No wallet connected');
-  //     final String userAddress = accounts.first.split(':').last;
-
-  //     final contract = await deployedManagerContract();
-
-  //     final List<dynamic> result = await _appKitModal.requestReadContract(
-  //       topic: _appKitModal.session?.topic ?? '',
-  //       chainId: _appKitModal.selectedChain!.chainId,
-  //       deployedContract: contract,
-  //       functionName: 'getFounderProjects',
-  //       parameters: [EthereumAddress.fromHex(userAddress)],
-  //     );
-
-  //     final List<String> addresses = result.map((e) => e.toString()).toList();
-  //     return addresses;
-  //   } catch (e) {
-  //     print('Error fetching project addresses: $e');
-  //     return [];
-  //   }
-  // }
-
   Future<List<String>> getMyProjectAddresses() async {
     try {
       final List<String> accounts =
@@ -392,98 +368,157 @@ class WalletConnectControl extends Cubit<Web3State> {
       final List<String> addresses =
           addressList.map((e) => e.toString()).toList();
 
-      print("✅ Project addresses: $addresses");
+      print("✅ My projects addresses: $addresses");
       return addresses;
     } catch (e) {
       print('Error fetching project addresses: $e');
       return [];
     }
   }
+Future<List<String>> getAllActiveProjectAddresses() async {
+  try {
+    final contract = await deployedManagerContract();
 
-  Future<Map<String, dynamic>> getProjectInfo(String projectAddress) async {
-    try {
-      final contract = await deployedProjectContract(projectAddress, "");
+    final List<dynamic> result = await _appKitModal.requestReadContract(
+      topic: _appKitModal.session?.topic ?? '',
+      chainId: _appKitModal.selectedChain!.chainId,
+      deployedContract: contract,
+      functionName: 'getAllActiveProjects',
+      parameters: [], // no parameters
+    );
 
-      final name = await _appKitModal.requestReadContract(
-        topic: _appKitModal.session?.topic ?? '',
-        chainId: _appKitModal.selectedChain!.chainId,
-        deployedContract: contract,
-        functionName: 'name',
-      );
+    // result should be a List<dynamic> of EthereumAddress or Strings
+    final List<String> addresses = (result.first as List)
+        .map((e) => e.toString())
+        .toList();
 
-      final deadline = await _appKitModal.requestReadContract(
-        topic: _appKitModal.session?.topic ?? '',
-        chainId: _appKitModal.selectedChain!.chainId,
-        deployedContract: contract,
-        functionName: 'fundingDeadline',
-      );
-
-      final descCID = await _appKitModal.requestReadContract(
-        topic: _appKitModal.session?.topic ?? '',
-        chainId: _appKitModal.selectedChain!.chainId,
-        deployedContract: contract,
-        functionName: 'descCID',
-      );
-
-      final photoCID = await _appKitModal.requestReadContract(
-        topic: _appKitModal.session?.topic ?? '',
-        chainId: _appKitModal.selectedChain!.chainId,
-        deployedContract: contract,
-        functionName: 'photoCID',
-      );
-
-      final socialCID = await _appKitModal.requestReadContract(
-        topic: _appKitModal.session?.topic ?? '',
-        chainId: _appKitModal.selectedChain!.chainId,
-        deployedContract: contract,
-        functionName: 'socialMediaLinkCID',
-      );
-
-      final status = await _appKitModal.requestReadContract(
-        topic: _appKitModal.session?.topic ?? '',
-        chainId: _appKitModal.selectedChain!.chainId,
-        deployedContract: contract,
-        functionName: 'getStatus',
-      );
-
-      final goal = await _appKitModal.requestReadContract(
-        topic: _appKitModal.session?.topic ?? '',
-        chainId: _appKitModal.selectedChain!.chainId,
-        deployedContract: contract,
-        functionName: getProjectFundingGoalFunctionName,
-      );
-
-      final raised = await _appKitModal.requestReadContract(
-        topic: _appKitModal.session?.topic ?? '',
-        chainId: _appKitModal.selectedChain!.chainId,
-        deployedContract: contract,
-        functionName: getProjectFundingBalanceFunctionName,
-      );
-
-      return {
-        'projectAddress': projectAddress,
-        'name': name.first.toString(),
-        'deadline':
-            DateTime.fromMillisecondsSinceEpoch(
-              BigInt.parse(deadline.first.toString()).toInt() * 1000,
-            ).toString(),
-        'descCID': descCID.first.toString(),
-        'photoCID': photoCID.first.toString(),
-        'socialMediaCID': socialCID.first.toString(),
-        'status': status.first.toString(),
-        'goal': BigInt.parse(goal.first.toString()).toDouble(),
-        'raised': BigInt.parse(raised.first.toString()).toDouble(),
-      };
-    } catch (e) {
-      print('❌ Error loading project info: $e');
-      return {'error': e.toString()};
-    }
+    print("✅ All Active Projects addresses: $addresses");
+    return addresses;
+  } catch (e) {
+    print('Error fetching active project addresses: $e');
+    return [];
   }
+}
+Future<List<String>> getAllFundingProjectAddresses() async {
+  try {
+    final contract = await deployedManagerContract();
+
+    final List<dynamic> result = await _appKitModal.requestReadContract(
+      topic: _appKitModal.session?.topic ?? '',
+      chainId: _appKitModal.selectedChain!.chainId,
+      deployedContract: contract,
+      functionName: 'getAllFundingProjects',
+      parameters: [], // no parameters
+    );
+
+    // result should be a List<dynamic> of EthereumAddress or Strings
+    final List<String> addresses = (result.first as List)
+        .map((e) => e.toString())
+        .toList();
+
+    print("✅ All Funding Projects addresses: $addresses");
+    return addresses;
+  } catch (e) {
+    print('Error fetching project addresses: $e');
+    return [];
+  }
+}
+Future<Map<String, dynamic>> getProjectInfo(String projectAddress) async {
+  try {
+    final contract = await deployedProjectContract(projectAddress, "");
+
+    final topic = _appKitModal.session?.topic ?? '';
+    final chainId = _appKitModal.selectedChain!.chainId;
+
+    Future<List<dynamic>> call(String fn) =>
+        _appKitModal.requestReadContract(
+          topic: topic,
+          chainId: chainId,
+          deployedContract: contract,
+          functionName: fn,
+        );
+
+    final name = await call('name');
+    final fundingBalance = await call('fundingBalance');
+    final frozenFund = await call('frozenFund');
+    final fundingDone = await call('fundingDone');
+    final currentMilestone = await call('currentMilestone');
+    final status = await call('status');
+    final goal = await call('getProjectFundingGoal');
+    final deadline = await call('fundingDeadline');
+    final descCID = await call('descCID');
+    final photoCID = await call('photoCID');
+    final socialCID = await call('socialMediaLinkCID');
+    final founder = await call('founder');
+    final projectId = await call('projectId');
+
+    return {
+      'projectAddress': projectAddress,
+      'projectId': projectId.first.toString(),
+      'founder': founder.first.toString(),
+      'name': name.first.toString(),
+      'fundingBalance': fundingBalance.first.toString(),
+      'goal': goal.first.toString(),
+      'frozenFund': frozenFund.first.toString(),
+      'fundingDone': fundingDone.first.toString(),
+      'currentMilestone': currentMilestone.first.toString(),
+      'status': status.first.toString(),
+      'deadline': DateTime.fromMillisecondsSinceEpoch(
+        BigInt.parse(deadline.first.toString()).toInt() * 1000,
+      ).toString(),
+      'descCID': descCID.first.toString(),
+      'photoCID': photoCID.first.toString(),
+      'socialMediaCID': socialCID.first.toString(),
+    };
+  } catch (e) {
+    print('❌ Error loading project info: $e');
+    return {'error': e.toString()};
+  }
+}
 
   Future<List<Map<String, dynamic>>> getSelfProposedProject() async {
     List<Map<String, dynamic>> result = [];
     try {
       List<String> projectAddressList = await getMyProjectAddresses();
+      if (projectAddressList.isNotEmpty) {
+        for (String projectAddress in projectAddressList) {
+          Map<String, dynamic> projectInfo = await getProjectInfo(
+            projectAddress,
+          );
+          result.add(projectInfo);
+        }
+      }
+    } catch (e) {
+      /// Handle error
+    }
+    print(result);
+    return (result);
+  }
+
+
+
+    Future<List<Map<String, dynamic>>> getAllFundingProject() async {
+    List<Map<String, dynamic>> result = [];
+    try {
+      List<String> projectAddressList = await getAllFundingProjectAddresses();
+      if (projectAddressList.isNotEmpty) {
+        for (String projectAddress in projectAddressList) {
+          Map<String, dynamic> projectInfo = await getProjectInfo(
+            projectAddress,
+          );
+          result.add(projectInfo);
+        }
+      }
+    } catch (e) {
+      /// Handle error
+    }
+    return (result);
+  }
+
+      Future<List<Map<String, dynamic>>> getAllActiveProject() async {
+    List<Map<String, dynamic>> result = [];
+    try {
+      List<String> projectAddressList = await getAllActiveProjectAddresses();
       if (projectAddressList.isNotEmpty) {
         for (String projectAddress in projectAddressList) {
           Map<String, dynamic> projectInfo = await getProjectInfo(

@@ -42,7 +42,7 @@ class ProjectSubmissionService {
     final statusMessages = <String>[];
     String? imageCid, detailCid, socialMediaCid, tokenSymbolCid;
 
-    statusMessages.add('📤 Starting file uploads to IPFS...');
+    statusMessages.add('Starting file uploads to IPFS...');
 
     // Upload image
     try {
@@ -51,11 +51,10 @@ class ProjectSubmissionService {
         description: 'Project image',
         file: imageFile,
       );
-      statusMessages.add(
-        imageCid != null
-            ? '✅ Image uploaded. CID: $imageCid'
-            : 'Image upload failed (null CID).',
-      );
+      statusMessages.add(imageCid != null
+          ? 'Image uploaded. CID: $imageCid'
+          : 'Image upload failed (null CID).');
+>>>>>>> Stashed changes
     } catch (e) {
       statusMessages.add('Image upload error: $e');
     }
@@ -67,11 +66,11 @@ class ProjectSubmissionService {
         description: 'Token Symbol',
         file: symbolFile,
       );
-      statusMessages.add(
-        tokenSymbolCid != null
-            ? '✅ Token Symbol uploaded. CID: $tokenSymbolCid'
-            : 'Token Symbol upload failed (null CID).',
-      );
+
+      statusMessages.add(tokenSymbolCid != null
+          ? 'Token Symbol uploaded. CID: $tokenSymbolCid'
+          : 'Token Symbol upload failed (null CID).');
+
     } catch (e) {
       statusMessages.add('Token Symbol upload error: $e');
     }
@@ -83,11 +82,9 @@ class ProjectSubmissionService {
         description: 'Project detail file',
         file: detailFile,
       );
-      statusMessages.add(
-        detailCid != null
-            ? '✅ Detail file uploaded. CID: $detailCid'
-            : 'Detail file upload failed (null CID).',
-      );
+      statusMessages.add(detailCid != null
+          ? 'Detail file uploaded. CID: $detailCid'
+          : 'Detail file upload failed (null CID).');
     } catch (e) {
       statusMessages.add('Detail file upload error: $e');
     }
@@ -100,11 +97,9 @@ class ProjectSubmissionService {
         description: 'Project social media link text',
         file: socialMediaFile,
       );
-      statusMessages.add(
-        socialMediaCid != null
-            ? '✅ Social Media Link File uploaded. CID: $socialMediaCid'
-            : 'Social Media Link File failed (null CID).',
-      );
+      statusMessages.add(socialMediaCid != null
+          ? 'Social Media Link File uploaded. CID: $socialMediaCid'
+          : 'Social Media Link File failed (null CID).');
     } catch (e) {
       statusMessages.add('Social Media Link File upload error: $e');
     }

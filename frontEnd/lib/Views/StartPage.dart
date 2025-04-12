@@ -121,7 +121,14 @@ class _StartPageState extends State<StartPage> {
                   state.action == HomeScreenActionButton.connectWallet) {
                 return (GestureDetector(
                   onTap: () {
-                    w3mService!.openModalView();
+                    if (w3mService != null) {
+                      w3mService!.openModalView();
+                    } else {
+                      print("w3mService is null");
+                      // 或者提示用户、初始化它
+                    }
+
+                    // w3mService!.openModalView();
                   },
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.start,
