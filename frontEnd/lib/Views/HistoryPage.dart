@@ -22,6 +22,7 @@ class _HistoryPageState extends State<HistoryPage> {
 
   @override
   void initState() {
+    context.read<WalletConnectControl>().fetchHomeScreenActionButton();
     super.initState();
   }
 

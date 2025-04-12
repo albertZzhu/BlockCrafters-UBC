@@ -49,6 +49,9 @@ class _StartPageState extends State<StartPage> {
         context.read<WalletConnectControl>().instantiate(context);
       }
     });
+    context
+        .read<WalletConnectControl>()
+        .fetchHomeScreenActionButton(); // Fetch the action button state
   }
 
   FloatingActionButton addNewProjectWidget() {
