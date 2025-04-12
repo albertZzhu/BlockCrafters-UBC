@@ -1,5 +1,7 @@
 pragma solidity ^0.8.19;
 //TODO: add ownable
+import "hardhat/console.sol";
+
 contract AddressStorage{
     mapping(bytes32 => address) private addresses;
 
@@ -12,6 +14,7 @@ contract AddressStorage{
     }
 
     function _setAddress(bytes32 _key, address _value) internal {
+        console.log("The address is:", _value);
         addresses[_key] = _value;
     }
 
