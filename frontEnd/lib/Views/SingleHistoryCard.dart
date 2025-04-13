@@ -23,6 +23,7 @@ class SingleHistoryCard extends StatelessWidget {
     int projectStatus,
   )
   addMilestone;
+  final Function(String projectAddress, String projectName) cancelProject;
 
   const SingleHistoryCard({
     Key? key,
@@ -36,6 +37,7 @@ class SingleHistoryCard extends StatelessWidget {
     required this.withdraw,
     required this.startVoting,
     required this.addMilestone,
+    required this.cancelProject,
   }) : super(key: key);
 
   double get progress => (raised / goal).clamp(0.0, 1.0);
@@ -66,7 +68,7 @@ class SingleHistoryCard extends StatelessWidget {
 
   List<Widget> dynamicBody(BuildContext context) {
     List<Widget> widgets = [];
-    if (projectStatus != 0) {
+    if (projectStatus != 0 && projectStatus != 3) {
       widgets.add(
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -96,87 +98,110 @@ class SingleHistoryCard extends StatelessWidget {
       );
     }
     widgets.add(
-      ButtonTheme(
-        child: ButtonBar(
-          children: <Widget>[
-            TextButton(
-              child: Text('Add Milestone'),
-              style: TextButton.styleFrom(
-                foregroundColor:
-                    projectStatus >= 0 && projectStatus <= 2
-                        ? Colors.blue
-                        : Colors.grey,
-              ),
-              onPressed:
-                  projectStatus >= 0 && projectStatus <= 2
-                      ? () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder:
-                                (context) => AddMilestonePage(
-                                  projectAddress: this.projectAddress,
-                                  projectName: this.projectName,
-                                  projectStatus: this.projectStatus,
-                                  addMilestone: this.addMilestone,
-                                ),
-                          ),
-                        );
-                      }
-                      : () {
-                        Fluttertoast.showToast(
-                          msg:
-                              "You cannot add milestone when project is $projectStatus",
-                        );
-                      },
-            ),
-            TextButton(
-              child: Text('Start Voting'),
-              style: TextButton.styleFrom(
-                foregroundColor:
-                    projectStatus == 2
-                        ? Colors.blue
-                        : Colors.grey,
-              ),
-              onPressed:
-                  projectStatus == 2
-                      ? () {
-                        startVoting(this.projectAddress, this.projectName);
-                      }
-                      : () {
-                        Fluttertoast.showToast(
-                          msg:
-                              "You can only start voting process when project is active",
-                        );
-                      },
-            ),
-            TextButton(
-              child: Text('Withdraw'),
-              style: TextButton.styleFrom(
-                foregroundColor:
-                    projectStatus == 2 || projectStatus == 4
-                        ? Colors.blue
-                        : Colors.grey,
-              ),
-              onPressed:
-                  projectStatus == 2 || projectStatus == 4
-                      ? () {
-                        withdraw(this.projectAddress, this.projectName);
-                      }
-                      : () {
-                        Fluttertoast.showToast(
-                          msg:
-                              "You can only withdraw when project is completed",
-                        );
-                      },
-            ),
-            TextButton(
-              child: Text('Edit'),
-              onPressed: () {
-                _launchCID();
+      Align(
+        alignment: Alignment.centerRight, // Aligns the dropdown to the right
+        child: ButtonTheme(
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              icon: Icon(
+                Icons.more_vert,
+                color: Colors.blue,
+                size: 28,
+              ), // Styled dropdown icon
+              items: [
+                DropdownMenuItem(
+                  value: 'addMilestone',
+                  child: Text(
+                    'Add Milestone',
+                    style: TextStyle(
+                      color:
+                          projectStatus >= 0 && projectStatus <= 2
+                              ? Colors.black
+                              : Colors.grey,
+                    ),
+                  ),
+                ),
+                DropdownMenuItem(
+                  value: 'startVoting',
+                  child: Text(
+                    'Start Voting',
+                    style: TextStyle(
+                      color: projectStatus == 2 ? Colors.black : Colors.grey,
+                    ),
+                  ),
+                ),
+                DropdownMenuItem(
+                  value: 'withdraw',
+                  child: Text(
+                    'Withdraw',
+                    style: TextStyle(
+                      color:
+                          projectStatus == 2 || projectStatus == 4
+                              ? Colors.black
+                              : Colors.grey,
+                    ),
+                  ),
+                ),
+                DropdownMenuItem(
+                  value: 'cancel',
+                  child: Text(
+                    'Cancel',
+                    style: TextStyle(
+                      color: projectStatus == 2 ? Colors.black : Colors.grey,
+                    ),
+                  ),
+                ),
+              ],
+              onChanged: (String? value) {
+                if (value == 'addMilestone') {
+                  if (projectStatus >= 0 && projectStatus <= 2) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (context) => AddMilestonePage(
+                              projectAddress: this.projectAddress,
+                              projectName: this.projectName,
+                              projectStatus: this.projectStatus,
+                              addMilestone: this.addMilestone,
+                            ),
+                      ),
+                    );
+                  } else {
+                    Fluttertoast.showToast(
+                      msg:
+                          "You cannot add milestone when project is ${projectStatusTranslation(projectStatus)}",
+                    );
+                  }
+                } else if (value == 'startVoting') {
+                  if (projectStatus == 2) {
+                    startVoting(this.projectAddress, this.projectName);
+                  } else {
+                    Fluttertoast.showToast(
+                      msg:
+                          "You can only start voting process when project is active",
+                    );
+                  }
+                } else if (value == 'withdraw') {
+                  if (projectStatus == 2 || projectStatus == 4) {
+                    withdraw(this.projectAddress, this.projectName);
+                  } else {
+                    Fluttertoast.showToast(
+                      msg: "You can only withdraw when project is completed",
+                    );
+                  }
+                } else if (value == 'cancel') {
+                  if (projectStatus == 2) {
+                    cancelProject(this.projectAddress, this.projectName);
+                  } else {
+                    Fluttertoast.showToast(
+                      msg: "You can only cancel when project is active",
+                    );
+                  }
+                }
               },
             ),
-          ],
+          ),
         ),
       ),
     );

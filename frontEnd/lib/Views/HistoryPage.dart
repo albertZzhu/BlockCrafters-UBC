@@ -26,6 +26,12 @@ class _HistoryPageState extends State<HistoryPage> {
     super.initState();
   }
 
+  Future<void> _fetchData() async {
+    // Fetch data logic here
+    await context.read<WalletConnectControl>().fetchHomeScreenActionButton();
+    setState(() {}); // Rebuild the widget to reflect the updated data
+  }
+
   Widget bodyState(List<Map<String, Object>> posts, bool isLogin) {
     return SafeArea(
       child: Padding(
@@ -34,23 +40,29 @@ class _HistoryPageState extends State<HistoryPage> {
           children: [
             const SizedBox(height: 12),
             Expanded(
-              child: ListView.builder(
-                itemCount: posts.length,
-                itemBuilder: (BuildContext context, int index) {
-                  return SingleHistoryCard(
-                    milestones: [],
-                    projectName: posts[index]['projectName'] as String,
-                    imageUrl: posts[index]['imageUrl'] as String,
-                    projectAddress: posts[index]['address'] as String,
-                    projectStatus: posts[index]['status'] as int,
-                    goal: posts[index]['goal'] as double,
-                    raised: posts[index]['raised'] as double,
-                    withdraw: context.read<WalletConnectControl>().withdraw,
-                    startVoting: context.read<WalletConnectControl>().startVoting,
-                    addMilestone:
-                        context.read<WalletConnectControl>().addMileStone,
-                  );
-                },
+              child: RefreshIndicator(
+                onRefresh: _fetchData,
+                child: ListView.builder(
+                  itemCount: posts.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    return SingleHistoryCard(
+                      milestones: [],
+                      projectName: posts[index]['projectName'] as String,
+                      imageUrl: posts[index]['imageUrl'] as String,
+                      projectAddress: posts[index]['address'] as String,
+                      projectStatus: posts[index]['status'] as int,
+                      goal: posts[index]['goal'] as double,
+                      raised: posts[index]['raised'] as double,
+                      withdraw: context.read<WalletConnectControl>().withdraw,
+                      startVoting:
+                          context.read<WalletConnectControl>().startVoting,
+                      addMilestone:
+                          context.read<WalletConnectControl>().addMileStone,
+                      cancelProject:
+                          context.read<WalletConnectControl>().cancelProject,
+                    );
+                  },
+                ),
               ),
             ),
           ],

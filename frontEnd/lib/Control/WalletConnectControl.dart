@@ -375,106 +375,107 @@ class WalletConnectControl extends Cubit<Web3State> {
       return [];
     }
   }
-Future<List<String>> getAllActiveProjectAddresses() async {
-  try {
-    final contract = await deployedManagerContract();
 
-    final List<dynamic> result = await _appKitModal.requestReadContract(
-      topic: _appKitModal.session?.topic ?? '',
-      chainId: _appKitModal.selectedChain!.chainId,
-      deployedContract: contract,
-      functionName: 'getAllActiveProjects',
-      parameters: [], // no parameters
-    );
+  Future<List<String>> getAllActiveProjectAddresses() async {
+    try {
+      final contract = await deployedManagerContract();
 
-    // result should be a List<dynamic> of EthereumAddress or Strings
-    final List<String> addresses = (result.first as List)
-        .map((e) => e.toString())
-        .toList();
+      final List<dynamic> result = await _appKitModal.requestReadContract(
+        topic: _appKitModal.session?.topic ?? '',
+        chainId: _appKitModal.selectedChain!.chainId,
+        deployedContract: contract,
+        functionName: 'getAllActiveProjects',
+        parameters: [], // no parameters
+      );
 
-    print("✅ All Active Projects addresses: $addresses");
-    return addresses;
-  } catch (e) {
-    print('Error fetching active project addresses: $e');
-    return [];
+      // result should be a List<dynamic> of EthereumAddress or Strings
+      final List<String> addresses =
+          (result.first as List).map((e) => e.toString()).toList();
+
+      print("✅ All Active Projects addresses: $addresses");
+      return addresses;
+    } catch (e) {
+      print('Error fetching active project addresses: $e');
+      return [];
+    }
   }
-}
-Future<List<String>> getAllFundingProjectAddresses() async {
-  try {
-    final contract = await deployedManagerContract();
 
-    final List<dynamic> result = await _appKitModal.requestReadContract(
-      topic: _appKitModal.session?.topic ?? '',
-      chainId: _appKitModal.selectedChain!.chainId,
-      deployedContract: contract,
-      functionName: 'getAllFundingProjects',
-      parameters: [], // no parameters
-    );
+  Future<List<String>> getAllFundingProjectAddresses() async {
+    try {
+      final contract = await deployedManagerContract();
 
-    // result should be a List<dynamic> of EthereumAddress or Strings
-    final List<String> addresses = (result.first as List)
-        .map((e) => e.toString())
-        .toList();
+      final List<dynamic> result = await _appKitModal.requestReadContract(
+        topic: _appKitModal.session?.topic ?? '',
+        chainId: _appKitModal.selectedChain!.chainId,
+        deployedContract: contract,
+        functionName: 'getAllFundingProjects',
+        parameters: [], // no parameters
+      );
 
-    print("✅ All Funding Projects addresses: $addresses");
-    return addresses;
-  } catch (e) {
-    print('Error fetching project addresses: $e');
-    return [];
+      // result should be a List<dynamic> of EthereumAddress or Strings
+      final List<String> addresses =
+          (result.first as List).map((e) => e.toString()).toList();
+
+      print("✅ All Funding Projects addresses: $addresses");
+      return addresses;
+    } catch (e) {
+      print('Error fetching project addresses: $e');
+      return [];
+    }
   }
-}
-Future<Map<String, dynamic>> getProjectInfo(String projectAddress) async {
-  try {
-    final contract = await deployedProjectContract(projectAddress, "");
 
-    final topic = _appKitModal.session?.topic ?? '';
-    final chainId = _appKitModal.selectedChain!.chainId;
+  Future<Map<String, dynamic>> getProjectInfo(String projectAddress) async {
+    try {
+      final contract = await deployedProjectContract(projectAddress, "");
 
-    Future<List<dynamic>> call(String fn) =>
-        _appKitModal.requestReadContract(
-          topic: topic,
-          chainId: chainId,
-          deployedContract: contract,
-          functionName: fn,
-        );
+      final topic = _appKitModal.session?.topic ?? '';
+      final chainId = _appKitModal.selectedChain!.chainId;
 
-    final name = await call('name');
-    final fundingBalance = await call('fundingBalance');
-    final frozenFund = await call('frozenFund');
-    final fundingDone = await call('fundingDone');
-    final currentMilestone = await call('currentMilestone');
-    final status = await call('status');
-    final goal = await call('getProjectFundingGoal');
-    final deadline = await call('fundingDeadline');
-    final descCID = await call('descCID');
-    final photoCID = await call('photoCID');
-    final socialCID = await call('socialMediaLinkCID');
-    final founder = await call('founder');
-    final projectId = await call('projectId');
+      Future<List<dynamic>> call(String fn) => _appKitModal.requestReadContract(
+        topic: topic,
+        chainId: chainId,
+        deployedContract: contract,
+        functionName: fn,
+      );
 
-    return {
-      'projectAddress': projectAddress,
-      'projectId': projectId.first.toString(),
-      'founder': founder.first.toString(),
-      'name': name.first.toString(),
-      'fundingBalance': fundingBalance.first.toString(),
-      'goal': goal.first.toString(),
-      'frozenFund': frozenFund.first.toString(),
-      'fundingDone': fundingDone.first.toString(),
-      'currentMilestone': currentMilestone.first.toString(),
-      'status': status.first.toString(),
-      'deadline': DateTime.fromMillisecondsSinceEpoch(
-        BigInt.parse(deadline.first.toString()).toInt() * 1000,
-      ).toString(),
-      'descCID': descCID.first.toString(),
-      'photoCID': photoCID.first.toString(),
-      'socialMediaCID': socialCID.first.toString(),
-    };
-  } catch (e) {
-    print('❌ Error loading project info: $e');
-    return {'error': e.toString()};
+      final name = await call('name');
+      final fundingBalance = await call('fundingBalance');
+      final frozenFund = await call('frozenFund');
+      final fundingDone = await call('fundingDone');
+      final currentMilestone = await call('currentMilestone');
+      final status = await call('status');
+      final goal = await call('getProjectFundingGoal');
+      final deadline = await call('fundingDeadline');
+      final descCID = await call('descCID');
+      final photoCID = await call('photoCID');
+      final socialCID = await call('socialMediaLinkCID');
+      final founder = await call('founder');
+      final projectId = await call('projectId');
+
+      return {
+        'projectAddress': projectAddress,
+        'projectId': projectId.first.toString(),
+        'founder': founder.first.toString(),
+        'name': name.first.toString(),
+        'fundingBalance': fundingBalance.first.toString(),
+        'goal': goal.first.toString(),
+        'frozenFund': frozenFund.first.toString(),
+        'fundingDone': fundingDone.first.toString(),
+        'currentMilestone': currentMilestone.first.toString(),
+        'status': status.first.toString(),
+        'deadline':
+            DateTime.fromMillisecondsSinceEpoch(
+              BigInt.parse(deadline.first.toString()).toInt() * 1000,
+            ).toString(),
+        'descCID': descCID.first.toString(),
+        'photoCID': photoCID.first.toString(),
+        'socialMediaCID': socialCID.first.toString(),
+      };
+    } catch (e) {
+      print('❌ Error loading project info: $e');
+      return {'error': e.toString()};
+    }
   }
-}
 
   Future<List<Map<String, dynamic>>> getSelfProposedProject() async {
     List<Map<String, dynamic>> result = [];
@@ -495,9 +496,7 @@ Future<Map<String, dynamic>> getProjectInfo(String projectAddress) async {
     return (result);
   }
 
-
-
-    Future<List<Map<String, dynamic>>> getAllFundingProject() async {
+  Future<List<Map<String, dynamic>>> getAllFundingProject() async {
     List<Map<String, dynamic>> result = [];
     try {
       List<String> projectAddressList = await getAllFundingProjectAddresses();
@@ -515,7 +514,7 @@ Future<Map<String, dynamic>> getProjectInfo(String projectAddress) async {
     return (result);
   }
 
-      Future<List<Map<String, dynamic>>> getAllActiveProject() async {
+  Future<List<Map<String, dynamic>>> getAllActiveProject() async {
     List<Map<String, dynamic>> result = [];
     try {
       List<String> projectAddressList = await getAllActiveProjectAddresses();
@@ -629,7 +628,7 @@ Future<Map<String, dynamic>> getProjectInfo(String projectAddress) async {
     } catch (e) {}
   }
 
-    Future<void> startVoting(String projectAddress, String projectName) async {
+  Future<void> startVoting(String projectAddress, String projectName) async {
     try {
       final List<String> accounts =
           _appKitModal.session?.getAccounts() ?? <String>[];
@@ -708,192 +707,220 @@ Future<Map<String, dynamic>> getProjectInfo(String projectAddress) async {
   }
 
   Future<void> voteOnProject({
-  required String projectAddress,
-  required bool decision,
-}) async {
-  try {
-    // final voter = _appKitModal.session!.getAccounts().first.split(':').last;
-    final accounts = _appKitModal.session?.getAccounts();
-    if (accounts == null || accounts.isEmpty) {
-      throw Exception("No wallet connected");
+    required String projectAddress,
+    required bool decision,
+  }) async {
+    try {
+      // final voter = _appKitModal.session!.getAccounts().first.split(':').last;
+      final accounts = _appKitModal.session?.getAccounts();
+      if (accounts == null || accounts.isEmpty) {
+        throw Exception("No wallet connected");
+      }
+      final voter = accounts.first.split(':').last;
+
+      print("🔐 Voter address: $voter");
+
+      final votingAddress = await getVotingContractAddress(projectAddress);
+      print(
+        "📦 Voting contract address for project $projectAddress: $votingAddress",
+      );
+
+      final contract = await deployedVotingContract(votingAddress);
+      print("✅ Voting contract loaded");
+
+      final currentVoting = await _appKitModal.requestReadContract(
+        topic: _appKitModal.session?.topic ?? '',
+        chainId: _appKitModal.selectedChain!.chainId,
+        deployedContract: contract,
+        functionName: 'viewCurrentVoting',
+      );
+
+      final milestoneID = BigInt.parse(currentVoting[0].toString());
+      print("🗳️ Voting on milestone ID: $milestoneID");
+      print("🗳️ Vote decision: ${decision ? 'Approve' : 'Reject'}");
+
+      _appKitModal.launchConnectedWallet();
+      print("🚀 Wallet launched");
+
+      await _appKitModal.requestWriteContract(
+        topic: _appKitModal.session?.topic ?? '',
+        chainId: _appKitModal.selectedChain!.chainId,
+        deployedContract: contract,
+        functionName: 'vote',
+        parameters: [milestoneID, decision],
+        transaction: Transaction(
+          to: EthereumAddress.fromHex(votingAddress),
+          from: EthereumAddress.fromHex(voter),
+        ),
+      );
+
+      Fluttertoast.showToast(msg: "✅ Vote submitted successfully!");
+      print("✅ Vote transaction sent!");
+    } catch (e) {
+      Fluttertoast.showToast(msg: "❌ Vote failed: $e");
+      print("❌ Error in voteOnProject: $e");
     }
-    final voter = accounts.first.split(':').last;
-
-    print("🔐 Voter address: $voter");
-
-    final votingAddress = await getVotingContractAddress(projectAddress);
-    print("📦 Voting contract address for project $projectAddress: $votingAddress");
-
-    final contract = await deployedVotingContract(votingAddress);
-    print("✅ Voting contract loaded");
-
-    final currentVoting = await _appKitModal.requestReadContract(
-      topic: _appKitModal.session?.topic ?? '',
-      chainId: _appKitModal.selectedChain!.chainId,
-      deployedContract: contract,
-      functionName: 'viewCurrentVoting',
-    );
-
-    final milestoneID = BigInt.parse(currentVoting[0].toString());
-    print("🗳️ Voting on milestone ID: $milestoneID");
-    print("🗳️ Vote decision: ${decision ? 'Approve' : 'Reject'}");
-
-    _appKitModal.launchConnectedWallet();
-    print("🚀 Wallet launched");
-
-    await _appKitModal.requestWriteContract(
-      topic: _appKitModal.session?.topic ?? '',
-      chainId: _appKitModal.selectedChain!.chainId,
-      deployedContract: contract,
-      functionName: 'vote',
-      parameters: [milestoneID, decision],
-      transaction: Transaction(
-        to: EthereumAddress.fromHex(votingAddress),
-        from: EthereumAddress.fromHex(voter),
-      ),
-    );
-
-    Fluttertoast.showToast(msg: "✅ Vote submitted successfully!");
-    print("✅ Vote transaction sent!");
-  } catch (e) {
-    Fluttertoast.showToast(msg: "❌ Vote failed: $e");
-    print("❌ Error in voteOnProject: $e");
   }
-}
 
-Future<String> getVotingContractAddress(String projectAddress) async {
-  try {
-    final contract = await deployedVotingManagerContract();
-    print("🔧 Voting manager contract loaded");
+  Future<String> getVotingContractAddress(String projectAddress) async {
+    try {
+      final contract = await deployedVotingManagerContract();
+      print("🔧 Voting manager contract loaded");
 
-    print("📬 Looking up VotingPlatforms for project: $projectAddress");
+      print("📬 Looking up VotingPlatforms for project: $projectAddress");
+      final result = await _appKitModal.requestReadContract(
+        topic: _appKitModal.session?.topic ?? '',
+        chainId: _appKitModal.selectedChain!.chainId,
+        deployedContract: contract,
+        functionName: 'VotingPlatforms',
+        parameters: [EthereumAddress.fromHex(projectAddress)],
+      );
+
+      final addr = result.first.toString();
+      print("📍 Voting address for project $projectAddress is $addr");
+      return addr;
+    } catch (e) {
+      print("❌ Error in getVotingContractAddress: $e");
+      rethrow;
+    }
+  }
+
+  Future<bool> hasVotePower(String projectAddress) async {
+    try {
+      // final user = _appKitModal.session!.getAccounts().first.split(':').last;
+      final accounts = _appKitModal.session?.getAccounts();
+      if (accounts == null || accounts.isEmpty) {
+        Fluttertoast.showToast(msg: "Please connect your wallet");
+        return false; //
+      }
+      final user = accounts.first.split(':').last;
+
+      print("🔎 Checking vote power for user: $user");
+
+      final votingAddress = await getVotingContractAddress(projectAddress);
+      final contract = await deployedVotingContract(votingAddress);
+
+      final currentVoting = await _appKitModal.requestReadContract(
+        topic: _appKitModal.session?.topic ?? '',
+        chainId: _appKitModal.selectedChain!.chainId,
+        deployedContract: contract,
+        functionName: 'viewCurrentVoting',
+      );
+
+      final blockNumber = BigInt.parse(currentVoting[3].toString());
+      print("🔎 Current voting block: $blockNumber");
+
+      final result = await _appKitModal.requestReadContract(
+        topic: _appKitModal.session?.topic ?? '',
+        chainId: _appKitModal.selectedChain!.chainId,
+        deployedContract: contract,
+        functionName: 'getVotePower',
+        parameters: [EthereumAddress.fromHex(user), blockNumber],
+      );
+
+      final power = BigInt.parse(result.first.toString());
+      print("💪 Vote power: $power");
+
+      return power > BigInt.zero;
+    } catch (e) {
+      print("❌ Error in hasVotePower: $e");
+      return false;
+    }
+  }
+
+  Future<Map<String, dynamic>> getCurrentVotingStats(
+    String projectAddress,
+  ) async {
+    try {
+      final votingAddress = await getVotingContractAddress(projectAddress);
+      final contract = await deployedVotingContract(votingAddress);
+
+      final currentVoting = await _appKitModal.requestReadContract(
+        topic: _appKitModal.session?.topic ?? '',
+        chainId: _appKitModal.selectedChain!.chainId,
+        deployedContract: contract,
+        functionName: 'viewCurrentVoting',
+      );
+
+      final milestoneID = BigInt.parse(currentVoting[0].toString());
+
+      final votingResult = await _appKitModal.requestReadContract(
+        topic: _appKitModal.session?.topic ?? '',
+        chainId: _appKitModal.selectedChain!.chainId,
+        deployedContract: contract,
+        functionName: 'getVoting',
+        parameters: [milestoneID, BigInt.from(-1)],
+      );
+
+      final voting = votingResult.first as List;
+
+      print("📦 voting = $voting");
+
+      BigInt getBigInt(List v, int i) =>
+          (v.length > i) ? BigInt.parse(v[i].toString()) : BigInt.zero;
+      int getInt(List v, int i) =>
+          (v.length > i) ? int.parse(v[i].toString()) : -1;
+
+      return {
+        'positives': getBigInt(voting, 3),
+        'negatives': getBigInt(voting, 4),
+        'threshold': getBigInt(voting, 2),
+        'voteType': getInt(voting, 1),
+        'voteResult': getInt(voting, 0),
+        'error': null,
+      };
+    } catch (e) {
+      print("❌ Error getting voting stats: $e");
+      return {
+        'positives': BigInt.zero,
+        'negatives': BigInt.zero,
+        'threshold': BigInt.zero,
+        'voteType': -1,
+        'voteResult': -1,
+        'error': e.toString(),
+      };
+    }
+  }
+
+  Future<DeployedContract> deployedVotingManagerContract() async {
+    final manager = await deployedManagerContract();
+
     final result = await _appKitModal.requestReadContract(
       topic: _appKitModal.session?.topic ?? '',
       chainId: _appKitModal.selectedChain!.chainId,
-      deployedContract: contract,
-      functionName: 'VotingPlatforms',
-      parameters: [EthereumAddress.fromHex(projectAddress)],
+      deployedContract: manager,
+      functionName: 'getVotingManagerAddress',
+      parameters: [],
     );
 
-    final addr = result.first.toString();
-    print("📍 Voting address for project $projectAddress is $addr");
-    return addr;
-  } catch (e) {
-    print("❌ Error in getVotingContractAddress: $e");
-    rethrow;
+    final votingManagerAddress = result.first.toString();
+    return await getVotingManagerContract(votingManagerAddress);
   }
-}
-Future<bool> hasVotePower(String projectAddress) async {
-  try {
-    // final user = _appKitModal.session!.getAccounts().first.split(':').last;
-    final accounts = _appKitModal.session?.getAccounts();
-    if (accounts == null || accounts.isEmpty) {
-      Fluttertoast.showToast(msg: "Please connect your wallet");
-      return false; // 
-    }
-    final user = accounts.first.split(':').last;
 
-    print("🔎 Checking vote power for user: $user");
+  Future<void> cancelProject(String projectAddress, String projectName) async {
+    try {
+      final List<String> accounts =
+          _appKitModal.session?.getAccounts() ?? <String>[];
 
-    final votingAddress = await getVotingContractAddress(projectAddress);
-    final contract = await deployedVotingContract(votingAddress);
+      if (accounts.isNotEmpty) {
+        final String sender = accounts.first.split(':').last;
 
-    final currentVoting = await _appKitModal.requestReadContract(
-      topic: _appKitModal.session?.topic ?? '',
-      chainId: _appKitModal.selectedChain!.chainId,
-      deployedContract: contract,
-      functionName: 'viewCurrentVoting',
-    );
+        _appKitModal.launchConnectedWallet();
 
-    final blockNumber = BigInt.parse(currentVoting[3].toString());
-    print("🔎 Current voting block: $blockNumber");
-
-    final result = await _appKitModal.requestReadContract(
-      topic: _appKitModal.session?.topic ?? '',
-      chainId: _appKitModal.selectedChain!.chainId,
-      deployedContract: contract,
-      functionName: 'getVotePower',
-      parameters: [
-        EthereumAddress.fromHex(user),
-        blockNumber,
-      ],
-    );
-
-    final power = BigInt.parse(result.first.toString());
-    print("💪 Vote power: $power");
-
-    return power > BigInt.zero;
-  } catch (e) {
-    print("❌ Error in hasVotePower: $e");
-    return false;
+        await _appKitModal.requestWriteContract(
+          topic: _appKitModal.session?.topic ?? '',
+          chainId: _appKitModal.selectedChain!.chainId,
+          deployedContract: await deployedProjectContract(
+            projectAddress,
+            projectName,
+          ),
+          functionName: getProjectCancelFunctionName,
+          transaction: Transaction(
+            to: EthereumAddress.fromHex(projectAddress),
+            from: EthereumAddress.fromHex(sender),
+          ),
+        );
+      }
+    } catch (e) {}
   }
-}
-
-Future<Map<String, dynamic>> getCurrentVotingStats(String projectAddress) async {
-  try {
-    final votingAddress = await getVotingContractAddress(projectAddress);
-    final contract = await deployedVotingContract(votingAddress);
-
-    final currentVoting = await _appKitModal.requestReadContract(
-      topic: _appKitModal.session?.topic ?? '',
-      chainId: _appKitModal.selectedChain!.chainId,
-      deployedContract: contract,
-      functionName: 'viewCurrentVoting',
-    );
-
-    final milestoneID = BigInt.parse(currentVoting[0].toString());
-
-    final votingResult = await _appKitModal.requestReadContract(
-      topic: _appKitModal.session?.topic ?? '',
-      chainId: _appKitModal.selectedChain!.chainId,
-      deployedContract: contract,
-      functionName: 'getVoting',
-      parameters: [milestoneID, BigInt.from(-1)],
-    );
-
-    final voting = votingResult.first as List;
-
-    print("📦 voting = $voting");
-
-    BigInt getBigInt(List v, int i) =>
-        (v.length > i) ? BigInt.parse(v[i].toString()) : BigInt.zero;
-    int getInt(List v, int i) =>
-        (v.length > i) ? int.parse(v[i].toString()) : -1;
-
-    return {
-      'positives': getBigInt(voting, 3),
-      'negatives': getBigInt(voting, 4),
-      'threshold': getBigInt(voting, 2),
-      'voteType': getInt(voting, 1),
-      'voteResult': getInt(voting, 0),
-      'error': null, 
-    };
-  } catch (e) {
-    print("❌ Error getting voting stats: $e");
-    return {
-      'positives': BigInt.zero,
-      'negatives': BigInt.zero,
-      'threshold': BigInt.zero,
-      'voteType': -1,
-      'voteResult': -1,
-      'error': e.toString(),
-    };
-  }
-}
-
-Future<DeployedContract> deployedVotingManagerContract() async {
-  final manager = await deployedManagerContract();
-
-  final result = await _appKitModal.requestReadContract(
-    topic: _appKitModal.session?.topic ?? '',
-    chainId: _appKitModal.selectedChain!.chainId,
-    deployedContract: manager,
-    functionName: 'getVotingManagerAddress',
-    parameters: [],
-  );
-
-  final votingManagerAddress = result.first.toString();
-  return await getVotingManagerContract(votingManagerAddress); 
-}
-
 }

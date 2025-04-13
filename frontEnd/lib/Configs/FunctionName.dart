@@ -10,6 +10,7 @@ const String getStartProjectFunctionName = "startFunding";
 const String getProjectFundingGoalFunctionName = "getProjectFundingGoal";
 const String getProjectFundingBalanceFunctionName = "getFundingBalance";
 const String startVotingFunctionName = "requestAdvance";
+const String getProjectCancelFunctionName = "endProject";
 
 /// PriceFeed contract function names
 const String priceFeedToUSDFunctionName = "convertToUSD";
