@@ -282,6 +282,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       deadline: post['deadline']?.toString() ?? "",
                       status: post['status']?.toString() ?? "",
                       founder: post['founder']?.toString() ?? "Unknown",
+                      tokenAddress: post['tokenAddress']?.toString() ?? "",
 
                         // projectName: post['projectName'] as String,
                         // imageUrl: post['imageUrl'] as String,
@@ -336,6 +337,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       deadline: post['deadline']?.toString() ?? "",
                       status: post['status']?.toString() ?? "",
                       founder: post['founder']?.toString() ?? "Unknown",
+                      tokenAddress: post['tokenAddress']?.toString() ?? "",
 
                         // projectName: post['projectName'] as String,
                         // imageUrl: post['imageUrl'] as String,
@@ -435,10 +437,46 @@ Future<bool?> showVoteConfirmationDialog(BuildContext context, String projectNam
   //     };
   //   }).toList();
   // }
-  List<Map<String, Object>> transferToPosts(List<Map<String, dynamic>> posts) {
-    print("🔍 Raw post data:");
-    posts.forEach((p) => print(p));
-    return posts.map((post) {
+  // Future<List<Map<String, Object>>> transferToPosts(List<Map<String, dynamic>> posts) async {
+  // // List<Map<String, Object>> transferToPosts(List<Map<String, dynamic>> posts) {
+  //   print("🔍 Raw post data:");
+  //   posts.forEach((p) => print(p));
+  //   return posts.map((post) {
+  //     final fundingBalance = post['fundingBalance'];
+  //     final getGoal = post['goal'];
+
+  //     final double raised = (fundingBalance is String)
+  //         ? double.tryParse(fundingBalance) ?? 0.0
+  //         : (fundingBalance as num?)?.toDouble() ?? 0.0;
+
+  //     final double goal = (getGoal is String)
+  //         ? double.tryParse(getGoal) ?? 0.0
+  //         : (getGoal as num?)?.toDouble() ?? 0.0;
+
+  //     final tokenAddress = await context.read<WalletConnectControl>().getTokenAddressFromManager(
+  //       post['projectAddress'].toString(),
+  //     );
+  //     return {
+  //       'projectAddress':  post['projectAddress']?.toString() ?? "",
+  //       'projectName': post['name']?.toString() ?? "Untitled",
+  //       'imageUrl': 'https://ipfs.io/ipfs/${post['photoCID'] ?? ''}',
+  //       'detailCid': post['descCID']?.toString() ?? "",
+  //       'status': post['status']?.toString() ?? "",
+  //       'link': post['socialMediaCID']?.toString() ?? "",
+  //       'address': post['projectAddress']?.toString() ?? "",
+  //       'goal': goal,
+  //       'raised': raised,
+  //       'founder': post['founder']?.toString() ?? "Unknown",
+  //       'deadline': post['deadline']?.toString() ?? "Unknown",
+  //       'tokenAddress': tokenAddress,
+  //     };
+  //   }).toList();
+  // }
+
+  Future<List<Map<String, Object>>> transferToPosts(List<Map<String, dynamic>> posts) async {
+    List<Map<String, Object>> result = [];
+
+    for (final post in posts) {
       final fundingBalance = post['fundingBalance'];
       final getGoal = post['goal'];
 
@@ -450,8 +488,12 @@ Future<bool?> showVoteConfirmationDialog(BuildContext context, String projectNam
           ? double.tryParse(getGoal) ?? 0.0
           : (getGoal as num?)?.toDouble() ?? 0.0;
 
-      return {
-        'projectAddress':  post['projectAddress']?.toString() ?? "",
+      final tokenAddress = await context.read<WalletConnectControl>().getTokenAddressFromManager(
+        post['projectAddress'].toString(),
+      );
+
+      result.add({
+        'projectAddress': post['projectAddress']?.toString() ?? "",
         'projectName': post['name']?.toString() ?? "Untitled",
         'imageUrl': 'https://ipfs.io/ipfs/${post['photoCID'] ?? ''}',
         'detailCid': post['descCID']?.toString() ?? "",
@@ -462,34 +504,36 @@ Future<bool?> showVoteConfirmationDialog(BuildContext context, String projectNam
         'raised': raised,
         'founder': post['founder']?.toString() ?? "Unknown",
         'deadline': post['deadline']?.toString() ?? "Unknown",
-      };
-    }).toList();
+        'tokenAddress': tokenAddress,
+      });
+    }
+
+    return result;
   }
+
 
   @override
   Widget build(BuildContext context) {
     context.read<WalletConnectControl>().fetchHomeScreenActionButton();
+
     return Scaffold(
       body: BlocBuilder<WalletConnectControl, Web3State>(
         builder: (context, state) {
           if (state is FetchHomeScreenActionButtonSuccess &&
               state.action == HomeScreenActionButton.interactWithContract) {
             isLogin = true;
-            // return FutureBuilder<List<Map<String, dynamic>>>(
-            return FutureBuilder<List<List<Map<String, dynamic>>>>(
+
+            return FutureBuilder<List<List<Map<String, Object>>>>(
               future: Future.wait([
-                context.read<WalletConnectControl>().getAllFundingProject(),
-                context.read<WalletConnectControl>().getAllActiveProject(),
+                context.read<WalletConnectControl>().getAllFundingProject().then(transferToPosts),
+                context.read<WalletConnectControl>().getAllActiveProject().then(transferToPosts),
               ]),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 } else if (snapshot.hasData) {
-                  final List<Map<String, dynamic>> fundingProjects = snapshot.data![0];
-                  final List<Map<String, dynamic>> activeProjects = snapshot.data![1];
-
-                  final fundingPosts = transferToPosts(fundingProjects);
-                  final activePosts = transferToPosts(activeProjects);
+                  final List<Map<String, Object>> fundingPosts = snapshot.data![0];
+                  final List<Map<String, Object>> activePosts = snapshot.data![1];
 
                   return bodyState(fundingPosts, activePosts, isLogin);
                 } else {
@@ -509,4 +553,51 @@ Future<bool?> showVoteConfirmationDialog(BuildContext context, String projectNam
       ),
     );
   }
+  
+  
+  
+  // @override
+  // Widget build(BuildContext context) {
+  //   context.read<WalletConnectControl>().fetchHomeScreenActionButton();
+  //   return Scaffold(
+  //     body: BlocBuilder<WalletConnectControl, Web3State>(
+  //       builder: (context, state) {
+  //         if (state is FetchHomeScreenActionButtonSuccess &&
+  //             state.action == HomeScreenActionButton.interactWithContract) {
+  //           isLogin = true;
+  //           // return FutureBuilder<List<Map<String, dynamic>>>(
+  //           return FutureBuilder<List<List<Map<String, dynamic>>>>(
+  //             future: Future.wait([
+  //               context.read<WalletConnectControl>().getAllFundingProject(),
+  //               context.read<WalletConnectControl>().getAllActiveProject(),
+  //             ]),
+  //             builder: (context, snapshot) {
+  //               if (snapshot.connectionState == ConnectionState.waiting) {
+  //                 return const Center(child: CircularProgressIndicator());
+  //               } else if (snapshot.hasData) {
+  //                 final List<Map<String, dynamic>> fundingProjects = snapshot.data![0];
+  //                 final List<Map<String, dynamic>> activeProjects = snapshot.data![1];
+
+  //                 final fundingPosts = transferToPosts(fundingProjects);
+  //                 final activePosts = transferToPosts(activeProjects);
+
+
+  //                 return bodyState(fundingPosts, activePosts, isLogin);
+  //               } else {
+  //                 return const Center(child: Text("No projects found."));
+  //               }
+  //             },
+  //           );
+  //         } else if (state is FetchHomeScreenActionButtonSuccess &&
+  //             state.action == HomeScreenActionButton.connectWallet) {
+  //           return const Center(
+  //             child: Text("Please connect your wallet to view projects."),
+  //           );
+  //         } else {
+  //           return const Center(child: CircularProgressIndicator());
+  //         }
+  //       },
+  //     ),
+  //   );
+  // }
 }

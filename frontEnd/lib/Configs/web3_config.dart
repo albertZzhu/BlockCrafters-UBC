@@ -61,6 +61,17 @@ Future<DeployedContract> getVotingManagerContract(String votingManagerAddress) a
 }
 
 
+Future<DeployedContract> deployedTokenManagerContract(String tokenManagerAddress) async {
+  const abiPath = 'lib/ContractInterface/TokenManager.json';
+  final abi = await rootBundle.loadString(abiPath);
+
+  return DeployedContract(
+    ContractAbi.fromJson(abi, 'TokenManager'),
+    EthereumAddress.fromHex(tokenManagerAddress),
+  );
+}
+
+
 // Future<DeployedContract> deployedVotingManagerContract() async {
 //   const abiPath = 'lib/ContractInterface/ProjectVotingManager.json';
 //   final abi = await rootBundle.loadString(abiPath);

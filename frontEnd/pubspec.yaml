@@ -87,6 +87,7 @@ flutter:
     - lib/ContractInterface/IProjectVotingManager.json
     - lib/ContractInterface/IProjectVoting.json
     - lib/ContractInterface/ProjectVoting.json
+    - lib/ContractInterface/TokenManager.json
     - assets/banner.png
     - assets/19602.jpg
     - assets/football.jpg

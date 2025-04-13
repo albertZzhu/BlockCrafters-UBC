@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import 'package:coach_link/Control/WalletConnectControl.dart';
 import 'package:provider/provider.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:flutter/services.dart';
+
 
 
 
@@ -19,6 +21,7 @@ class SingleProjectCard extends StatelessWidget {
   final VoidCallback onInvest;
   final VoidCallback onVote;
   final String projectAddress;
+  final String tokenAddress;
 
   const SingleProjectCard({
     Key? key,
@@ -33,6 +36,7 @@ class SingleProjectCard extends StatelessWidget {
     required this.founder,
     required this.onInvest,
     required this.onVote,
+    required this.tokenAddress,
   }) : super(key: key);
 
   double get progress => (goal > 0) ? (raised / goal).clamp(0.0, 1.0) : 0.0;
@@ -97,6 +101,36 @@ class SingleProjectCard extends StatelessWidget {
             title: Text(projectName),
             subtitle: Text("Created by: $founder", style: TextStyle(fontSize: 8),),
           ),
+          // show token info
+          if (tokenAddress.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(left: 16.0, bottom: 4.0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Text(
+                      "Token address: $tokenAddress",
+                      style: const TextStyle(
+                        fontSize: 8,
+                        fontStyle: FontStyle.normal,
+                        // overflow: TextOverflow.ellipsis, 
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.copy, size: 14),
+                    tooltip: 'Copy token address',
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: tokenAddress));
+                      Fluttertoast.showToast(msg: "Token address copied!");
+                    },
+                  ),
+                ],
+              ),
+            ),
+
+
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
             child: Text(
@@ -171,7 +205,7 @@ class SingleProjectCard extends StatelessWidget {
                     final data = snapshot.data;
 
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const SizedBox.shrink(); // 或 loading indicator
+                      return const SizedBox.shrink(); 
                     }
 
                     final canVote = data != null &&
