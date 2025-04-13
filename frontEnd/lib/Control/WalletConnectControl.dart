@@ -789,7 +789,7 @@ Future<bool> hasVotePower(String projectAddress) async {
     final accounts = _appKitModal.session?.getAccounts();
     if (accounts == null || accounts.isEmpty) {
       Fluttertoast.showToast(msg: "Please connect your wallet");
-      return false; // ⬅️ 或者 throw/return 等根据你函数的上下文返回值定
+      return false; // 
     }
     final user = accounts.first.split(':').last;
 
@@ -893,7 +893,7 @@ Future<DeployedContract> deployedVotingManagerContract() async {
   );
 
   final votingManagerAddress = result.first.toString();
-  return await getVotingManagerContract(votingManagerAddress); // 来自 web3_config.dart
+  return await getVotingManagerContract(votingManagerAddress); 
 }
 
 }
