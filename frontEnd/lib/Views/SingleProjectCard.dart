@@ -54,6 +54,8 @@ class SingleProjectCard extends StatelessWidget {
     String daysLeftText;
 
     try {
+      print('📅 Raw deadline value: $deadline');
+
       final deadlineDateTime = DateTime.parse(deadline);
       formattedDeadline = DateFormat('MMM d, y').format(deadlineDateTime);
 

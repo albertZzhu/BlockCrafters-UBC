@@ -13,6 +13,7 @@ class SingleHistoryCard extends StatelessWidget {
   final double raised;
 
   final Function(String projectAddress, String projectName) withdraw;
+  final Function(String projectAddress, String projectName) startVoting;
   final Function(
     String projectAddress,
     String name,
@@ -33,6 +34,7 @@ class SingleHistoryCard extends StatelessWidget {
     required this.goal,
     required this.raised,
     required this.withdraw,
+    required this.startVoting,
     required this.addMilestone,
   }) : super(key: key);
 
@@ -125,6 +127,26 @@ class SingleHistoryCard extends StatelessWidget {
                         Fluttertoast.showToast(
                           msg:
                               "You cannot add milestone when project is $projectStatus",
+                        );
+                      },
+            ),
+            TextButton(
+              child: Text('Start Voting'),
+              style: TextButton.styleFrom(
+                foregroundColor:
+                    projectStatus == 2
+                        ? Colors.blue
+                        : Colors.grey,
+              ),
+              onPressed:
+                  projectStatus == 2
+                      ? () {
+                        startVoting(this.projectAddress, this.projectName);
+                      }
+                      : () {
+                        Fluttertoast.showToast(
+                          msg:
+                              "You can only start voting process when project is active",
                         );
                       },
             ),

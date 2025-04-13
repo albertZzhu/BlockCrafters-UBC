@@ -408,6 +408,7 @@ class _MyHomePageState extends State<MyHomePage> {
         'goal': goal,
         'raised': raised,
         'founder': post['founder']?.toString() ?? "Unknown",
+        'deadline': post['deadline']?.toString() ?? "Unknown",
       };
     }).toList();
   }

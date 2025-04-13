@@ -46,6 +46,7 @@ class _HistoryPageState extends State<HistoryPage> {
                     goal: posts[index]['goal'] as double,
                     raised: posts[index]['raised'] as double,
                     withdraw: context.read<WalletConnectControl>().withdraw,
+                    startVoting: context.read<WalletConnectControl>().startVoting,
                     addMilestone:
                         context.read<WalletConnectControl>().addMileStone,
                   );

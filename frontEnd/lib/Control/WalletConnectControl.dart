@@ -629,6 +629,33 @@ Future<Map<String, dynamic>> getProjectInfo(String projectAddress) async {
     } catch (e) {}
   }
 
+    Future<void> startVoting(String projectAddress, String projectName) async {
+    try {
+      final List<String> accounts =
+          _appKitModal.session?.getAccounts() ?? <String>[];
+
+      if (accounts.isNotEmpty) {
+        final String sender = accounts.first.split(':').last;
+
+        _appKitModal.launchConnectedWallet();
+
+        await _appKitModal.requestWriteContract(
+          topic: _appKitModal.session?.topic ?? '',
+          chainId: _appKitModal.selectedChain!.chainId,
+          deployedContract: await deployedProjectContract(
+            projectAddress,
+            projectName,
+          ),
+          functionName: startVotingFunctionName,
+          transaction: Transaction(
+            to: EthereumAddress.fromHex(projectAddress),
+            from: EthereumAddress.fromHex(sender),
+          ),
+        );
+      }
+    } catch (e) {}
+  }
+
   Future<void> withdraw(String projectAddress, String projectName) async {
     try {
       final List<String> accounts =

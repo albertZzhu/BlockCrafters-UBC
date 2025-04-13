@@ -9,6 +9,7 @@ const String getMilestoneListFunctionName = "getMilestoneList";
 const String getStartProjectFunctionName = "startFunding";
 const String getProjectFundingGoalFunctionName = "getProjectFundingGoal";
 const String getProjectFundingBalanceFunctionName = "getFundingBalance";
+const String startVotingFunctionName = "requestAdvance";
 
 /// PriceFeed contract function names
 const String priceFeedToUSDFunctionName = "convertToUSD";
