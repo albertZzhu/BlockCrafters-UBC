@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:coach_link/Views/AddMilestonePage.dart';
+import 'package:coach_link/Views/InvestModal.dart';
 
 class SingleHistoryCard extends StatelessWidget {
   final List<Map<String, dynamic>> milestones;
@@ -11,6 +11,7 @@ class SingleHistoryCard extends StatelessWidget {
   final int projectStatus;
   final double goal;
   final double raised;
+  final bool isInvested;
 
   final Function(String projectAddress, String projectName) withdraw;
   final Function(String projectAddress, String projectName) startVoting;
@@ -25,6 +26,7 @@ class SingleHistoryCard extends StatelessWidget {
   addMilestone;
   final Function(String projectAddress, String projectName) cancelProject;
   final Function(String projectAddress, String projectName) startFunding;
+  final Function(String projectAddress, String projectName) refund;
 
   const SingleHistoryCard({
     Key? key,
@@ -40,6 +42,8 @@ class SingleHistoryCard extends StatelessWidget {
     required this.addMilestone,
     required this.cancelProject,
     required this.startFunding,
+    required this.isInvested,
+    required this.refund,
   }) : super(key: key);
 
   double get progress => (raised / goal).clamp(0.0, 1.0);
@@ -61,11 +65,165 @@ class SingleHistoryCard extends StatelessWidget {
     }
   }
 
-  Future<void> _launchCID() async {
-    final url = 'https://gateway.pinata.cloud/ipfs/$projectAddress';
-    if (await canLaunchUrl(Uri.parse(url))) {
-      await launchUrl(Uri.parse(url));
-    }
+  Widget buildInvestActionButtons(BuildContext context) {
+    return (ButtonTheme(
+      child: ButtonBar(
+        children: [
+          //TextButton(onPressed: () {}, child: const Text("Add Invest")),
+          TextButton(
+            style: TextButton.styleFrom(
+              foregroundColor: projectStatus == 3 ? Colors.blue : Colors.grey,
+            ),
+            onPressed: () {
+              if (projectStatus == 3) {
+                refund(this.projectAddress, this.projectName);
+              } else {
+                Fluttertoast.showToast(
+                  msg: "You can only get the refund when project is failed",
+                );
+              }
+            },
+            child: const Text("Refund"),
+          ),
+        ],
+      ),
+    ));
+  }
+
+  Widget buildProposerActionButtons(BuildContext context) {
+    return (Align(
+      alignment: Alignment.centerRight, // Aligns the dropdown to the right
+      child: ButtonTheme(
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            icon: Icon(
+              Icons.more_vert,
+              color: Colors.blue,
+              size: 28,
+            ), // Styled dropdown icon
+            items: [
+              DropdownMenuItem(
+                value: 'addMilestone',
+                child: Text(
+                  'Add Milestone',
+                  style: TextStyle(
+                    color:
+                        projectStatus >= 0 && projectStatus <= 2
+                            ? Colors.black
+                            : Colors.grey,
+                  ),
+                ),
+              ),
+              DropdownMenuItem(
+                value: 'startVoting',
+                child: Text(
+                  'Start Voting',
+                  style: TextStyle(
+                    color: projectStatus == 2 ? Colors.black : Colors.grey,
+                  ),
+                ),
+              ),
+              DropdownMenuItem(
+                value: 'withdraw',
+                child: Text(
+                  'Withdraw',
+                  style: TextStyle(
+                    color:
+                        projectStatus == 2 || projectStatus == 4
+                            ? Colors.black
+                            : Colors.grey,
+                  ),
+                ),
+              ),
+              DropdownMenuItem(
+                value: 'cancel',
+                child: Text(
+                  'Cancel',
+                  style: TextStyle(
+                    color: projectStatus == 2 ? Colors.black : Colors.grey,
+                  ),
+                ),
+              ),
+              DropdownMenuItem(
+                value: 'startFunding',
+                child: Text(
+                  'Start Funding',
+                  style: TextStyle(
+                    color:
+                        projectStatus == 0 && milestones.length != 0
+                            ? Colors.black
+                            : Colors.grey,
+                  ),
+                ),
+              ),
+            ],
+            onChanged: (String? value) {
+              if (value == 'addMilestone') {
+                if (projectStatus >= 0 && projectStatus <= 2) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder:
+                          (context) => AddMilestonePage(
+                            projectAddress: this.projectAddress,
+                            projectName: this.projectName,
+                            projectStatus: this.projectStatus,
+                            addMilestone: this.addMilestone,
+                          ),
+                    ),
+                  );
+                } else {
+                  Fluttertoast.showToast(
+                    msg:
+                        "You cannot add milestone when project is ${projectStatusTranslation(projectStatus)}",
+                  );
+                }
+              } else if (value == 'startVoting') {
+                if (projectStatus == 2) {
+                  startVoting(this.projectAddress, this.projectName);
+                } else {
+                  Fluttertoast.showToast(
+                    msg:
+                        "You can only start voting process when project is active",
+                  );
+                }
+              } else if (value == 'withdraw') {
+                if (projectStatus == 2 || projectStatus == 4) {
+                  withdraw(this.projectAddress, this.projectName);
+                } else {
+                  Fluttertoast.showToast(
+                    msg: "You can only withdraw when project is completed",
+                  );
+                }
+              } else if (value == 'cancel') {
+                if (projectStatus == 2) {
+                  cancelProject(this.projectAddress, this.projectName);
+                } else {
+                  Fluttertoast.showToast(
+                    msg: "You can only cancel when project is active",
+                  );
+                }
+              } else if (value == 'startFunding') {
+                if (projectStatus == 0 && milestones.length != 0) {
+                  startFunding(this.projectAddress, this.projectName);
+                } else {
+                  if (projectStatus != 0) {
+                    Fluttertoast.showToast(
+                      msg:
+                          "You cannot start funding when project is ${projectStatusTranslation(projectStatus)}",
+                    );
+                  } else {
+                    Fluttertoast.showToast(
+                      msg: "You need to add milestone before starting funding",
+                    );
+                  }
+                }
+              }
+            },
+          ),
+        ),
+      ),
+    ));
   }
 
   List<Widget> dynamicBody(BuildContext context) {
@@ -100,140 +258,9 @@ class SingleHistoryCard extends StatelessWidget {
       );
     }
     widgets.add(
-      Align(
-        alignment: Alignment.centerRight, // Aligns the dropdown to the right
-        child: ButtonTheme(
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              icon: Icon(
-                Icons.more_vert,
-                color: Colors.blue,
-                size: 28,
-              ), // Styled dropdown icon
-              items: [
-                DropdownMenuItem(
-                  value: 'addMilestone',
-                  child: Text(
-                    'Add Milestone',
-                    style: TextStyle(
-                      color:
-                          projectStatus >= 0 && projectStatus <= 2
-                              ? Colors.black
-                              : Colors.grey,
-                    ),
-                  ),
-                ),
-                DropdownMenuItem(
-                  value: 'startVoting',
-                  child: Text(
-                    'Start Voting',
-                    style: TextStyle(
-                      color: projectStatus == 2 ? Colors.black : Colors.grey,
-                    ),
-                  ),
-                ),
-                DropdownMenuItem(
-                  value: 'withdraw',
-                  child: Text(
-                    'Withdraw',
-                    style: TextStyle(
-                      color:
-                          projectStatus == 2 || projectStatus == 4
-                              ? Colors.black
-                              : Colors.grey,
-                    ),
-                  ),
-                ),
-                DropdownMenuItem(
-                  value: 'cancel',
-                  child: Text(
-                    'Cancel',
-                    style: TextStyle(
-                      color: projectStatus == 2 ? Colors.black : Colors.grey,
-                    ),
-                  ),
-                ),
-                DropdownMenuItem(
-                  value: 'startFunding',
-                  child: Text(
-                    'Start Funding',
-                    style: TextStyle(
-                      color:
-                          projectStatus == 0 && milestones.length != 0
-                              ? Colors.black
-                              : Colors.grey,
-                    ),
-                  ),
-                ),
-              ],
-              onChanged: (String? value) {
-                if (value == 'addMilestone') {
-                  if (projectStatus >= 0 && projectStatus <= 2) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder:
-                            (context) => AddMilestonePage(
-                              projectAddress: this.projectAddress,
-                              projectName: this.projectName,
-                              projectStatus: this.projectStatus,
-                              addMilestone: this.addMilestone,
-                            ),
-                      ),
-                    );
-                  } else {
-                    Fluttertoast.showToast(
-                      msg:
-                          "You cannot add milestone when project is ${projectStatusTranslation(projectStatus)}",
-                    );
-                  }
-                } else if (value == 'startVoting') {
-                  if (projectStatus == 2) {
-                    startVoting(this.projectAddress, this.projectName);
-                  } else {
-                    Fluttertoast.showToast(
-                      msg:
-                          "You can only start voting process when project is active",
-                    );
-                  }
-                } else if (value == 'withdraw') {
-                  if (projectStatus == 2 || projectStatus == 4) {
-                    withdraw(this.projectAddress, this.projectName);
-                  } else {
-                    Fluttertoast.showToast(
-                      msg: "You can only withdraw when project is completed",
-                    );
-                  }
-                } else if (value == 'cancel') {
-                  if (projectStatus == 2) {
-                    cancelProject(this.projectAddress, this.projectName);
-                  } else {
-                    Fluttertoast.showToast(
-                      msg: "You can only cancel when project is active",
-                    );
-                  }
-                } else if (value == 'startFunding') {
-                  if (projectStatus == 0 && milestones.length != 0) {
-                    startFunding(this.projectAddress, this.projectName);
-                  } else {
-                    if (projectStatus != 0) {
-                      Fluttertoast.showToast(
-                        msg:
-                            "You cannot start funding when project is ${projectStatusTranslation(projectStatus)}",
-                      );
-                    } else {
-                      Fluttertoast.showToast(
-                        msg:
-                            "You need to add milestone before starting funding",
-                      );
-                    }
-                  }
-                }
-              },
-            ),
-          ),
-        ),
-      ),
+      isInvested
+          ? buildInvestActionButtons(context)
+          : buildProposerActionButtons(context),
     );
     return (widgets);
   }

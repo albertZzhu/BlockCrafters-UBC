@@ -985,4 +985,49 @@ class WalletConnectControl extends Cubit<Web3State> {
       }
     } catch (e) {}
   }
+
+  Future<List<Map<String, dynamic>>> getInvestedProjectList() async {
+    List<Map<String, dynamic>> result = [];
+    try {
+      final List<String> projectAddressList = await getInvestHistory();
+      if (projectAddressList.isNotEmpty) {
+        for (String projectAddress in projectAddressList) {
+          Map<String, dynamic> projectInfo = await getProjectInfo(
+            projectAddress,
+          );
+          result.add(projectInfo);
+        }
+      }
+    } catch (e) {
+      print('Error fetching invested project list: $e');
+    }
+    return (result);
+  }
+
+  Future<void> getRefund(String projectAddress, String projectName) async {
+    try {
+      final List<String> accounts =
+          _appKitModal.session?.getAccounts() ?? <String>[];
+
+      if (accounts.isNotEmpty) {
+        final String sender = accounts.first.split(':').last;
+
+        _appKitModal.launchConnectedWallet();
+
+        await _appKitModal.requestWriteContract(
+          topic: _appKitModal.session?.topic ?? '',
+          chainId: _appKitModal.selectedChain!.chainId,
+          deployedContract: await deployedProjectContract(
+            projectAddress,
+            projectName,
+          ),
+          functionName: getRefundFunctionName,
+          transaction: Transaction(
+            to: EthereumAddress.fromHex(projectAddress),
+            from: EthereumAddress.fromHex(sender),
+          ),
+        );
+      }
+    } catch (e) {}
+  }
 }
