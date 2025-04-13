@@ -51,70 +51,79 @@ class _AddMilestonePageState extends State<AddMilestonePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Add Milestone')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(
-              controller: _nameController,
-              decoration: const InputDecoration(labelText: 'Name'),
-            ),
-            TextField(
-              controller: _descriptionController,
-              decoration: const InputDecoration(labelText: 'Description'),
-            ),
-            TextField(
-              controller: _goalController,
-              decoration: const InputDecoration(labelText: 'Goal'),
-              keyboardType: TextInputType.numberWithOptions(decimal: true),
-            ),
-            TextField(
-              controller: _deadlineController,
-              readOnly: true,
-              decoration: const InputDecoration(labelText: 'Deadline'),
-              onTap: () async {
-                DateTime? pickedDate = await showDatePicker(
-                  context: context,
-                  initialDate: DateTime.now().add(const Duration(days: 1)),
-                  firstDate: DateTime.now().add(const Duration(days: 1)),
-                  lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
-                );
+      body: GestureDetector(
+        onTap:
+            () =>
+                FocusScope.of(
+                  context,
+                ).unfocus(), // Dismiss keyboard on tap outside
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: _nameController,
+                  decoration: const InputDecoration(labelText: 'Name'),
+                ),
+                TextField(
+                  controller: _descriptionController,
+                  decoration: const InputDecoration(labelText: 'Description'),
+                ),
+                TextField(
+                  controller: _goalController,
+                  decoration: const InputDecoration(labelText: 'Goal'),
+                  keyboardType: TextInputType.numberWithOptions(decimal: true),
+                ),
+                TextField(
+                  controller: _deadlineController,
+                  readOnly: true,
+                  decoration: const InputDecoration(labelText: 'Deadline'),
+                  onTap: () async {
+                    DateTime? pickedDate = await showDatePicker(
+                      context: context,
+                      initialDate: DateTime.now().add(const Duration(days: 1)),
+                      firstDate: DateTime.now().add(const Duration(days: 1)),
+                      lastDate: DateTime.now().add(
+                        const Duration(days: 365 * 5),
+                      ),
+                    );
 
-                if (pickedDate != null) {
-                  // Set to 23:59:59 of the selected day
-                  DateTime deadlineAtEndOfDay = DateTime(
-                    pickedDate.year,
-                    pickedDate.month,
-                    pickedDate.day,
-                    23,
-                    59,
-                    59,
-                  );
+                    if (pickedDate != null) {
+                      DateTime deadlineAtEndOfDay = DateTime(
+                        pickedDate.year,
+                        pickedDate.month,
+                        pickedDate.day,
+                        23,
+                        59,
+                        59,
+                      );
 
-                  // Save actual timestamp in seconds
-                  _deadlineTimestamp =
-                      deadlineAtEndOfDay.millisecondsSinceEpoch ~/ 1000;
+                      _deadlineTimestamp =
+                          deadlineAtEndOfDay.millisecondsSinceEpoch ~/ 1000;
 
-                  // Display just the date in the text field
-                  _deadlineController.text =
-                      deadlineAtEndOfDay.toIso8601String().split('T')[0];
-                }
-              },
+                      _deadlineController.text =
+                          deadlineAtEndOfDay.toIso8601String().split('T')[0];
+                    }
+                  },
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: _pickFile,
+                  child: const Text('Upload Description File'),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: _isLoading ? null : _submit,
+                  child:
+                      _isLoading
+                          ? const CircularProgressIndicator()
+                          : const Text('Submit'),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _pickFile,
-              child: const Text('Upload Description File'),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _isLoading ? null : _submit,
-              child:
-                  _isLoading
-                      ? const CircularProgressIndicator()
-                      : const Text('Submit'),
-            ),
-          ],
+          ),
         ),
       ),
     );

@@ -9,6 +9,7 @@ import 'package:coach_link/Model/enum.dart';
 import 'package:coach_link/Configs/FunctionName.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:math';
+import 'package:shared_preferences/shared_preferences.dart';
 
 part 'Web3ModalStates.dart';
 
@@ -218,6 +219,7 @@ class WalletConnectControl extends Cubit<Web3State> {
     try {
       final List<String> accounts =
           _appKitModal.session?.getAccounts() ?? <String>[];
+      final prefs = await SharedPreferences.getInstance();
 
       if (accounts.isNotEmpty) {
         final String sender = accounts.first.split(':').last;
@@ -241,6 +243,13 @@ class WalletConnectControl extends Cubit<Web3State> {
             ),
           ),
         );
+        if (prefs.containsKey("InvestHistory")) {
+          List<String> investHistory = prefs.getStringList("InvestHistory")!;
+          investHistory.add(projectAddress);
+          prefs.setStringList("InvestHistory", investHistory);
+        } else {
+          prefs.setStringList("InvestHistory", [projectAddress]);
+        }
         emit(
           InvestmentSuccess(
             transactionHash: 'transactionHash',
@@ -255,6 +264,19 @@ class WalletConnectControl extends Cubit<Web3State> {
           message: 'Investment Failed',
         ),
       );
+    }
+  }
+
+  /// * This method is used to get the investment history of the user.
+  /// * It retrieves the investment history from shared preferences.
+  /// * @return A Future that completes with a list of investment history.
+  Future<List<String>> getInvestHistory() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.containsKey("InvestHistory")) {
+      List<String> investHistory = prefs.getStringList("InvestHistory")!;
+      return investHistory;
+    } else {
+      return [];
     }
   }
 
@@ -486,6 +508,8 @@ class WalletConnectControl extends Cubit<Web3State> {
           Map<String, dynamic> projectInfo = await getProjectInfo(
             projectAddress,
           );
+          List<dynamic> milestones = await getMilestoneList(projectAddress);
+          projectInfo['milestones'] = milestones;
           result.add(projectInfo);
         }
       }
@@ -611,21 +635,39 @@ class WalletConnectControl extends Cubit<Web3State> {
             BigInt.from(deadline),
           ],
         );
-
-        if (projectStatus == 0) {
-          await _appKitModal.requestWriteContract(
-            topic: _appKitModal.session?.topic ?? '',
-            chainId: _appKitModal.selectedChain!.chainId,
-            deployedContract: contract,
-            functionName: getStartProjectFunctionName,
-            transaction: Transaction(
-              to: EthereumAddress.fromHex(projectAddress),
-              from: EthereumAddress.fromHex(sender),
-            ),
-          );
-        }
       }
     } catch (e) {}
+  }
+
+  Future<void> startProjectFunding(
+    String projectAddress,
+    String projectName,
+  ) async {
+    try {
+      final List<String> accounts =
+          _appKitModal.session?.getAccounts() ?? <String>[];
+
+      if (accounts.isNotEmpty) {
+        final String sender = accounts.first.split(':').last;
+
+        _appKitModal.launchConnectedWallet();
+        await _appKitModal.requestWriteContract(
+          topic: _appKitModal.session?.topic ?? '',
+          chainId: _appKitModal.selectedChain!.chainId,
+          deployedContract: await deployedProjectContract(
+            projectAddress,
+            projectName,
+          ),
+          functionName: getStartProjectFunctionName,
+          transaction: Transaction(
+            to: EthereumAddress.fromHex(projectAddress),
+            from: EthereumAddress.fromHex(sender),
+          ),
+        );
+      }
+    } catch (e) {
+      print("Error starting project funding: $e");
+    }
   }
 
   Future<void> startVoting(String projectAddress, String projectName) async {
@@ -689,8 +731,6 @@ class WalletConnectControl extends Cubit<Web3State> {
           _appKitModal.session?.getAccounts() ?? <String>[];
       if (accounts.isNotEmpty) {
         final contract = await deployedProjectContract(projectAddress, "");
-
-        _appKitModal.launchConnectedWallet();
 
         result = await _appKitModal.requestReadContract(
           topic: _appKitModal.session?.topic ?? '',

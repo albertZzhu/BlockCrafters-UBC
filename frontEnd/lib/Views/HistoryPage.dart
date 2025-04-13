@@ -46,7 +46,9 @@ class _HistoryPageState extends State<HistoryPage> {
                   itemCount: posts.length,
                   itemBuilder: (BuildContext context, int index) {
                     return SingleHistoryCard(
-                      milestones: [],
+                      milestones:
+                          posts[index]['milestones']
+                              as List<Map<String, dynamic>>,
                       projectName: posts[index]['projectName'] as String,
                       imageUrl: posts[index]['imageUrl'] as String,
                       projectAddress: posts[index]['address'] as String,
@@ -60,6 +62,10 @@ class _HistoryPageState extends State<HistoryPage> {
                           context.read<WalletConnectControl>().addMileStone,
                       cancelProject:
                           context.read<WalletConnectControl>().cancelProject,
+                      startFunding:
+                          context
+                              .read<WalletConnectControl>()
+                              .startProjectFunding,
                     );
                   },
                 ),
@@ -78,11 +84,15 @@ class _HistoryPageState extends State<HistoryPage> {
         'imageUrl': post['photoCID'].toString() ?? "",
         'detailCid': post['descCID'].toString() ?? "",
         'goal': double.tryParse(post['goal'].toString()) ?? 0,
-        'raised': double.tryParse(post['raised'].toString()) ?? 0,
+        'raised': double.tryParse(post['fundingBalance'].toString()) ?? 0,
         'deadline': post['deadline'].toString() ?? "",
         'status': int.tryParse(post['status'].toString()) ?? -1,
         'link': post['socialMediaCID'].toString() ?? "",
         'address': post['projectAddress'].toString() ?? "",
+        'milestones':
+            (post['milestones'] as List<dynamic>?)
+                ?.cast<Map<String, dynamic>>() ??
+            <Map<String, dynamic>>[],
       };
     }).toList();
   }

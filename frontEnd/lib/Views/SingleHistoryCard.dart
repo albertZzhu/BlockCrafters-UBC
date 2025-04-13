@@ -24,6 +24,7 @@ class SingleHistoryCard extends StatelessWidget {
   )
   addMilestone;
   final Function(String projectAddress, String projectName) cancelProject;
+  final Function(String projectAddress, String projectName) startFunding;
 
   const SingleHistoryCard({
     Key? key,
@@ -38,6 +39,7 @@ class SingleHistoryCard extends StatelessWidget {
     required this.startVoting,
     required this.addMilestone,
     required this.cancelProject,
+    required this.startFunding,
   }) : super(key: key);
 
   double get progress => (raised / goal).clamp(0.0, 1.0);
@@ -151,6 +153,18 @@ class SingleHistoryCard extends StatelessWidget {
                     ),
                   ),
                 ),
+                DropdownMenuItem(
+                  value: 'startFunding',
+                  child: Text(
+                    'Start Funding',
+                    style: TextStyle(
+                      color:
+                          projectStatus == 0 && milestones.length != 0
+                              ? Colors.black
+                              : Colors.grey,
+                    ),
+                  ),
+                ),
               ],
               onChanged: (String? value) {
                 if (value == 'addMilestone') {
@@ -197,6 +211,22 @@ class SingleHistoryCard extends StatelessWidget {
                     Fluttertoast.showToast(
                       msg: "You can only cancel when project is active",
                     );
+                  }
+                } else if (value == 'startFunding') {
+                  if (projectStatus == 0 && milestones.length != 0) {
+                    startFunding(this.projectAddress, this.projectName);
+                  } else {
+                    if (projectStatus != 0) {
+                      Fluttertoast.showToast(
+                        msg:
+                            "You cannot start funding when project is ${projectStatusTranslation(projectStatus)}",
+                      );
+                    } else {
+                      Fluttertoast.showToast(
+                        msg:
+                            "You need to add milestone before starting funding",
+                      );
+                    }
                   }
                 }
               },
