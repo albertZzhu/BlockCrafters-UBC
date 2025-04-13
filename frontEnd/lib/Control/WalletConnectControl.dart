@@ -897,6 +897,28 @@ class WalletConnectControl extends Cubit<Web3State> {
     return await getVotingManagerContract(votingManagerAddress);
   }
 
+  Future<String> getTokenAddressFromManager(String projectAddress) async {
+    try {
+      final String tokenManagerAddress = dotenv.env['TOKEN_MANAGER_ADDRESS']!;
+      final contract = await deployedTokenManagerContract(tokenManagerAddress);
+
+      final result = await _appKitModal.requestReadContract(
+        topic: _appKitModal.session?.topic ?? '',
+        chainId: _appKitModal.selectedChain!.chainId,
+        deployedContract: contract,
+        functionName: 'getTokenAddress',
+        parameters: [EthereumAddress.fromHex(projectAddress)],
+      );
+
+      final tokenAddress = result.first.toString();
+      print("🎯 Token Address for project $projectAddress is $tokenAddress");
+      return tokenAddress;
+    } catch (e) {
+      print("❌ Error in getTokenAddressFromManager: $e");
+      return "Error";
+    }
+  }
+
   Future<void> cancelProject(String projectAddress, String projectName) async {
     try {
       final List<String> accounts =
