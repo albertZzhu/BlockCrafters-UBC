@@ -1,0 +1,333 @@
+[
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_ProjectAddress",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_addressProviderAddress",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "milestoneID",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "enum VoteType",
+          "name": "voteType",
+          "type": "uint8"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "startTime",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "endTime",
+          "type": "uint256"
+        }
+      ],
+      "name": "VotingStarted",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "milestoneID",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "enum VoteResult",
+          "name": "result",
+          "type": "uint8"
+        }
+      ],
+      "name": "VotingValidated",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "investor",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "blockNumber",
+          "type": "uint256"
+        }
+      ],
+      "name": "getVotePower",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "milestoneID",
+          "type": "uint256"
+        },
+        {
+          "internalType": "int256",
+          "name": "votingID",
+          "type": "int256"
+        }
+      ],
+      "name": "getVoting",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "enum VoteResult",
+              "name": "result",
+              "type": "uint8"
+            },
+            {
+              "internalType": "enum VoteType",
+              "name": "voteType",
+              "type": "uint8"
+            },
+            {
+              "internalType": "uint256",
+              "name": "threshold",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "positives",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "negatives",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "startTime",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "endTime",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "newDeadline",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "blockNumber",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct Voting",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "milestoneID",
+          "type": "uint256"
+        },
+        {
+          "internalType": "int256",
+          "name": "votingID",
+          "type": "int256"
+        }
+      ],
+      "name": "getVotingResult",
+      "outputs": [
+        {
+          "internalType": "enum VoteResult",
+          "name": "",
+          "type": "uint8"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "milestoneID",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "newDeadline",
+          "type": "uint256"
+        }
+      ],
+      "name": "startNewVoting",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "milestoneID",
+          "type": "uint256"
+        },
+        {
+          "internalType": "int256",
+          "name": "votingID",
+          "type": "int256"
+        }
+      ],
+      "name": "validateVotingResult",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "viewCurrentVoting",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        },
+        {
+          "internalType": "enum VoteType",
+          "name": "",
+          "type": "uint8"
+        },
+        {
+          "internalType": "enum VoteResult",
+          "name": "",
+          "type": "uint8"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "milestoneID",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bool",
+          "name": "decision",
+          "type": "bool"
+        }
+      ],
+      "name": "vote",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "milestoneID",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "votings",
+      "outputs": [
+        {
+          "internalType": "enum VoteResult",
+          "name": "result",
+          "type": "uint8"
+        },
+        {
+          "internalType": "enum VoteType",
+          "name": "voteType",
+          "type": "uint8"
+        },
+        {
+          "internalType": "uint256",
+          "name": "threshold",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "positives",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "negatives",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "startTime",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "endTime",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "newDeadline",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "blockNumber",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ]

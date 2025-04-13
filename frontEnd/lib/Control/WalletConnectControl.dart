@@ -706,4 +706,194 @@ Future<Map<String, dynamic>> getProjectInfo(String projectAddress) async {
     }
     return (result);
   }
+
+  Future<void> voteOnProject({
+  required String projectAddress,
+  required bool decision,
+}) async {
+  try {
+    // final voter = _appKitModal.session!.getAccounts().first.split(':').last;
+    final accounts = _appKitModal.session?.getAccounts();
+    if (accounts == null || accounts.isEmpty) {
+      throw Exception("No wallet connected");
+    }
+    final voter = accounts.first.split(':').last;
+
+    print("🔐 Voter address: $voter");
+
+    final votingAddress = await getVotingContractAddress(projectAddress);
+    print("📦 Voting contract address for project $projectAddress: $votingAddress");
+
+    final contract = await deployedVotingContract(votingAddress);
+    print("✅ Voting contract loaded");
+
+    final currentVoting = await _appKitModal.requestReadContract(
+      topic: _appKitModal.session?.topic ?? '',
+      chainId: _appKitModal.selectedChain!.chainId,
+      deployedContract: contract,
+      functionName: 'viewCurrentVoting',
+    );
+
+    final milestoneID = BigInt.parse(currentVoting[0].toString());
+    print("🗳️ Voting on milestone ID: $milestoneID");
+    print("🗳️ Vote decision: ${decision ? 'Approve' : 'Reject'}");
+
+    _appKitModal.launchConnectedWallet();
+    print("🚀 Wallet launched");
+
+    await _appKitModal.requestWriteContract(
+      topic: _appKitModal.session?.topic ?? '',
+      chainId: _appKitModal.selectedChain!.chainId,
+      deployedContract: contract,
+      functionName: 'vote',
+      parameters: [milestoneID, decision],
+      transaction: Transaction(
+        to: EthereumAddress.fromHex(votingAddress),
+        from: EthereumAddress.fromHex(voter),
+      ),
+    );
+
+    Fluttertoast.showToast(msg: "✅ Vote submitted successfully!");
+    print("✅ Vote transaction sent!");
+  } catch (e) {
+    Fluttertoast.showToast(msg: "❌ Vote failed: $e");
+    print("❌ Error in voteOnProject: $e");
+  }
+}
+
+Future<String> getVotingContractAddress(String projectAddress) async {
+  try {
+    final contract = await deployedVotingManagerContract();
+    print("🔧 Voting manager contract loaded");
+
+    print("📬 Looking up VotingPlatforms for project: $projectAddress");
+    final result = await _appKitModal.requestReadContract(
+      topic: _appKitModal.session?.topic ?? '',
+      chainId: _appKitModal.selectedChain!.chainId,
+      deployedContract: contract,
+      functionName: 'VotingPlatforms',
+      parameters: [EthereumAddress.fromHex(projectAddress)],
+    );
+
+    final addr = result.first.toString();
+    print("📍 Voting address for project $projectAddress is $addr");
+    return addr;
+  } catch (e) {
+    print("❌ Error in getVotingContractAddress: $e");
+    rethrow;
+  }
+}
+Future<bool> hasVotePower(String projectAddress) async {
+  try {
+    // final user = _appKitModal.session!.getAccounts().first.split(':').last;
+    final accounts = _appKitModal.session?.getAccounts();
+    if (accounts == null || accounts.isEmpty) {
+      Fluttertoast.showToast(msg: "Please connect your wallet");
+      return false; // ⬅️ 或者 throw/return 等根据你函数的上下文返回值定
+    }
+    final user = accounts.first.split(':').last;
+
+    print("🔎 Checking vote power for user: $user");
+
+    final votingAddress = await getVotingContractAddress(projectAddress);
+    final contract = await deployedVotingContract(votingAddress);
+
+    final currentVoting = await _appKitModal.requestReadContract(
+      topic: _appKitModal.session?.topic ?? '',
+      chainId: _appKitModal.selectedChain!.chainId,
+      deployedContract: contract,
+      functionName: 'viewCurrentVoting',
+    );
+
+    final blockNumber = BigInt.parse(currentVoting[3].toString());
+    print("🔎 Current voting block: $blockNumber");
+
+    final result = await _appKitModal.requestReadContract(
+      topic: _appKitModal.session?.topic ?? '',
+      chainId: _appKitModal.selectedChain!.chainId,
+      deployedContract: contract,
+      functionName: 'getVotePower',
+      parameters: [
+        EthereumAddress.fromHex(user),
+        blockNumber,
+      ],
+    );
+
+    final power = BigInt.parse(result.first.toString());
+    print("💪 Vote power: $power");
+
+    return power > BigInt.zero;
+  } catch (e) {
+    print("❌ Error in hasVotePower: $e");
+    return false;
+  }
+}
+
+Future<Map<String, dynamic>> getCurrentVotingStats(String projectAddress) async {
+  try {
+    final votingAddress = await getVotingContractAddress(projectAddress);
+    final contract = await deployedVotingContract(votingAddress);
+
+    final currentVoting = await _appKitModal.requestReadContract(
+      topic: _appKitModal.session?.topic ?? '',
+      chainId: _appKitModal.selectedChain!.chainId,
+      deployedContract: contract,
+      functionName: 'viewCurrentVoting',
+    );
+
+    final milestoneID = BigInt.parse(currentVoting[0].toString());
+
+    final votingResult = await _appKitModal.requestReadContract(
+      topic: _appKitModal.session?.topic ?? '',
+      chainId: _appKitModal.selectedChain!.chainId,
+      deployedContract: contract,
+      functionName: 'getVoting',
+      parameters: [milestoneID, BigInt.from(-1)],
+    );
+
+    final voting = votingResult.first as List;
+
+    print("📦 voting = $voting");
+
+    BigInt getBigInt(List v, int i) =>
+        (v.length > i) ? BigInt.parse(v[i].toString()) : BigInt.zero;
+    int getInt(List v, int i) =>
+        (v.length > i) ? int.parse(v[i].toString()) : -1;
+
+    return {
+      'positives': getBigInt(voting, 3),
+      'negatives': getBigInt(voting, 4),
+      'threshold': getBigInt(voting, 2),
+      'voteType': getInt(voting, 1),
+      'voteResult': getInt(voting, 0),
+      'error': null, 
+    };
+  } catch (e) {
+    print("❌ Error getting voting stats: $e");
+    return {
+      'positives': BigInt.zero,
+      'negatives': BigInt.zero,
+      'threshold': BigInt.zero,
+      'voteType': -1,
+      'voteResult': -1,
+      'error': e.toString(),
+    };
+  }
+}
+
+Future<DeployedContract> deployedVotingManagerContract() async {
+  final manager = await deployedManagerContract();
+
+  final result = await _appKitModal.requestReadContract(
+    topic: _appKitModal.session?.topic ?? '',
+    chainId: _appKitModal.selectedChain!.chainId,
+    deployedContract: manager,
+    functionName: 'getVotingManagerAddress',
+    parameters: [],
+  );
+
+  final votingManagerAddress = result.first.toString();
+  return await getVotingManagerContract(votingManagerAddress); // 来自 web3_config.dart
+}
+
 }

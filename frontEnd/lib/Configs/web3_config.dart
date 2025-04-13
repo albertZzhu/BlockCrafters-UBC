@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:web3dart/web3dart.dart';
+import 'package:reown_appkit/reown_appkit.dart';
 
 Future<DeployedContract> deployedProjectContract(
   String contractAddress,
@@ -39,3 +40,38 @@ Future<DeployedContract> deployedPriceFeedContract() async {
 
   return contract;
 }
+
+Future<DeployedContract> deployedVotingContract(String contractAddress) async {
+  const abiPath = 'lib/ContractInterface/IProjectVoting.json';
+  final abi = await rootBundle.loadString(abiPath);
+
+  final contract = DeployedContract(
+    ContractAbi.fromJson(abi, "IProjectVoting"),
+    EthereumAddress.fromHex(contractAddress),
+  );
+  return contract;
+}
+Future<DeployedContract> getVotingManagerContract(String votingManagerAddress) async {
+  final abi = await rootBundle.loadString('lib/ContractInterface/ProjectVotingManager.json');
+
+  return DeployedContract(
+    ContractAbi.fromJson(abi, "ProjectVotingManager"),
+    EthereumAddress.fromHex(votingManagerAddress),
+  );
+}
+
+
+// Future<DeployedContract> deployedVotingManagerContract() async {
+//   const abiPath = 'lib/ContractInterface/ProjectVotingManager.json';
+//   final abi = await rootBundle.loadString(abiPath);
+
+//   final contract = DeployedContract(
+//     ContractAbi.fromJson(abi, "ProjectVotingManager"),
+//     EthereumAddress.fromHex(dotenv.env['VOTING_MANAGER_ADDRESS']!),
+//   );
+//   return contract;
+// }
+
+
+
+

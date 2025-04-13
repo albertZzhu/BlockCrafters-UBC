@@ -83,6 +83,10 @@ flutter:
     - lib/ContractInterface/CrowdFundProject.abi.json
     - lib/ContractInterface/CrowdfundingManager.json
     - lib/ContractInterface/PriceFeed.abi.json
+    - lib/ContractInterface/ProjectVotingManager.json 
+    - lib/ContractInterface/IProjectVotingManager.json
+    - lib/ContractInterface/IProjectVoting.json
+    - lib/ContractInterface/ProjectVoting.json
     - assets/banner.png
     - assets/19602.jpg
     - assets/football.jpg

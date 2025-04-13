@@ -273,6 +273,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   if (fundingPosts.isEmpty)
                     const Text("No funding projects found."),
                   ...fundingPosts.map((post) => SingleProjectCard(
+                      projectAddress: post['projectAddress']?.toString() ?? "",
                       projectName: post['projectName']?.toString() ?? "Untitled",
                       imageUrl: post['imageUrl']?.toString() ?? "",
                       detailCid: post['detailCid']?.toString() ?? "",
@@ -326,6 +327,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   if (activePosts.isEmpty)
                     const Text("No active projects found."),
                   ...activePosts.map((post) => SingleProjectCard(
+                      projectAddress: post['projectAddress']?.toString() ?? "",
                       projectName: post['projectName']?.toString() ?? "Untitled",
                       imageUrl: post['imageUrl']?.toString() ?? "",
                       detailCid: post['detailCid']?.toString() ?? "",
@@ -344,7 +346,33 @@ class _MyHomePageState extends State<MyHomePage> {
                         // status: post['status'] as String,
                         // founder: post['founder'] as String,
                         onInvest: () {}, // Disabled for active projects
-                        onVote: () => print('Vote clicked for ${post['projectName']}'),
+                        // onVote: () => print('Vote clicked for ${post['projectName']}'),
+                        // onVote: () => handleVoteClick(context, post),
+                        onVote: () async {
+                          if (isLogin) {
+                            print("🧭 Vote button clicked");
+
+                            final decision = await showVoteConfirmationDialog(
+                              context,
+                              post['projectName']?.toString() ?? 'this project',
+                            );
+
+                            print("👤 User decision: $decision");
+
+                            if (decision != null) {
+                              await context.read<WalletConnectControl>().voteOnProject(
+                                projectAddress: post['address'].toString(),
+                                decision: decision,
+                              );
+                            }
+                          } else {
+                            print("🚫 User not logged in");
+                            Fluttertoast.showToast(msg: "Please login to vote");
+                          }
+                        },
+
+
+
                       )),
                 ],
               ),
@@ -354,6 +382,30 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
     );
   }
+
+
+Future<bool?> showVoteConfirmationDialog(BuildContext context, String projectName) {
+  return showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text('Vote on $projectName'),
+      content: const Text('Do you want to approve or reject the milestone?'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: const Text('Reject'),
+        ),
+        ElevatedButton(
+          onPressed: () => Navigator.pop(context, true),
+          child: const Text('Approve'),
+        ),
+      ],
+    ),
+  );
+}
+
+
+
 
   // List<Map<String, Object>> transferToPosts(List<Map<String, dynamic>> posts) {
     
@@ -399,6 +451,7 @@ class _MyHomePageState extends State<MyHomePage> {
           : (getGoal as num?)?.toDouble() ?? 0.0;
 
       return {
+        'projectAddress':  post['projectAddress']?.toString() ?? "",
         'projectName': post['name']?.toString() ?? "Untitled",
         'imageUrl': 'https://ipfs.io/ipfs/${post['photoCID'] ?? ''}',
         'detailCid': post['descCID']?.toString() ?? "",
