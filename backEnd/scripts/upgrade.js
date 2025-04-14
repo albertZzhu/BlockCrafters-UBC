@@ -1,5 +1,5 @@
 const { ethers, upgrades } = require("hardhat");
-const CONTRACT_ADDRESS = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512";
+
 
 async function upgradeContract(contractAddress, newContractName) {
     let time = Date.now();
@@ -15,7 +15,8 @@ async function upgradeContract(contractAddress, newContractName) {
     return updatedContract;
 }
 async function main() {
-    await upgradeContract(CONTRACT_ADDRESS, 'CrowdfundingManagerV2')
+    const CONTRACT_ADDRESS = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512";
+    await upgradeContract(CONTRACT_ADDRESS, 'CrowdfundingManager')
 }
 
 // We recommend this pattern to be able to use async/await everywhere

@@ -18,7 +18,7 @@ describe("CrowdfundingManager", function () {
     const descCID =    'Description. Should be 46b Hash.'+'-'.repeat(14);
     const photoCID =   'photoCID Should be 46b Hash.'+'-'.repeat(18);
     // const XdotComCID = 'XdotComCID__ Should be 46b Hash.';
-    const socialMediaLinkCID = 'SocialMedia. Should be 46b Hash.'+'-'.repeat(14);;
+    const socialMediaLinkCID = 'SocialMedia. Should be 46b Hash.'+'-'.repeat(14);
     let projectContract;
     let fundingDeadline;
     let milestoneDeadline;
@@ -430,7 +430,7 @@ describe("CrowdfundingManager", function () {
         const fundingGoal = oneEther;
         let frozen = fundingGoal; // 100% frozen at the beginning
         let project1Address;
-        before(async function () {
+        beforeEach(async function () {
             // create a project
             const {tx: tx1, projectAddress:_project1address} = await createValidProject(founder1)
             project1Address = _project1address;            
@@ -443,24 +443,48 @@ describe("CrowdfundingManager", function () {
             await expect(project1.connect(backer1).invest({ value: fundingGoal }))
             .to.emit(project1, "InvestmentMade")
                 .withArgs(backer1.address, fundingGoal);
-                
-                // prepare voting
-                votingPlatform1 = await ethers.getContractAt("ProjectVoting", await project1.votingPlatform());
         });
         it("Should allow backer to request refund if project failed (Ended)", async function () {
             //end project
+            expect(await project1.getStatus()).to.equal(2); // ProjectStatus.Active
             await project1.connect(founder1).endProject();
             expect(await project1.getStatus()).to.equal(3); // ProjectStatus.Failed
             const prevBackerBalance = await ethers.provider.getBalance(backer1.address);
-            await project1.connect(backer1).refund();
-
-            // check the balance of the project
-            expect(await ethers.provider.getBalance(project1Address)).to.equal(0); // 0
-            // check the balance of the backer
+            const prevProjectBalance = await ethers.provider.getBalance(project1Address);
+            let tokenManager = await ethers.getContractAt("TokenManager", await project1.tokenManager());
+            const getRefundableAmount = await tokenManager.getRefundableAmount(project1Address,backer1.address);
+            expect(getRefundableAmount).to.equal(halfEther*BigInt(20)/BigInt(100)+halfEther); // 0.2 ether
+            let tx = await project1.connect(backer1).refund();
+            receipt = await tx.wait();
+            const gasUsed = receipt.gasUsed * receipt.gasPrice;
+            // console.log(receipt.logs)
             const currBackerBalance = await ethers.provider.getBalance(backer1.address);
-            console.log("prevBackerBalance", prevBackerBalance.toString())
-            console.log("currBackerBalance", currBackerBalance.toString())
-            expect(currBackerBalance).to.be.above(prevBackerBalance); // should be more than before
+            const currProjectBalance = await ethers.provider.getBalance(project1Address);
+            expect(currProjectBalance).to.be.equal(prevProjectBalance-getRefundableAmount); // 0.2 ether
+            expect(currBackerBalance).to.be.equal(prevBackerBalance+getRefundableAmount-gasUsed);
+        });
+        it("Backers should be able to refund 20% of the funding if project fails the last milestone", async function () {
+            //m1 vote
+            await project1.connect(founder1).requestAdvance();
+            expect(await project1.getCurrentMilestone()).to.equal(0);
+            let votingPlatform1 = await ethers.getContractAt("ProjectVoting", await project1.votingPlatform());
+            await votingPlatform1.connect(backer1).vote(0, true);
+            expect(await project1.getCurrentMilestone()).to.equal(1);
+            await project1.connect(founder1).endProject();
+            expect(await project1.getStatus()).to.equal(3); // ProjectStatus.Failed
+            const prevBackerBalance = await ethers.provider.getBalance(backer1.address);
+            const prevProjectBalance = await ethers.provider.getBalance(project1Address);
+            let tokenManager = await ethers.getContractAt("TokenManager", await project1.tokenManager());
+            const getRefundableAmount = await tokenManager.getRefundableAmount(project1Address,backer1.address);
+            expect(getRefundableAmount).to.equal(oneEther*BigInt(20)/BigInt(100)); // 0.2 ether
+            let tx = await project1.connect(backer1).refund();
+            receipt = await tx.wait();
+            const gasUsed = receipt.gasUsed * receipt.gasPrice;
+            // console.log(receipt.logs)
+            const currBackerBalance = await ethers.provider.getBalance(backer1.address);
+            const currProjectBalance = await ethers.provider.getBalance(project1Address);
+            expect(currProjectBalance).to.be.equal(prevProjectBalance-getRefundableAmount); // 0.2 ether
+            expect(currBackerBalance).to.be.equal(prevBackerBalance+getRefundableAmount-gasUsed);
         });
     });
 
@@ -494,6 +518,26 @@ describe("CrowdfundingManager", function () {
             await expect(
                 project1.connect(backer1).withdraw()
             ).to.be.revertedWith("Only the founder can perform this action");
+        });
+        it("Should allow Founder to self-invest and withdraw", async function () {
+            const {tx: tx2, projectAddress:_project2Address} = await createValidProject(founder1)
+            let project2 = await ethers.getContractAt("CrowdfundingProject", _project2Address);
+            await project2.connect(founder1).addMilestone("Milestone 1", descCID, fundingGoal, milestoneDeadline);
+            await project2.connect(founder1).startFunding();
+            await project2.connect(founder1).invest({ value: fundingGoal });
+            const prevFounderBalance = await ethers.provider.getBalance(founder1.address);
+            const withdrawable = fundingGoal * BigInt(80) / BigInt(100); // 80% release = 0.4
+            const transactionFee = withdrawable * BigInt(1) / BigInt(100); // 1% fee
+            const founderShare = withdrawable - transactionFee;
+            let tx = await project2.connect(founder1).withdraw();
+            let receipt = await tx.wait();
+            const gasUsed = receipt.gasUsed * receipt.gasPrice;
+            // check the balance of the project
+            // expect(await ethers.provider.getBalance(project1Address)).to.equal(0); // 0
+            // check the balance of the founder
+            const currFounderBalance = await ethers.provider.getBalance(founder1.address);
+            expect(currFounderBalance).to.be.equal(prevFounderBalance-gasUsed+founderShare)
+
         });
         it("Should allow founder to withdraw Milestone1's 80% after project activated", async function () {
             expect(await project1.getFundingBalance()).to.equal(fundingGoal);

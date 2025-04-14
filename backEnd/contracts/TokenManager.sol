@@ -3,6 +3,7 @@ pragma solidity ^0.8.19;
 
 import "./ProjectToken.sol";
 import {IAddressProvider} from "./AddressStorage.sol";
+import "./ICrowdfundingProject.sol";
 import "hardhat/console.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 interface ITokenManager {
@@ -10,7 +11,7 @@ interface ITokenManager {
     function deployToken(address projectAddress, string memory name, string memory symbol) external returns (address deployedTokenAddress);
     function mintTo(address investor, uint256 amount) external;
     function balanceOf(address project, address investor) external view returns (uint256);
-    function refund(address investor, uint256 amount) external;
+    function refund(address investor, uint256 amount) external returns (uint256);
     function computeTokenAddress(address projectAddress, string memory name, string memory symbol) external view returns (address);
     function getPastVotes(address project, address account, uint256 blockNumber) external view returns (uint256);
     function getTokenAddress(address project) external view returns (address);
@@ -76,10 +77,21 @@ contract TokenManager is ITokenManager, Initializable{
         return ProjectToken(tokenAddresses[project]).balanceOf(investor);
     }
 
-    function refund(address investor, uint256 amount) external onlyAuthorized{
+    function refund(address investor, uint256 amount) external onlyAuthorized returns (uint256) {
         // require(tokenAddresses[msg.sender] != address(0), "Token not deployed");
+        require(this.balanceOf(msg.sender, investor) >= amount, "Insufficient balance to refund");
+        ICrowdfundingProject project = ICrowdfundingProject(msg.sender);
+        uint256 refundableProportion = project.getFrozenFunding()*100 / project.getProjectFundingGoal();
+        uint refundableAmount = amount * refundableProportion / 100;
         ProjectToken(tokenAddresses[msg.sender])._refund(investor, amount);
-        // call CrowdfundingProject to refund the investor
+        // return CrowdfundingProject the refundable amount
+        return refundableAmount;
+    }
+    function getRefundableAmount(address projectAddress, address investorAddress) external view returns (uint256) {
+        ICrowdfundingProject project = ICrowdfundingProject(projectAddress);
+        uint256 refundableProportion = project.getFrozenFunding()*100 / project.getProjectFundingGoal();
+        uint256 refundableAmount = this.balanceOf(projectAddress, investorAddress) * refundableProportion / 100;
+        return refundableAmount;
     }
 
     /// View future token address before it's deployed

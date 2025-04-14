@@ -212,10 +212,10 @@ contract CrowdfundingProject is ICrowdfundingProject {
         require(status == ProjectStatus.Failed, "Project is not failed");
         // 2. refund the investors based on their their number of ProjectTokens.
         // 3. burn the ProjectTokens.
-        uint256 toRefund = tokenManager.balanceOf(address(this), msg.sender);
-        require(toRefund > 0, "No tokens to refund");
-        require(address(this).balance >= toRefund, "Insufficient balance for refund");
-        tokenManager.refund(msg.sender, toRefund); // burn the tokens and get the refund amount
+        uint256 userBalance = tokenManager.balanceOf(address(this), msg.sender);
+        require(userBalance > 0, "No tokens to refund");
+        require(address(this).balance >= userBalance, "Proejct has insufficient balance for refund");
+        uint256 toRefund = tokenManager.refund(msg.sender, userBalance); // burn the tokens and get the refund amount
         // 4. transfer the refund to the investor.
         fundingBalance -= toRefund; // remove the refund amount from the funding balance
         payable(msg.sender).transfer(toRefund); // transfer the refund to the investor
