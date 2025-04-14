@@ -27,6 +27,7 @@ class SingleHistoryCard extends StatelessWidget {
   final Function(String projectAddress, String projectName) cancelProject;
   final Function(String projectAddress, String projectName) startFunding;
   final Function(String projectAddress, String projectName) refund;
+  final VoidCallback onInvest;
 
   const SingleHistoryCard({
     Key? key,
@@ -44,6 +45,7 @@ class SingleHistoryCard extends StatelessWidget {
     required this.startFunding,
     required this.isInvested,
     required this.refund,
+    required this.onInvest,
   }) : super(key: key);
 
   double get progress => (raised / goal).clamp(0.0, 1.0);
@@ -69,7 +71,20 @@ class SingleHistoryCard extends StatelessWidget {
     return (ButtonTheme(
       child: ButtonBar(
         children: [
-          //TextButton(onPressed: () {}, child: const Text("Add Invest")),
+          TextButton(
+            style: TextButton.styleFrom(
+              foregroundColor: projectStatus == 1 ? Colors.blue : Colors.grey,
+            ),
+            onPressed:
+                projectStatus == 1
+                    ? onInvest
+                    : () {
+                      Fluttertoast.showToast(
+                        msg: "You can only invest when project is funding",
+                      );
+                    },
+            child: const Text("Add Invest"),
+          ),
           TextButton(
             style: TextButton.styleFrom(
               foregroundColor: projectStatus == 3 ? Colors.blue : Colors.grey,

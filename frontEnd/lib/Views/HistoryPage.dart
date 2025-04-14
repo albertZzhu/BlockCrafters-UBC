@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:coach_link/Control/WalletConnectControl.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:coach_link/Views/SingleHistoryCard.dart';
+import 'package:coach_link/Views/InvestModal.dart';
 
 class HistoryPage extends StatefulWidget {
   HistoryPage({Key? key}) : super(key: key);
@@ -60,6 +61,62 @@ class _HistoryPageState extends State<HistoryPage>
     );
   }
 
+  void showInvestModal(
+    BuildContext context,
+    Function(
+      String projectAddress,
+      String token,
+      String amount,
+      String projectName,
+    )
+    onInvest,
+    String description,
+    String projectImageUrl,
+    String projectAddress,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return AnimatedPadding(
+          duration: const Duration(milliseconds: 50),
+          curve: Curves.easeOut,
+          padding: EdgeInsets.only(
+            bottom:
+                MediaQuery.of(context).viewInsets.bottom, // Adjust for keyboard
+          ),
+          child: DraggableScrollableSheet(
+            initialChildSize: 0.6,
+            maxChildSize: 0.9,
+            minChildSize: 0.4,
+            builder: (_, controller) {
+              return Container(
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
+                  ),
+                ),
+                child: Wrap(
+                  children: [
+                    InvestModal(
+                      onInvest: onInvest,
+                      description: description,
+                      projectImageUrl: projectImageUrl,
+                      projectAddress: projectAddress,
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
   Widget bodyState(
     List<Map<String, Object>> posts,
     bool isLogin,
@@ -87,6 +144,27 @@ class _HistoryPageState extends State<HistoryPage>
                 context.read<WalletConnectControl>().startProjectFunding,
             isInvested: isInvest,
             refund: context.read<WalletConnectControl>().getRefund,
+            onInvest: () {
+              showInvestModal(
+                context,
+                (
+                  String projectAddress,
+                  String token,
+                  String amount,
+                  String projectName,
+                ) {
+                  context.read<WalletConnectControl>().investProject(
+                    projectAddress: posts[index]['address'] as String,
+                    token: token,
+                    amount: amount,
+                    projectName: projectName,
+                  );
+                },
+                posts[index]['projectName'] as String,
+                posts[index]['imageUrl'] as String,
+                posts[index]['address'] as String,
+              );
+            },
           );
         },
       ),

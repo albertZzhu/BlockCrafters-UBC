@@ -245,7 +245,9 @@ class WalletConnectControl extends Cubit<Web3State> {
         );
         if (prefs.containsKey("InvestHistory")) {
           List<String> investHistory = prefs.getStringList("InvestHistory")!;
-          investHistory.add(projectAddress);
+          if (!prefs.getStringList("InvestHistory")!.contains(projectAddress)) {
+            investHistory.add(projectAddress);
+          }
           prefs.setStringList("InvestHistory", investHistory);
         } else {
           prefs.setStringList("InvestHistory", [projectAddress]);
