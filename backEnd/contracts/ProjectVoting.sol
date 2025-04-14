@@ -97,7 +97,8 @@ contract ProjectVoting is IProjectVoting{
         votingID = votingID<0?votingID%int(_votings.length):votingID;
         require(0 <= votingID && votingID < int(_votings.length), "Voting does not exist");
         Voting storage voting = _votings[uint256(votingID)];
-        if (voting.positives > voting.threshold){
+        VoteResult result = this.getVotingResult(milestoneID, votingID);
+        if (result==VoteResult.Approved){
             voting.result = VoteResult.Approved;
             if(voting.voteType == VoteType.Extension){
                 Project.extendDeadline(milestoneID);
@@ -106,7 +107,7 @@ contract ProjectVoting is IProjectVoting{
                 Project.advanceMilestone();
                 // console.log('AdvanceApproved');
             }
-        }else if (voting.negatives >= voting.threshold){
+        }else if (result==VoteResult.Rejected){
             voting.result = VoteResult.Rejected;
             // console.log('Rejected');
         }
@@ -121,7 +122,7 @@ contract ProjectVoting is IProjectVoting{
         }
         if (voting.positives > voting.threshold){
             return VoteResult.Approved;
-        }else if (voting.negatives > voting.threshold){
+        }else if (voting.negatives >= voting.threshold){
             return VoteResult.Rejected;
         }
         return VoteResult.Pending;
