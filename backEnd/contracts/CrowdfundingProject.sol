@@ -245,8 +245,6 @@ contract CrowdfundingProject is ICrowdfundingProject {
         payable(ProjectManager.getPlatformOwner()).transfer(transactionFee);
         payable(founder).transfer(founderShare);
 
-        emit ProjectStatusUpdated(status, fundingDone);
-
         emit FundsWithdrawn(projectId, founder, founderShare, transactionFee);
     }
 
