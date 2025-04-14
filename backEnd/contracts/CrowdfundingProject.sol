@@ -125,6 +125,8 @@ contract CrowdfundingProject is ICrowdfundingProject {
         uint256 _deadline
     ) external onlyFounder() {
         // Add a new milestone to the project
+        require(bytes(_name).length > 0 && bytes(_name).length <= 100, "Milestone name length must be between 1 and 100 characters");
+        require(bytes(_descCID).length == 46, "Invalid IPFS hash");
         require(_fundingGoal > 0, "Milestone goal must be positive");
         require(_deadline > block.timestamp, "Deadline must be in the future");
         if (milestones.length > 0) {
