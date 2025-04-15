@@ -1,0 +1,36 @@
+@startuml
+actor Founder
+participant CrowdfundingManager
+participant CrowdfundingProject
+participant TokenManager
+participant ProjectVotingManager
+
+== Create Project ==
+Founder -> CrowdfundingManager: createProject(\n    projectName, fundingDeadline, \n    descCID, photoCID, socialMediaLinkCID, \n    tokenName, tokenSymbol)
+activate CrowdfundingManager
+
+alt invalid inputs (name, IPFS hashes, deadline)
+    CrowdfundingManager -> Founder: Revert with error
+end
+
+CrowdfundingManager -> CrowdfundingProject: new CrowdfundingProject(msg.sender, projectCount, projectName, fundingDeadline, \n    descCID, photoCID, socialMediaLinkCID)
+activate CrowdfundingProject
+CrowdfundingProject --> CrowdfundingManager: CrowdfundingProject instance
+deactivate CrowdfundingProject
+
+CrowdfundingManager -> TokenManager: deployToken(projectAddress, tokenName, tokenSymbol)
+activate TokenManager
+TokenManager --> CrowdfundingManager: Token deployed
+deactivate TokenManager
+
+CrowdfundingManager -> ProjectVotingManager: createVotingPlatfrom(projectAddress)
+activate ProjectVotingManager
+ProjectVotingManager --> CrowdfundingManager: Voting platform address
+deactivate ProjectVotingManager
+
+CrowdfundingManager -> CrowdfundingProject: setVotingPlatform(voting)
+CrowdfundingManager -> CrowdfundingManager: Update mappings and arrays
+CrowdfundingManager -> Founder: Emit ProjectCreated event
+
+deactivate CrowdfundingManager
+@enduml

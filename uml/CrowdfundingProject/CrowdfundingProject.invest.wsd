@@ -1,0 +1,35 @@
+@startuml
+actor Investor
+participant CrowdfundingProject
+participant TokenManager
+
+Investor -> CrowdfundingProject: invest()
+activate CrowdfundingProject
+
+alt not(isFundingProject())
+    CrowdfundingProject -> Investor: Revert with "Project is not funding or expired"
+end
+
+alt msg.value <= 0
+    CrowdfundingProject -> Investor: Revert with "Investment must be > 0"
+end
+alt fundingBalance + msg.value > getProjectFundingGoal()
+    CrowdfundingProject -> Investor: Revert with "Investment exceeds funding goal"
+end
+CrowdfundingProject -> TokenManager: mintTo(msg.sender, msg.value)
+activate TokenManager
+TokenManager -> ProjectToken: mint(msg.sender, msg.value)
+activate ProjectToken
+ProjectToken --> TokenManager: Project Tokens minted
+deactivate ProjectToken
+TokenManager --> CrowdfundingProject: Project Tokens minted
+deactivate TokenManager
+
+' CrowdfundingProject -> CrowdfundingProject: Update fundingBalance
+alt Funding goal reached
+    CrowdfundingProject -> CrowdfundingProject: activateProject()
+end
+
+CrowdfundingProject -> Investor: Emit InvestmentMade event
+deactivate CrowdfundingProject
+@enduml

@@ -1,0 +1,22 @@
+@startuml
+actor Founder
+participant CrowdfundingProject
+
+== Add Milestone To Exisiting Inactive Project ==
+Founder -> CrowdfundingProject: addMilestone(_name, _descCID, _fundingGoal, _deadline)
+activate CrowdfundingProject
+
+alt invalid length of _name and descCID
+    CrowdfundingProject -> Founder: Revert with error
+end
+alt _fundingGoal <= 0
+    CrowdfundingProject -> Founder: Revert with "Milestone goal must be positive"
+end
+alt _deadline <= block.timestamp||_deadline <= lastMilestoneDeadline
+    CrowdfundingProject -> Founder: Revert with error
+end
+
+CrowdfundingProject -> CrowdfundingProject: Add milestone to milestones array
+CrowdfundingProject -> Founder: Emit MilestoneAdded event
+deactivate CrowdfundingProject
+@enduml

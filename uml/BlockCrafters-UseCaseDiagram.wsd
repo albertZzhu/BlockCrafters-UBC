@@ -1,0 +1,53 @@
+@startuml
+left to right direction
+skinparam actorStyle awesome
+' skinparam backgroundColor transparent
+
+' Set custom colors for actors
+actor User
+actor Investor #75c99a
+actor Founder #LightBlue
+actor PlatformOwner #ffcc00
+
+
+' actor Governance
+
+User <|-- (Investor)
+User <|-- (Founder)
+
+rectangle "BlockCrafters" {
+    (CrowdfundingManager)
+    (CrowdfundingProject)
+    (CrowdfundingManager) .-r[hidden].> (CrowdfundingProject)
+    rectangle "CrowdfundingManager"{
+        CrowdfundingProject <-l- (Create Project)
+        Founder -d-> (Create Project)        
+        PlatformOwner-u->(Change Platform Owner)
+    }
+    ' CrowdfundingProject-u->CrowdfundingManager
+        
+    rectangle "CrowdfundingProject"{
+            Investor  -d-> (Invest)
+            Investor  -d-> (Refund)
+            Investor  -d-> (Vote)
+            
+            Founder -d-> (Add MileStone)
+            Founder -d-> (Start Funding)
+            Founder -d-> (Create Requests) 
+            (Create Requests)  -d-> (Milestone Extension Request): <<include>>
+            (Create Requests)  -d-> (Project Advance Request): <<include>>
+            Founder -d-> (Cancel Project)
+            Founder -d-> (Withdraw)
+            (Withdraw) -d-> (Deduct Transaction Fee) 
+            (Deduct Transaction Fee) -d-> PlatformOwner : <<include>>
+            
+            ' ' positioning
+            ' (Create Project)-r[hidden]-> (Add MileStone)
+            ' (Add MileStone) -l[hidden]-> (Start Funding)
+            ' (Start Funding) -l[hidden]-> (Create Requests)
+            ' (Create Requests) -l[hidden]-> (Withdraw)
+            ' (Withdraw) -l[hidden]-> (Cancel Project)  
+        }
+}
+
+@enduml

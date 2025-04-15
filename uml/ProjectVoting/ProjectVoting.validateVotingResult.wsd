@@ -1,0 +1,22 @@
+@startuml
+actor User
+== Check voting results and determines if the voting can be ended ==
+User -> ProjectVoting: validateVotingResult(milestoneID, -1)
+activate ProjectVoting
+alt voting doesn't exist
+    ProjectVoting -> User: Revert with error
+end
+ProjectVoting -> ProjectVoting: Check voting thresholds
+alt positives>50% || (block.timestamp>votingDeadline && positives>negatives)
+    ProjectVoting -> CrowdfundingProject: extendDeadline(milestoneID) or advanceMilestone()
+    activate CrowdfundingProject
+    CrowdfundingProject --> ProjectVoting: Success
+    deactivate CrowdfundingProject
+    ProjectVoting -> ProjectVoting: Update voting result to Approved
+else negatives>=50% || (block.timestamp>votingDeadline && negatives>=positives)
+    ProjectVoting -> ProjectVoting: Update voting result to Rejected
+end
+
+ProjectVoting -> User: Emit VotingValidated event
+deactivate ProjectVoting
+@enduml

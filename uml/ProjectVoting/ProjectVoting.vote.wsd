@@ -1,0 +1,41 @@
+@startuml
+actor Investor
+participant ProjectVoting
+participant TokenManager
+participant CrowdfundingProject
+
+Investor -> ProjectVoting: vote(milestoneID, decision)
+activate ProjectVoting
+
+alt No voting exists for milestoneID
+    ProjectVoting -> Investor: Revert with "No voting has started yet"
+end
+
+ProjectVoting -> ProjectVoting: Get the latest voting for milestoneID
+alt Voting ended
+    ProjectVoting -> Investor: Revert with "Voting has ended"
+end
+alt already voted
+    ProjectVoting -> Investor: Revert with "Already voted"
+end
+ProjectVoting -> TokenManager: getPastVotes(address(Project), msg.sender, voting.blockNumber)
+activate TokenManager
+TokenManager --> ProjectVoting: votePower
+deactivate TokenManager
+
+' ProjectVoting -> ProjectVoting: Calculate final votePower
+alt votePower <= 0
+    ProjectVoting -> Investor: Revert with "You have no voting power"
+end
+
+' ProjectVoting -> ProjectVoting: Record vote decision and update votePower
+alt decision == true
+    ProjectVoting -> ProjectVoting: Increment voting.positives
+else decision == false
+    ProjectVoting -> ProjectVoting: Increment voting.negatives
+end
+
+ProjectVoting -> ProjectVoting: validateVotingResult(milestoneID, -1)
+ProjectVoting -> Investor: Vote successfully recorded
+deactivate ProjectVoting
+@enduml

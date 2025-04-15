@@ -1,0 +1,37 @@
+@startuml
+actor Founder
+participant CrowdfundingProject
+participant ProjectManager
+actor PlatformOwner
+
+Founder -> CrowdfundingProject: withdraw()
+activate CrowdfundingProject
+
+alt msg.sender!=founder
+    CrowdfundingProject -> Founder: Revert with "Only the founder can perform this action"
+end
+alt status != Active or Completed
+    CrowdfundingProject -> Founder: Revert with "Project is not active"
+end
+CrowdfundingProject -> CrowdfundingProject: Calculate totalAvailable = fundingBalance - frozenFund
+alt not(totalAvailable > 0)
+    CrowdfundingProject -> Founder: Revert with "No funds available for withdrawal"
+end
+
+CrowdfundingProject -> CrowdfundingProject: Calculate transactionFee and founderShare
+alt not(contract balance >= transactionFee)
+    CrowdfundingProject -> Founder: Revert with "Insufficient balance for fee"
+end
+
+CrowdfundingProject -> CrowdfundingProject: Deduct totalAvailable from fundingBalance
+CrowdfundingProject -> ProjectManager: getPlatformOwner()
+activate ProjectManager
+ProjectManager --> CrowdfundingProject: platformOwnerAddress
+deactivate ProjectManager
+
+CrowdfundingProject -> Founder: Transfer founderShare
+CrowdfundingProject -> PlatformOwner: Transfer transactionFee to PlatformOwner
+
+CrowdfundingProject -> Founder: Emit FundsWithdrawn event
+deactivate CrowdfundingProject
+@enduml

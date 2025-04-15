@@ -1,0 +1,20 @@
+@startuml
+actor Founder
+participant CrowdfundingProject
+
+== Start Project Funding==
+Founder -> CrowdfundingProject: startFunding()
+activate CrowdfundingProject
+
+alt no existing milestones
+    CrowdfundingProject -> Founder: Revert with "No milestones added"
+end
+alt status!= Inactive
+    CrowdfundingProject -> Founder: Revert with "Can only start funding if project is inactive"
+end
+
+
+CrowdfundingProject -> CrowdfundingProject: Update project status to Funding
+CrowdfundingProject -> Founder: Emit ProjectStatusUpdated event
+deactivate CrowdfundingProject
+@enduml

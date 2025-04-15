@@ -1,0 +1,50 @@
+@startuml
+actor Investor
+participant CrowdfundingProject
+participant TokenManager
+
+Investor -> CrowdfundingProject: refund()
+activate CrowdfundingProject
+
+alt block.timestamp > lastMilestone.deadline || (block.timestamp>fundingDeadline && status==Funding)
+    CrowdfundingProject -> CrowdfundingProject: setProjectFailed()
+end
+
+alt Validate status != Failed
+    CrowdfundingProject -> Investor: Revert with "Project is not failed"
+end
+
+CrowdfundingProject -> TokenManager: balanceOf(address(this), msg.sender)
+activate TokenManager    
+    TokenManager -> ProjectToken: balanceOf(address(project), msg.sender)
+    activate ProjectToken
+        ProjectToken --> TokenManager: userBalance
+    deactivate ProjectToken
+TokenManager --> CrowdfundingProject: userBalance
+deactivate TokenManager
+
+alt userBalance <= 0
+    CrowdfundingProject -> Investor: Revert with "No tokens to refund"
+end
+
+alt contract balance < userBalance
+    CrowdfundingProject -> Investor: Revert with "Project has insufficient balance for refund"
+end
+
+CrowdfundingProject -> TokenManager: toRefund=refund(msg.sender, userBalance)
+activate TokenManager
+    TokenManager -> TokenManager: calculate refundableAmmount
+    TokenManager -> ProjectToken: _refund(msg.sender, userBalance)
+    activate ProjectToken
+        ProjectToken -> ProjectToken: _burn(msg.sender, userBalance)
+        ProjectToken -->TokenManager: Tokens burned
+    deactivate ProjectToken
+    TokenManager --> CrowdfundingProject: refundableAmmount
+deactivate TokenManager
+
+CrowdfundingProject -> CrowdfundingProject: Deduct toRefund from fundingBalance
+CrowdfundingProject -> Investor: Transfer toRefund to msg.sender
+
+CrowdfundingProject -> Investor: Emit RefundIssued event
+deactivate CrowdfundingProject
+@enduml

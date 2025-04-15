@@ -1,0 +1,26 @@
+@startuml
+actor Founder
+participant CrowdfundingProject
+participant ProjectVoting
+
+== Request Milestone Deadline Extension ==
+Founder -> CrowdfundingProject: requestExtension(milestoneID, newDeadline)
+activate CrowdfundingProject
+
+alt status != Active
+    CrowdfundingProject -> Founder: Revert with "Project is not active"
+end
+
+alt unvalid newDeadline (in past or before lastMilestoneDeadline)
+    CrowdfundingProject -> Founder: Revert with error
+end
+
+CrowdfundingProject -> ProjectVoting: startNewVoting(milestoneID, newDeadline)
+activate ProjectVoting
+ProjectVoting --> CrowdfundingProject: Voting started
+deactivate ProjectVoting
+
+CrowdfundingProject -> Founder: Emit VotingStarted event
+deactivate CrowdfundingProject
+
+@enduml

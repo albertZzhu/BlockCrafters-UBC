@@ -1,0 +1,26 @@
+@startuml
+actor Founder
+participant CrowdfundingProject
+participant ProjectVoting
+
+== Request Advancing to Next Milestone (or Completing Project) ==
+Founder -> CrowdfundingProject: requestAdvance()
+activate CrowdfundingProject
+
+alt status != Active
+    CrowdfundingProject -> Founder: Revert with "Project is not active"
+end
+
+alt milestoneStatus[currentMilestone]!=Pending
+    CrowdfundingProject -> Founder: Revert with error
+end
+
+CrowdfundingProject -> ProjectVoting: startNewVoting(currentMilestone, VoteType.Advance)
+activate ProjectVoting
+ProjectVoting --> CrowdfundingProject: Voting started
+deactivate ProjectVoting
+
+CrowdfundingProject -> Founder: Emit VotingStarted event
+deactivate CrowdfundingProject
+
+@enduml
