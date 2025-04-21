@@ -142,7 +142,7 @@ contract ProjectVoting is IProjectVoting{
         require(votes[voteKey].decision == VoteResult.Pending, "Already voted");
         uint256 votePower = this.getVotePower(msg.sender, voting.blockNumber);
         require(votePower > 0, "You have no voting power");
-        votes[voteKey].votePower = votePower;
+        // votes[voteKey].votePower = votePower;
         votes[voteKey].decision = decision ? VoteResult.Approved : VoteResult.Rejected;
         if(decision){
             voting.positives += votePower;

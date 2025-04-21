@@ -207,7 +207,7 @@ contract CrowdfundingProject is ICrowdfundingProject {
     //Founder withdraw after success
     function refund() external {
         // TODO: Implement this function
-        // 1.set project status to failed if the last milestone is not completed after the deadline.
+        // 1.set project status to failed if the last milestone is not completed after the deadline. Or if funding failed
         if(block.timestamp > milestones[milestones.length-1].deadline){
             setProjectFailed();
         }        
@@ -216,10 +216,10 @@ contract CrowdfundingProject is ICrowdfundingProject {
         // 3. burn the ProjectTokens.
         uint256 userBalance = tokenManager.balanceOf(address(this), msg.sender);
         require(userBalance > 0, "No tokens to refund");
-        require(address(this).balance >= userBalance, "Proejct has insufficient balance for refund");
+        require(address(this).balance >= userBalance, "Project has insufficient balance for refund");
         uint256 toRefund = tokenManager.refund(msg.sender, userBalance); // burn the tokens and get the refund amount
         // 4. transfer the refund to the investor.
-        fundingBalance -= toRefund; // remove the refund amount from the funding balance
+        // fundingBalance -= toRefund; // remove the refund amount from the funding balance
         payable(msg.sender).transfer(toRefund); // transfer the refund to the investor
 
         emit RefundIssued(msg.sender, toRefund);
@@ -231,7 +231,7 @@ contract CrowdfundingProject is ICrowdfundingProject {
 
         // Milestone memory m = milestones[currentMilestone];
 
-        uint256 totalAvailable = fundingBalance-frozenFund; // 80% of the funding goal
+        uint256 totalAvailable = address(this).balance-frozenFund; // 80% of the funding goal
         require(totalAvailable > 0, "No funds available for withdrawal");
         uint256 ammount = totalAvailable; // withdraw the entire available amount
 
@@ -241,8 +241,8 @@ contract CrowdfundingProject is ICrowdfundingProject {
 
 
         require(address(this).balance >= transactionFee, "Insufficient balance for fee");
-        // minus the withdrawing frm funding balance
-        fundingBalance -= ammount;
+        // // minus the withdrawing frm funding balance
+        // fundingBalance -= ammount;
 
         payable(ProjectManager.getPlatformOwner()).transfer(transactionFee);
         payable(founder).transfer(founderShare);
@@ -253,7 +253,12 @@ contract CrowdfundingProject is ICrowdfundingProject {
 
     // set the status to fail
     function setProjectFailed() private {
-        require(status == ProjectStatus.Active, "Project is not active");
+        // the project can be set to failed if project is active, or if the funding deadline has passed and the project is not funded
+        if (status == ProjectStatus.Funding && fundingDeadline > block.timestamp) {
+            require(fundingDeadline < block.timestamp, "Funding deadline has not passed yet");
+        } else {
+            require(status == ProjectStatus.Active, "Project is not active");
+        }        
         status = ProjectStatus.Failed;
         emit ProjectStatusUpdated(status, fundingDone);
     }
@@ -361,7 +366,9 @@ contract CrowdfundingProject is ICrowdfundingProject {
     function getStatus() external view returns(ProjectStatus) {
         return status;
     }
-
+    function getBalance() external view returns(uint256) {
+        return address(this).balance;
+    }
     function getFundingBalance() external view returns(uint256) {
         return fundingBalance;
     }

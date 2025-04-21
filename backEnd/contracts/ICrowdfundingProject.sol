@@ -11,7 +11,7 @@ interface ICrowdfundingProject{
     }
     enum MilestoneStatus{ //not currently used, may be redundant
         Pending,  // milestone not started or working in progress
-        Failed,   // milestone failed (deadline passed/extention failed)
+        Failed,   // milestone failed (deadline passed/Extension failed)
         Completed // milestone advance request approved
     }
     struct Milestone {

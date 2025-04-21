@@ -98,7 +98,7 @@ describe("CrowdfundingManager", function () {
     });
 
     describe("Deployment", function () {
-        it("Should set the correct platform plaftformOwner", async function () {
+        it("Should set the correct platform platformOwner", async function () {
             expect(await app.platformOwner()).to.equal(appOwner.address);
         });
 
@@ -540,7 +540,7 @@ describe("CrowdfundingManager", function () {
 
         });
         it("Should allow founder to withdraw Milestone1's 80% after project activated", async function () {
-            expect(await project1.getFundingBalance()).to.equal(fundingGoal);
+            expect(await project1.getBalance()).to.equal(fundingGoal);
             let prevFounderBalance = await ethers.provider.getBalance(founder1.address);
             let prevOwnerBalance = await ethers.provider.getBalance(appOwner.address);
             
@@ -555,9 +555,9 @@ describe("CrowdfundingManager", function () {
             let gasUsed = receipt.gasUsed * receipt.gasPrice;
 
             expect(await project1.frozenFund()).to.equal(frozen); // 0.1
-            expect(await project1.getFundingBalance()).to.equal(frozen); // 0.6
+            expect(await project1.getBalance()).to.equal(frozen); // 0.6
 
-            // plaftformOwner receives txn fee
+            // platformOwner receives txn fee
             let currOwnerBalance = await ethers.provider.getBalance(appOwner.address);
             expect(currOwnerBalance - prevOwnerBalance).to.equal(transactionFee);
 
@@ -566,7 +566,7 @@ describe("CrowdfundingManager", function () {
             expect(currFounderBalance - prevFounderBalance + gasUsed).to.equal(founderShare);
             
         });
-        it("Should not allow founder to withdraw when no funds available (fronzen)", async function () {
+        it("Should not allow founder to withdraw when no funds available (frozen)", async function () {
             it("Should revert if no funds available", async function () {
                 await expect(
                     project1.connect(founder1).withdraw()
@@ -596,10 +596,10 @@ describe("CrowdfundingManager", function () {
 
             // check frozen, and balance
             expect(await project1.getFrozenFunding()).to.equal(frozen); //0.2
-            expect(await project1.getFundingBalance()).to.equal(frozen);
+            expect(await project1.getBalance()).to.equal(frozen);
             expect(await ethers.provider.getBalance(project1Address)).to.equal(frozen); //0.2
             
-            // plaftformOwner receives txn fee
+            // platformOwner receives txn fee
             currOwnerBalance = await ethers.provider.getBalance(appOwner.address);
             expect(currOwnerBalance - prevOwnerBalance).to.equal(transactionFee);
 
@@ -631,10 +631,10 @@ describe("CrowdfundingManager", function () {
 
             // check frozen, and balance
             expect(await project1.getFrozenFunding()).to.equal(frozen); //0.2
-            expect(await project1.getFundingBalance()).to.equal(frozen);
+            expect(await project1.getBalance()).to.equal(frozen);
             expect(await ethers.provider.getBalance(project1Address)).to.equal(frozen); //0.2
             
-            // plaftformOwner receives txn fee
+            // platformOwner receives txn fee
             currOwnerBalance = await ethers.provider.getBalance(appOwner.address);
             expect(currOwnerBalance - prevOwnerBalance).to.equal(transactionFee);
 
@@ -644,7 +644,7 @@ describe("CrowdfundingManager", function () {
         });
     });
 
-    describe("Plaftform owner transfer", function () {
+    describe("Platform owner transfer", function () {
         it("Should allow platform owner to transfer ownership", async function () {
             await expect(app.connect(appOwner).setPlatformOwner(backer1.address))
                 .to.emit(app, "CrowdfundingManagerUpdated")
@@ -653,7 +653,7 @@ describe("CrowdfundingManager", function () {
             expect(await app.platformOwner()).to.equal(backer1.address);
         });
 
-        it("Should revert if non-plaftformowner tries to transfer ownership", async function () {
+        it("Should revert if non-platformowner tries to transfer ownership", async function () {
             await expect(
                 app.connect(backer1).setPlatformOwner(backer2.address)
             ).to.be.revertedWith("Not the platform owner");

@@ -166,7 +166,7 @@ describe("ProjectVoting", function () {
             const milestone = await project1.getMilestone(0);
             expect(milestone.deadline).to.equal(milestoneDeadline);
         });
-        it("Extention Appoved if votepower>50%, and deadline is extended", async function () {
+        it("Extension Approved if votepower>50%, and deadline is extended", async function () {
             // activate the project
             await project1.connect(backer1).invest({value: ethers.parseEther('2')});
             await project1.connect(backer2).invest({value: ethers.parseEther('3')});
@@ -180,7 +180,7 @@ describe("ProjectVoting", function () {
             const milestone = await project1.getMilestone(0);
             expect(milestone.deadline).to.equal(milestoneDeadline+oneDay);
         });
-        it("Extention Rejected if votepower<=50%, and deadline is not extended", async function () {
+        it("Extension Rejected if negative votepower>=50%, and deadline is not extended", async function () {
             // activate the project
             await project1.connect(backer1).invest({value: ethers.parseEther('2.5')});
             await project1.connect(backer2).invest({value: ethers.parseEther('2.5')});
@@ -200,7 +200,7 @@ describe("ProjectVoting", function () {
                 project1.connect(founder2).requestExtension(0, milestoneDeadline + oneDay)
             ).to.be.revertedWith("Only the founder can perform this action");
         });
-        it("Can's Start an Extension request if project not active", async function () {
+        it("Can't Start an Extension request if project not active", async function () {
             await expect(
                 project1.connect(founder1).requestExtension(0, milestoneDeadline + oneDay)
             ).to.be.revertedWith("Project is not active");
@@ -295,7 +295,7 @@ describe("ProjectVoting", function () {
             const currentMilestone = await project1.getCurrentMilestone();
             expect(currentMilestone).to.equal(0);
         });
-        it("Advance appoved if votepower>50%, and milestone advanced", async function () {
+        it("Advance Approved if votepower>50%, and milestone advanced", async function () {
             // activate the project
             await project1.connect(backer1).invest({value: ethers.parseEther('2')});
             await project1.connect(backer2).invest({value: ethers.parseEther('3')});
@@ -348,7 +348,7 @@ describe("ProjectVoting", function () {
                 project1.connect(founder2).requestAdvance()
             ).to.be.revertedWith("Only the founder can perform this action");
         });
-        it("Can's Start an Advance request if project not active", async function () {
+        it("Can't Start an Advance request if project not active", async function () {
             await expect(
                 project1.connect(founder1).requestAdvance()
             ).to.be.revertedWith("Project is not active");
