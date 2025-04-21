@@ -2,27 +2,47 @@ const { ethers, upgrades } = require("hardhat");
 const { expect } = require("chai");
 // const { it, beforeEach } = require("node:test");
 const {upgradeContract} = require("../scripts/upgrade.js");
-describe("App", function () {
+describe("Contract Upgrade", function () {
     const AMOUNT = ethers.parseEther("0.01"); //bignumber
     let app,
         appAddress,
         upgradedApp,
         upgradedAppAddress;
-    let owner, attacker;
+    let owner;
 
     // this.timeout(150000);
-    beforeEach(async function () {
-        [owner, attacker] = await ethers.getSigners();
+    before(async function () {
+        [owner] = await ethers.getSigners();
 
-        const App = await ethers.getContractFactory("CrowdfundingManager");
+        // Deploy addressProvider
+        let addressProviderFactory = await ethers.getContractFactory("AddressProvider");
+        let addressProvider = await addressProviderFactory.deploy();
+        await addressProvider.waitForDeployment();
+        // Deploy votingManager+tokenManager+CrowdfundingManager
+        let votingManagerFactory = await ethers.getContractFactory("ProjectVotingManager");
+        let votingManager = await upgrades.deployProxy(
+            votingManagerFactory, [addressProvider.target], { initializer: 'initialize' }
+        );
+        await votingManager.waitForDeployment();
+        await addressProvider.connect(owner).setProjectVotingManager(await votingManager.getAddress());
 
-        app = await upgrades.deployProxy(App);
+        let tokenManagerFactory = await ethers.getContractFactory("TokenManager");
+        let tokenManager = await upgrades.deployProxy(
+            tokenManagerFactory, [addressProvider.target], { initializer: 'initialize' }
+        );
+        await tokenManager.waitForDeployment();
+        await addressProvider.connect(owner).setTokenManager(await tokenManager.getAddress());
+
+        let CrowdfundingManager = await ethers.getContractFactory("CrowdfundingManager");
+        let app = await upgrades.deployProxy(
+            CrowdfundingManager,
+            [addressProvider.target],
+            { initializer: "initialize" }
+        );
         await app.waitForDeployment();
         appAddress = await app.getAddress();
-        console.log("App address:", appAddress);
+        await addressProvider.connect(owner).setCrowdfundingManager(appAddress);
 
-        // attackAddress = await attack.getAddress();
-        // console.log("Attack address:", attackAddress);
         upgradedApp = await upgradeContract(appAddress, "CrowdfundingManagerV2");
         await upgradedApp.waitForDeployment();
         upgradedAppAddress = await upgradedApp.getAddress();
